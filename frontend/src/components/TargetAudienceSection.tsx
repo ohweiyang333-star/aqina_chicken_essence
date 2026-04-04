@@ -3,28 +3,13 @@
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { BriefcaseBusiness, Heart, HeartPulse, ShieldCheck } from 'lucide-react';
+import { IMAGES } from '@/lib/image-utils';
 
 const imageSets = {
-  workplace: [
-    '/images/heritage.png',
-    '/images/pack-1.png',
-    '/images/pack-2.png',
-  ],
-  maternity: [
-    '/images/pack-4.png',
-    '/images/aqina_hero_chicken_essence_premium.png',
-    '/images/pack-1.png',
-  ],
-  recovery: [
-    '/images/pack-6.png',
-    '/images/heritage.png',
-    '/images/pack-4.png',
-  ],
-  halal: [
-    '/images/aqina_hero_chicken_essence_premium.png',
-    '/images/pack-2.png',
-    '/images/heritage.png',
-  ],
+  workplace: IMAGES.audience.workplace,
+  maternity: IMAGES.audience.maternity,
+  recovery: IMAGES.audience.recovery,
+  halal: IMAGES.audience.halal,
 } as const;
 
 const items = [

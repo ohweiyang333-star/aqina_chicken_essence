@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import { Bolt, Heart } from 'lucide-react';
 import Image from 'next/image';
+import { IMAGES } from '@/lib/image-utils';
 
 export default function ProblemSolutionSection() {
   const t = useTranslations('ProblemSolution');
@@ -14,7 +15,7 @@ export default function ProblemSolutionSection() {
       subtitle: t('urban.subtitle') || 'For the Busy Professional',
       problem: t('urban.problem') || 'Singapore urbanites often feel exhausted and stressed. Traditional chicken soup has a bitter, gamey taste that makes you "hold your nose" to drink.',
       solution: t('urban.solution') || 'Say goodbye to bitterness, awaken your vitality. Aqina uses MD2 pineapple enzyme circular ecosystem farming, double-boiled with steam extraction. No water added, zero moisture, no gamey taste. Every sip is fresh and rich like soup—ending the days of holding your nose to drink chicken essence.',
-      image: '/images/urban-professional.jpg',
+      image: IMAGES.problems.urbanProfessional,
       imageAlt: 'Urban professional',
     },
     {
@@ -23,7 +24,7 @@ export default function ProblemSolutionSection() {
       subtitle: t('mother.subtitle') || 'For Expecting & New Mothers',
       problem: t('mother.problem') || 'Need scientific nourishment during pregnancy but worried about safety?',
       solution: t('mother.solution') || 'Specially formulated for pregnant and postpartum mothers. No hormones, rich in carnosine. The taste that even severe nausea can accept—Halal certified for peace of mind.',
-      image: '/images/mother-care.jpg',
+      image: IMAGES.problems.motherCare,
       imageAlt: 'Expecting mother with baby',
     },
   ];

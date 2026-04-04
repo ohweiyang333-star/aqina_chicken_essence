@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { ShoppingCart } from 'lucide-react';
+import Image from 'next/image';
 import useCartStore from '@/lib/cart-store';
+import { IMAGES } from '@/lib/image-utils';
 import CartDrawer from './CartDrawer';
 
 export default function Header() {
@@ -41,17 +43,9 @@ export default function Header() {
         ].join(' ')}
       >
         <div className="section-shell flex h-16 items-center justify-between gap-4">
-          <Link href={homeHref} className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-primary/40 bg-surface text-primary shadow-[0_8px_20px_rgba(0,0,0,0.28)]">
-              <span className="font-heading text-xl font-bold leading-none">A</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="font-heading text-2xl font-semibold tracking-[0.12em] text-primary">
-                AQINA
-              </span>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.36em] text-muted">
-                Premium Essence
-              </span>
+          <Link href={homeHref} className="flex items-center">
+            <div className="relative h-12 w-28">
+              <Image src={IMAGES.logo} alt="Aqina Logo" fill className="object-contain" priority sizes="120px" />
             </div>
           </Link>
 

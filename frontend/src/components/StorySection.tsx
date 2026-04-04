@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { CheckCircle2 } from 'lucide-react';
+import { IMAGES } from '@/lib/image-utils';
 
 export default function StorySection() {
   const t = useTranslations('Index');
@@ -12,7 +13,7 @@ export default function StorySection() {
       <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16">
         <div className="relative w-full lg:w-1/2 aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl">
           <Image
-            src="/images/heritage.png"
+            src={IMAGES.story}
             alt="Traditional Brewing"
             fill
             className="object-cover"

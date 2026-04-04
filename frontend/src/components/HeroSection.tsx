@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import Image from 'next/image';
+import { IMAGES } from '@/lib/image-utils';
 
 export default function HeroSection() {
   const t = useTranslations('Index');
@@ -10,7 +11,7 @@ export default function HeroSection() {
   return (
     <section className="relative isolate flex min-h-[85vh] items-end overflow-hidden pt-16">
       <Image
-        src="/images/heritage.png"
+        src={IMAGES.hero}
         alt="Aqina premium heritage"
         fill
         priority

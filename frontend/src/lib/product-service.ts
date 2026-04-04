@@ -11,7 +11,7 @@ import {
   orderBy,
 } from "firebase/firestore";
 import { db } from "./firebase";
-
+import { IMAGES } from "./image-utils";
 export interface Product {
   id: string;
   name: {
@@ -100,11 +100,26 @@ export async function getProductById(id: string): Promise<Product | null> {
  * Transform Firestore product to display format for legacy code
  */
 export function toDisplayProduct(product: Product, locale: string) {
+  let image = product.imageUrl;
+  const sizeOrId = (product.packSize || product.id || "").toLowerCase();
+  
+  if (sizeOrId.includes("1") || sizeOrId.includes("one") || sizeOrId.includes("一")) {
+    image = IMAGES.products.box1;
+  } else if (sizeOrId.includes("2") || sizeOrId.includes("two") || sizeOrId.includes("两") || sizeOrId.includes("二")) {
+    image = IMAGES.products.box2;
+  } else if (sizeOrId.includes("4") || sizeOrId.includes("four") || sizeOrId.includes("四")) {
+    image = IMAGES.products.box4;
+  } else if (sizeOrId.includes("6") || sizeOrId.includes("six") || sizeOrId.includes("六")) {
+    image = IMAGES.products.box6;
+  } else {
+    image = IMAGES.products.boxMain;
+  }
+
   return {
     id: product.id,
     name: product.name[locale as "en" | "zh"] || product.name.en,
     price: product.price,
-    image: product.imageUrl,
+    image: image,
     label: product.packSize,
     popular: product.isRecommended,
     badge: product.badge,

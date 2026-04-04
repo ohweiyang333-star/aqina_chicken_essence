@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import CheckoutModal from "@/components/CheckoutModal";
 import useCartStore from "@/lib/cart-store";
+import { IMAGES } from "@/lib/image-utils";
 import {
   getProducts,
   toDisplayProduct,
@@ -34,7 +35,7 @@ export default function HomePage() {
           id: "pack1",
           name: t("products.items.pack1"),
           price: 39.9,
-          image: "/images/pack-1.png",
+          image: IMAGES.products.box1,
           label: t("products.packSizes.pack1"),
           badge: t("products.badges.pack1"),
         },
@@ -42,7 +43,7 @@ export default function HomePage() {
           id: "pack2",
           name: t("products.items.pack2"),
           price: 75.0,
-          image: "/images/pack-2.png",
+          image: IMAGES.products.box2,
           label: t("products.packSizes.pack2"),
           badge: t("products.badges.pack2"),
           popular: true,
@@ -51,7 +52,7 @@ export default function HomePage() {
           id: "pack4",
           name: t("products.items.pack4"),
           price: 149.0,
-          image: "/images/pack-4.png",
+          image: IMAGES.products.box4,
           label: t("products.packSizes.pack4"),
           badge: t("products.badges.pack4"),
         },
@@ -59,7 +60,7 @@ export default function HomePage() {
           id: "pack6",
           name: t("products.items.pack6"),
           price: 219.0,
-          image: "/images/pack-6.png",
+          image: IMAGES.products.box6,
           label: t("products.packSizes.pack6"),
           badge: t("products.badges.pack6"),
         },

@@ -2,7 +2,9 @@
 
 import { useTranslations, useLocale } from 'next-intl';
 import Link from 'next/link';
+import Image from 'next/image';
 import { aqinaSiteConfig } from '@/lib/site-config';
+import { IMAGES } from '@/lib/image-utils';
 
 export default function Footer() {
   const t = useTranslations('Index');
@@ -14,17 +16,9 @@ export default function Footer() {
       <div className="section-shell space-y-8">
         <div className="flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
-            <Link href={homeHref} className="inline-flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-md border border-primary/36 bg-surface text-primary">
-                <span className="font-heading text-xl font-bold">A</span>
-              </div>
-              <div>
-                <div className="font-heading text-2xl font-semibold tracking-[0.14em] text-primary">
-                  AQINA
-                </div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.34em] text-muted">
-                  Premium Essence
-                </div>
+            <Link href={homeHref} className="inline-flex items-center">
+              <div className="relative h-14 w-32">
+                <Image src={IMAGES.logo} alt="Aqina Logo" fill className="object-contain" sizes="140px" />
               </div>
             </Link>
             <p className="max-w-md text-sm leading-7 text-muted">{t('footer.tagline')}</p>
