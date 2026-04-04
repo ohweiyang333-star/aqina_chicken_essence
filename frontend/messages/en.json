@@ -1,0 +1,190 @@
+{
+  "Index": {
+    "title": "Aqina Premium Chicken Essence",
+    "subtitle": "Pure extraction, crafted for modern recovery and daily resilience",
+    "hero": {
+      "badge": "20 Years of Pure Extraction",
+      "title": "No Water Added.",
+      "highlight": "Only Golden Chicken Essence.",
+      "description": "From pineapple-fed farm chickens to small-molecule extraction, each pouch is built for clean taste, quick absorption, and a premium daily ritual that feels effortless.",
+      "cta": "Shop Now",
+      "secondaryCta": "Learn More",
+      "noteOne": "Halal Certified",
+      "noteTwo": "Small Peptide Absorption"
+    },
+    "identity": {
+      "title": "Choose Your Identity",
+      "items": {
+        "workplace": "Workplace Elite",
+        "maternity": "Maternity Care",
+        "halal": "Halal Certified",
+        "recovery": "Post-Surgery Recovery"
+      }
+    },
+    "audience": {
+      "subtitle": "Tailored Nourishment",
+      "title": "A premium ritual for every season of life",
+      "items": {
+        "workplace": {
+          "eyebrow": "Workplace Energy",
+          "title": "Sharper mornings, cleaner focus, no heavy aftertaste.",
+          "description": "Built for long office hours and early starts, Aqina delivers a brighter, soup-like profile with fast absorption so your first drink supports clarity instead of feeling medicinal.",
+          "pointOne": "Light golden taste that is easy to drink daily",
+          "pointTwo": "Small-molecule nutrition for quick morning recovery",
+          "pointThree": "Fits executives, founders, and high-output teams"
+        },
+        "maternity": {
+          "eyebrow": "Maternity Care",
+          "title": "Gentle enough for sensitive days, rich enough for deep nourishment.",
+          "description": "Designed for pregnancy and postpartum recovery, the formula keeps the aroma clean and the texture light while still delivering concentrated amino acids for everyday restoration.",
+          "pointOne": "Smoother aroma for sensitive pregnancy stages",
+          "pointTwo": "Comfort-focused nourishment without oily heaviness",
+          "pointThree": "A refined ritual for postpartum rebuilding"
+        },
+        "recovery": {
+          "eyebrow": "Recovery Support",
+          "title": "A concentrated daily backup when the body needs rebuilding.",
+          "description": "When appetite is low and recovery demands are high, the goal is purity and absorption. Aqina keeps the serving compact, precise, and easier for daily intake during fragile periods.",
+          "pointOne": "Compact serving for low-appetite recovery periods",
+          "pointTwo": "Made for surgical recovery and elderly care routines",
+          "pointThree": "Clean ingredient story for family confidence"
+        },
+        "halal": {
+          "eyebrow": "Certified Trust",
+          "title": "Global trust marks, premium process, and a cleaner ingredient story.",
+          "description": "Halal confidence, disciplined production, and clear sourcing make Aqina easier to recommend to families who want premium nourishment without compromise.",
+          "pointOne": "Halal-friendly positioning for broader household trust",
+          "pointTwo": "Premium process story suitable for gifting and sharing",
+          "pointThree": "Supports modern wellness without changing routines"
+        }
+      }
+    },
+    "products": {
+      "eyebrow": "Premium Collection",
+      "title": "Choose your dedicated nourishment plan",
+      "subtitle": "Four high-conviction packs for daily upkeep, targeted recovery, and family replenishment.",
+      "recommended": "Recommended",
+      "buyNow": "Buy Now",
+      "addToCart": "Add to Cart",
+      "featuresLabel": "Key Features",
+      "currency": "SGD",
+      "detailFallbackOne": "Premium extraction with no added water",
+      "detailFallbackTwo": "Built for a cleaner, easier daily routine",
+      "items": {
+        "pack1": "Daily Nourishment",
+        "pack2": "Signature Upgrade",
+        "pack4": "Recovery Program",
+        "pack6": "Family Reserve"
+      },
+      "packSizes": {
+        "pack1": "1 box · 7 pouches",
+        "pack2": "2 boxes · 14 pouches",
+        "pack4": "4 boxes · 28 pouches",
+        "pack6": "6 boxes · 42 pouches"
+      },
+      "badges": {
+        "pack1": "Starter Ritual",
+        "pack2": "Best Conversion",
+        "pack4": "Postpartum / Recovery",
+        "pack6": "Family Stock"
+      },
+      "details": {
+        "pack1": [
+          "A practical first box for everyday nourishment",
+          "Clean-tasting daily ritual with low commitment",
+          "Ideal for first-time Aqina buyers"
+        ],
+        "pack2": [
+          "Our strongest balance of value and consistency",
+          "Enough volume to feel a routine take shape",
+          "Best fit for repeat office and home use"
+        ],
+        "pack4": [
+          "Structured pack for focused recovery windows",
+          "Supports maternity and post-surgery replenishment",
+          "Built for households planning a full recovery month"
+        ],
+        "pack6": [
+          "Highest reserve for long-cycle household use",
+          "Suitable for gifting, sharing, and elder support",
+          "Best unit economics across the full lineup"
+        ]
+      }
+    },
+    "Cart": {
+      "title": "Shopping Cart",
+      "empty": "Your cart is empty",
+      "continueShopping": "Continue Shopping",
+      "subtotal": "Subtotal",
+      "freeShipping": "Free shipping applied!",
+      "checkout": "Proceed to Checkout"
+    },
+    "Checkout": {
+      "form": {
+        "title": "Complete Your Order",
+        "name": "Name / 姓名",
+        "phone": "WhatsApp Phone / 电话",
+        "address": "Delivery Address / 地址",
+        "subtotal": "Subtotal",
+        "delivery": "Delivery Fee",
+        "free": "FREE",
+        "submit": "Confirm Order",
+        "terms": "By clicking confirm, your order is submitted. Payment will be handled via Shopee or PayNow/PayLah!. Returns accepted within 7 days for quality issues."
+      },
+      "success": {
+        "title": "Order Received!",
+        "subtitle": "Thank you for your order. Please complete payment using one of the methods below.",
+        "close": "Back to Home"
+      },
+      "payment": {
+        "title": "Payment Instructions",
+        "cn": "下单后，请点击下方按钮跳转至 Shopee 完成支付。若选择 PayLah! / PayNow，请扫描下方 QR Code 并备注您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
+        "en": "After placing your order, please click the button below to complete payment on Shopee. For PayLah! / PayNow, please scan the QR Code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
+        "shopee": "Pay on Shopee",
+        "paynow": "PayNow / PayLah!",
+        "qrUnavailable": "PayNow QR details will be shared after order confirmation.",
+        "qrNote": "Reference: Your Order ID",
+        "whatsapp": "Send payment screenshot to WhatsApp {phone} for faster processing"
+      }
+    },
+    "Science": {
+      "subtitle": "Science and Trust",
+      "title": "Pure process, global certification, premium peace of mind",
+      "description": "Every pouch is positioned around cleaner extraction, clearer sourcing, and confidence-building certifications that support both self-use and gifting.",
+      "certifications": {
+        "mygap": "MyGAP Certified",
+        "mygapDesc": "Good Agricultural Practices from source to process",
+        "organic": "MY Organic",
+        "organicDesc": "A cleaner ingredient story with modern assurance",
+        "halal": "Halal Certified",
+        "halalDesc": "Broader household trust across diverse consumers",
+        "amino": "High Amino Acid",
+        "aminoDesc": "Built around fast-absorbing nutritional support"
+      },
+      "nutrition": {
+        "title": "Built for absorption, not heaviness",
+        "description": "Aqina focuses on concentrated essence, clean taste, and small-molecule support so it fits demanding schedules, sensitive recovery periods, and premium wellness routines without burden.",
+        "facts": {
+          "zeroFat": "0% Fat",
+          "zeroCholesterol": "0% Cholesterol",
+          "noHormones": "No Hormones",
+          "highProtein": "High Protein"
+        }
+      }
+    },
+    "mobileCta": {
+      "label": "Claim Your Pack",
+      "whatsappLabel": "Chat with Specialist"
+    },
+    "footer": {
+      "tagline": "Premium chicken essence designed for modern families, disciplined recovery, and daily resilience.",
+      "nav": {
+        "audience": "Audience",
+        "science": "Science",
+        "products": "Products"
+      },
+      "copyright": "© 2026 Aqina Singapore. All rights reserved.",
+      "contactLine": "{phone} · {email}"
+    }
+  }
+}

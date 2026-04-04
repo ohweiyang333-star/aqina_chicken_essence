@@ -1,0 +1,16 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Orders collection: Anyone can create, only admin can read/write all
+    match /orders/{orderId} {
+      allow create: if true; 
+      allow read, update, delete: if request.auth != null && request.auth.token.email == 'svogino@gmail.com';
+    }
+    
+    // Products collection: Anyone can read, only admin can write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.token.email == 'svogino@gmail.com';
+    }
+  }
+}

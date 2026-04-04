@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Products - 公开可读，只有认证的 admin 可以写
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Orders - 前台可创建（匿名），admin 可读写
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Payments - 只有 admin 可读写
+    match /payments/{paymentId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Customers - 只有 admin 可读写
+    match /customers/{customerId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Chatbot Settings - 只有 admin 可读写
+    match /chatbotSettings/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Admin Users - 只有 super admin 可读写
+    match /admin_users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+  }
+}

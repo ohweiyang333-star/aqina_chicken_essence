@@ -1,0 +1,190 @@
+{
+  "Index": {
+    "title": "Aqina 阿其纳滴鸡精",
+    "subtitle": "纯萃取、轻负担、为现代恢复与日常元气而生",
+    "hero": {
+      "badge": "20 年专注纯萃取",
+      "title": "滴水不加。",
+      "highlight": "只有金色滴鸡精精华。",
+      "description": "从凤梨鸡养殖到小分子萃取，Aqina 把口感、吸收速度与高级日常感整合成一袋更容易坚持的滋补仪式。",
+      "cta": "立即选购",
+      "secondaryCta": "了解更多",
+      "noteOne": "Halal 清真认证",
+      "noteTwo": "小分子吸收"
+    },
+    "identity": {
+      "title": "请选择您的身份",
+      "items": {
+        "workplace": "职场精英",
+        "maternity": "孕产护理",
+        "halal": "清真认证",
+        "recovery": "术后康复"
+      }
+    },
+    "audience": {
+      "subtitle": "定向滋养",
+      "title": "为不同人生阶段准备的一套高级日常",
+      "items": {
+        "workplace": {
+          "eyebrow": "职场元气",
+          "title": "更清爽的早晨专注感，不留厚重补品负担。",
+          "description": "针对长时间工作、早起通勤与高压节奏，Aqina 用更像清炖鸡汤的口感与更轻盈的饮用体验，帮助你把晨间补给变成可持续的习惯。",
+          "pointOne": "金黄清亮，日常饮用更顺口",
+          "pointTwo": "小分子营养更适合高效率早晨",
+          "pointThree": "适合主管、创业者与高强度上班族"
+        },
+        "maternity": {
+          "eyebrow": "孕产护理",
+          "title": "敏感时期也喝得下，温和却不失浓度。",
+          "description": "为孕期与产后恢复考虑，Aqina 保留高浓度滋养，同时尽量让气味更干净、口感更轻，帮助妈妈在脆弱阶段更容易持续补养。",
+          "pointOne": "更轻柔的香气，孕期接受度更高",
+          "pointTwo": "不走油腻路线，恢复期更容易坚持",
+          "pointThree": "适合产后调理与阶段性修复"
+        },
+        "recovery": {
+          "eyebrow": "恢复支持",
+          "title": "当身体需要修复时，一袋更专注的后盾。",
+          "description": "在食欲降低但恢复需求升高的时候，关键是纯净、轻量与好吸收。Aqina 让每日补给更集中、更精炼，也更容易进入家庭照护流程。",
+          "pointOne": "适合术后、长辈与低食欲阶段",
+          "pointTwo": "小体积高浓度，更适合恢复窗口期",
+          "pointThree": "成分叙事更干净，家人更安心"
+        },
+        "halal": {
+          "eyebrow": "认证信任",
+          "title": "国际信任标记、严谨工艺，与更清晰的成分故事。",
+          "description": "Halal 认证、规范生产与透明来源，让 Aqina 更容易进入讲究品质与信任感的现代家庭，也更适合送礼与推荐。",
+          "pointOne": "清真定位让更多家庭喝得安心",
+          "pointTwo": "高级工艺感更适合分享与送礼",
+          "pointThree": "不改变生活节奏也能完成滋补升级"
+        }
+      }
+    },
+    "products": {
+      "eyebrow": "高级系列",
+      "title": "选择属于你的专属滋养方案",
+      "subtitle": "从日常保养、阶段恢复到家庭补给，四种组合覆盖最常见的高价值需求。",
+      "recommended": "推荐款",
+      "buyNow": "立即购买",
+      "addToCart": "加入购物车",
+      "featuresLabel": "套餐亮点",
+      "currency": "SGD",
+      "detailFallbackOne": "纯萃滴鸡精，不额外加水",
+      "detailFallbackTwo": "更适合现代节奏的精简滋补方式",
+      "items": {
+        "pack1": "日常滋养装",
+        "pack2": "招牌升级装",
+        "pack4": "恢复调理装",
+        "pack6": "家庭储备装"
+      },
+      "packSizes": {
+        "pack1": "1 盒 · 7 袋",
+        "pack2": "2 盒 · 14 袋",
+        "pack4": "4 盒 · 28 袋",
+        "pack6": "6 盒 · 42 袋"
+      },
+      "badges": {
+        "pack1": "入门仪式",
+        "pack2": "高转化推荐",
+        "pack4": "孕产 / 恢复",
+        "pack6": "家庭常备"
+      },
+      "details": {
+        "pack1": [
+          "适合第一次体验 Aqina 的轻量组合",
+          "更容易建立每天一袋的基础习惯",
+          "适合自己喝，也适合作为试饮入门"
+        ],
+        "pack2": [
+          "价值感与持续性最平衡的一组",
+          "更容易真正感受到日常饮用节奏",
+          "适合办公室与家庭日常双场景"
+        ],
+        "pack4": [
+          "更适合阶段性恢复与集中补养",
+          "适合孕产调理与术后恢复安排",
+          "适合以完整恢复周期来规划采购"
+        ],
+        "pack6": [
+          "适合长期家庭储备与多人共享",
+          "更适合长辈照护、送礼与团购需求",
+          "整组单价优势最明显"
+        ]
+      }
+    },
+    "Cart": {
+      "title": "购物车",
+      "empty": "您的购物车是空的",
+      "continueShopping": "继续购物",
+      "subtotal": "小计",
+      "freeShipping": "已享免运费优惠！",
+      "checkout": "去结算"
+    },
+    "Checkout": {
+      "form": {
+        "title": "完成订单",
+        "name": "姓名 / Name",
+        "phone": "WhatsApp 电话 / Phone",
+        "address": "收货地址 / Address",
+        "subtotal": "小计",
+        "delivery": "运费",
+        "free": "免运费",
+        "submit": "确认订单",
+        "terms": "点击确认即提交订单。支付将通过 Shopee 或 PayNow/PayLah! 完成。质量问题支持 7 天内退换。"
+      },
+      "success": {
+        "title": "订单已收到！",
+        "subtitle": "感谢您的订单。请使用以下方式完成支付。",
+        "close": "返回首页"
+      },
+      "payment": {
+        "title": "支付说明",
+        "cn": "下单后，请点击下方按钮跳转至 Shopee 完成支付。若选择 PayLah! / PayNow，请扫描下方 QR Code 并备注您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
+        "en": "After placing your order, please click the button below to complete payment on Shopee. For PayLah! / PayNow, please scan the QR Code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
+        "shopee": "在 Shopee 支付",
+        "paynow": "PayNow / PayLah!",
+        "qrUnavailable": "如需 PayNow QR，请在下单后通过 WhatsApp 获取支付二维码。",
+        "qrNote": "备注：您的订单号",
+        "whatsapp": "发送支付截图至 WhatsApp {phone} 以加快处理"
+      }
+    },
+    "Science": {
+      "subtitle": "科学与信任",
+      "title": "更纯净的工艺、更完整的认证、更高级的安心感",
+      "description": "每一袋 Aqina 都围绕更干净的萃取、更清晰的来源与更容易建立信任的认证叙事来设计，既适合自用，也适合作为高级送礼选择。",
+      "certifications": {
+        "mygap": "MyGAP 认证",
+        "mygapDesc": "从源头到流程都更规范的农业标准",
+        "organic": "MY Organic",
+        "organicDesc": "更干净的成分叙事与现代安心感",
+        "halal": "Halal 清真认证",
+        "halalDesc": "适合更广泛家庭与多元消费者",
+        "amino": "高氨基酸群",
+        "aminoDesc": "更强调吸收效率的营养支持"
+      },
+      "nutrition": {
+        "title": "强调吸收，而不是厚重负担",
+        "description": "Aqina 聚焦浓缩精华、清爽口感与小分子支持，让它更适合高压工作节奏、孕产恢复阶段、术后修复与现代家庭的高频滋补场景。",
+        "facts": {
+          "zeroFat": "0 脂肪",
+          "zeroCholesterol": "0 胆固醇",
+          "noHormones": "无激素",
+          "highProtein": "高蛋白"
+        }
+      }
+    },
+    "mobileCta": {
+      "label": "立即锁定套餐",
+      "whatsappLabel": "咨询专员"
+    },
+    "footer": {
+      "tagline": "为现代家庭、恢复阶段与长期元气管理而打造的高级滴鸡精。",
+      "nav": {
+        "audience": "人群方案",
+        "science": "科学信任",
+        "products": "套餐选择"
+      },
+      "copyright": "© 2026 Aqina Singapore. 版权所有。",
+      "contactLine": "{phone} · {email}"
+    }
+  }
+}
