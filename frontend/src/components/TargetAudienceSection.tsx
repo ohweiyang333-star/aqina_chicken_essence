@@ -50,7 +50,7 @@ export default function TargetAudienceSection() {
                     index % 2 === 1 ? 'lg:[&>*:first-child]:order-2 lg:[&>*:last-child]:order-1' : '',
                   ].join(' ')}
                 >
-                  <div className="grid gap-3 sm:grid-cols-[1.2fr_0.8fr]">
+                  <div className={['grid gap-3', images.length > 1 ? 'sm:grid-cols-[1.2fr_0.8fr]' : 'sm:grid-cols-1'].join(' ')}>
                     <div className="image-mask premium-outline relative min-h-[18rem] overflow-hidden rounded-[1.25rem]">
                       <Image
                         src={images[0]}
@@ -60,22 +60,24 @@ export default function TargetAudienceSection() {
                         sizes="(max-width: 1024px) 100vw, 50vw"
                       />
                     </div>
-                    <div className="grid gap-3">
-                      {images.slice(1).map((src) => (
-                        <div
-                          key={src}
-                          className="image-mask premium-outline relative min-h-[8.5rem] overflow-hidden rounded-[1rem]"
-                        >
-                          <Image
-                            src={src}
-                            alt={t(`audience.items.${item.id}.title`)}
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 1024px) 50vw, 25vw"
-                          />
-                        </div>
-                      ))}
-                    </div>
+                    {images.length > 1 && (
+                      <div className="grid gap-3">
+                        {images.slice(1).map((src) => (
+                          <div
+                            key={src}
+                            className="image-mask premium-outline relative min-h-[8.5rem] overflow-hidden rounded-[1rem]"
+                          >
+                            <Image
+                              src={src}
+                              alt={t(`audience.items.${item.id}.title`)}
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 1024px) 50vw, 25vw"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-5">

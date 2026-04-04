@@ -15,9 +15,7 @@ export const IMAGES = {
   },
   audience: {
     workplace: [
-      getFirebaseUrl('Facebook上班族.jpg'),
-      getFirebaseUrl('小袋装特写.jpg'),
-      getFirebaseUrl('滴鸡精液体倒入玻璃碗特写 - 真实包装.png')
+      getFirebaseUrl('Facebook上班族.jpg')
     ],
     maternity: [
       getFirebaseUrl('产后妈妈场景_正确包装.jpg'),
