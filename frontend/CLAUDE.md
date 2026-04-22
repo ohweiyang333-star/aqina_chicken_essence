@@ -16,6 +16,15 @@ npm run build  # Production build
 npm run lint   # ESLint
 ```
 
+## Deployment Policy (Mandatory)
+
+- Frontend deployment is **GitHub Actions only**.
+- Do not run production deploy from local machine.
+- Deployment target comes from root `deployment-targets.json`:
+  - `frontend.platform=cloud_run` -> `.github/workflows/deploy-frontend.yml`
+  - `frontend.platform=firebase_hosting` -> `.github/workflows/deploy-firebase-hosting.yml`
+- Standard flow: code -> build/lint -> commit -> push `main` -> wait GitHub Actions.
+
 ## i18n
 
 Translations live in `/messages/en.json` and `/messages/zh.json`. All user-visible strings must have entries in both files. The `[locale]` dynamic segment in `app/[locale]/` handles routing; `src/middleware.ts` uses `localePrefix: 'as-needed'` so English has no prefix.

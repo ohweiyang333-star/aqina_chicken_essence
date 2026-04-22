@@ -1,0 +1,20 @@
+{
+  "frontend": {
+    "platform": "cloud_run",
+    "projectId": "aqina-chicken-essence",
+    "region": "asia-southeast1",
+    "service": "aqina-frontend",
+    "image": "asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/frontend"
+  },
+  "backend": {
+    "platform": "cloud_run",
+    "projectId": "aqina-chicken-essence",
+    "region": "asia-southeast1",
+    "service": "aqina-backend-api",
+    "image": "asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/backend"
+  },
+  "firebaseHosting": {
+    "projectId": "aqina-chicken-essence",
+    "channel": "live"
+  }
+}

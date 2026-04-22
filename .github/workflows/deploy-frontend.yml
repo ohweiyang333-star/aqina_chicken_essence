@@ -6,6 +6,7 @@ on:
     paths:
       - 'frontend/**'
       - '.github/workflows/deploy-frontend.yml'
+      - 'deployment-targets.json'
   workflow_dispatch:
 
 env:
@@ -21,18 +22,44 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Resolve Deployment Target
+        id: resolve
+        run: |
+          PLATFORM=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontend?.platform || 'cloud_run')")
+          PROJECT=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontend?.projectId || '${{ env.PROJECT_ID }}')")
+          REGION=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontend?.region || '${{ env.REGION }}')")
+          SERVICE=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontend?.service || '${{ env.SERVICE_NAME }}')")
+          IMAGE=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontend?.image || '${{ env.IMAGE_NAME }}')")
+          echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "region=$REGION" >> "$GITHUB_OUTPUT"
+          echo "service=$SERVICE" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Skip Non-Cloud-Run Frontend
+        if: steps.resolve.outputs.platform != 'cloud_run'
+        run: echo "Frontend target is '${{ steps.resolve.outputs.platform }}'. Skipping Cloud Run deploy."
+
       - name: Google Auth
+        if: steps.resolve.outputs.platform == 'cloud_run'
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Set up Cloud SDK
+        if: steps.resolve.outputs.platform == 'cloud_run'
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Select GCP Project
+        if: steps.resolve.outputs.platform == 'cloud_run'
+        run: gcloud config set project ${{ steps.resolve.outputs.project }}
+
       - name: Authorize Docker
+        if: steps.resolve.outputs.platform == 'cloud_run'
         run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
       - name: Build and Push Container
+        if: steps.resolve.outputs.platform == 'cloud_run'
         run: |-
           docker build \
             --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }} \
@@ -41,14 +68,15 @@ jobs:
             --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }} \
             --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }} \
             --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }} \
-            -t $IMAGE_NAME:${{ github.sha }} ./frontend
-          docker push $IMAGE_NAME:${{ github.sha }}
+            -t ${{ steps.resolve.outputs.image }}:${{ github.sha }} ./frontend
+          docker push ${{ steps.resolve.outputs.image }}:${{ github.sha }}
 
       - name: Deploy to Cloud Run
+        if: steps.resolve.outputs.platform == 'cloud_run'
         run: |-
-          gcloud run deploy $SERVICE_NAME \
-            --image $IMAGE_NAME:${{ github.sha }} \
-            --region $REGION \
+          gcloud run deploy ${{ steps.resolve.outputs.service }} \
+            --image ${{ steps.resolve.outputs.image }}:${{ github.sha }} \
+            --region ${{ steps.resolve.outputs.region }} \
             --platform managed \
             --allow-unauthenticated \
             --set-env-vars "NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}"

@@ -12,7 +12,8 @@ E-commerce and admin platform for Aqina 滴鸡精 (chicken essence health supple
 aqina-chicken-essence/
 ├── frontend/          # Next.js 16 app (landing page + admin)
 ├── backend/           # FastAPI Python service (app/ dir is empty — not yet implemented)
-├── .github/workflows/ # CI/CD: deploy-frontend.yml, deploy-backend.yml → Cloud Run
+├── .github/workflows/ # CI/CD: Cloud Run / Firebase Hosting / Firestore deploy
+├── deployment-targets.json # Deployment target source-of-truth
 ├── firestore.rules    # Firestore security rules
 └── firebase.json      # Firebase project config (region: asia-southeast1)
 ```
@@ -41,9 +42,31 @@ uvicorn app.main:app --reload  # Dev server at http://localhost:8000
 ### Firebase
 
 ```bash
-firebase deploy --only firestore:rules   # Deploy security rules
-firebase deploy --only firestore:indexes # Deploy indexes
+# Local debug only (NO production deploy from local machine)
+firebase emulators:start
 ```
+
+## Unified Deployment Policy (Mandatory)
+
+All deployment must go through **GitHub Actions** only.  
+Do not deploy from local machine with `gcloud run deploy` or `firebase deploy` for production.
+
+Single source-of-truth:
+- `deployment-targets.json`
+
+Workflows:
+- `.github/workflows/deploy-frontend.yml` → Frontend to Cloud Run (when `frontend.platform=cloud_run`)
+- `.github/workflows/deploy-backend.yml` → Backend to Cloud Run (when `backend.platform=cloud_run`)
+- `.github/workflows/deploy-firebase-hosting.yml` → Frontend to Firebase Hosting (when `frontend.platform=firebase_hosting`)
+- `.github/workflows/deploy-firestore.yml` → Firestore rules/indexes deploy
+
+Release flow:
+1. Implement changes
+2. Run local checks (`npm run build`, tests)
+3. Commit and push to `main`
+4. Wait for GitHub Actions deployment job(s)
+
+If deployment target changes (Cloud Run <-> Firebase Hosting), update **only** `deployment-targets.json`, then push.
 
 ## Frontend Architecture
 
@@ -117,8 +140,4 @@ Firebase project ID (`aqina-chicken-essence`) and storage bucket are hardcoded i
 
 ## Deployment
 
-GitHub Actions deploys on push to `main`:
-- **Frontend** (`frontend/` changes) → Cloud Run service `aqina-frontend` (public)
-- **Backend** (`backend/` changes) → Cloud Run service `aqina-backend-api` (requires auth)
-
-Both deploy to GCP region `asia-southeast1` (Singapore).
+GitHub Actions deploys on push to `main`, based on `deployment-targets.json`.

@@ -1,0 +1,66 @@
+name: Deploy Frontend to Firebase Hosting
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy-firebase-hosting.yml'
+      - 'deployment-targets.json'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve Hosting Target
+        id: resolve
+        run: |
+          PLATFORM=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontend?.platform || 'cloud_run')")
+          PROJECT=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.firebaseHosting?.projectId || cfg.frontend?.projectId || '')")
+          CHANNEL=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.firebaseHosting?.channel || 'live')")
+          HAS_HOSTING=$(node -e "const fs=require('fs'); const file='firebase.json'; if(!fs.existsSync(file)){console.log('false'); process.exit(0)} const cfg=JSON.parse(fs.readFileSync(file,'utf8')); console.log(cfg.hosting ? 'true' : 'false')")
+          echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "channel=$CHANNEL" >> "$GITHUB_OUTPUT"
+          echo "has_hosting=$HAS_HOSTING" >> "$GITHUB_OUTPUT"
+
+      - name: Skip Non-Firebase-Hosting Frontend
+        if: steps.resolve.outputs.platform != 'firebase_hosting'
+        run: echo "Frontend target is '${{ steps.resolve.outputs.platform }}'. Skipping Firebase Hosting deploy."
+
+      - name: Skip Missing Hosting Config
+        if: steps.resolve.outputs.platform == 'firebase_hosting' && steps.resolve.outputs.has_hosting != 'true'
+        run: |
+          echo "deployment-targets.json expects firebase_hosting, but firebase.json has no hosting block."
+          exit 1
+
+      - name: Google Auth
+        if: steps.resolve.outputs.platform == 'firebase_hosting' && steps.resolve.outputs.has_hosting == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Node.js
+        if: steps.resolve.outputs.platform == 'firebase_hosting' && steps.resolve.outputs.has_hosting == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        if: steps.resolve.outputs.platform == 'firebase_hosting' && steps.resolve.outputs.has_hosting == 'true'
+        run: npm install -g firebase-tools
+
+      - name: Deploy to Firebase Hosting
+        if: steps.resolve.outputs.platform == 'firebase_hosting' && steps.resolve.outputs.has_hosting == 'true'
+        run: |
+          if [ "${{ steps.resolve.outputs.channel }}" = "live" ]; then
+            firebase deploy --only hosting --project "${{ steps.resolve.outputs.project }}" --non-interactive
+          else
+            firebase hosting:channel:deploy "${{ steps.resolve.outputs.channel }}" --project "${{ steps.resolve.outputs.project }}" --non-interactive
+          fi

@@ -16,4 +16,11 @@ High-conversion marketing platform for Aqina Chicken Essence in Singapore, featu
 - `.github/workflows/`: CI/CD automation logic
 
 ## Deployment
-Automated deployment via GitHub Actions to Google Cloud Run.
+Automated deployment via GitHub Actions.
+
+- Target routing source-of-truth: `deployment-targets.json`
+- Frontend: Cloud Run or Firebase Hosting (based on target config)
+- Backend: Cloud Run
+- Firestore rules/indexes: GitHub Actions deploy workflow
+
+Production deploy policy: use GitHub Actions only (no local production deploy).
