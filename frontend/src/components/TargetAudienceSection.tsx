@@ -1,6 +1,6 @@
 'use client';
 
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { BriefcaseBusiness, Heart, HeartPulse, ShieldCheck } from 'lucide-react';
 import { IMAGES } from '@/lib/image-utils';
@@ -12,15 +12,21 @@ const imageSets = {
   halal: IMAGES.audience.halal,
 } as const;
 
-const items = [
-  { id: 'workplace', icon: BriefcaseBusiness },
-  { id: 'maternity', icon: Heart },
-  { id: 'recovery', icon: HeartPulse },
-  { id: 'halal', icon: ShieldCheck },
-] as const;
+const itemRegistry = {
+  workplace: { id: 'workplace', icon: BriefcaseBusiness },
+  maternity: { id: 'maternity', icon: Heart },
+  recovery: { id: 'recovery', icon: HeartPulse },
+  halal: { id: 'halal', icon: ShieldCheck },
+} as const;
+
+const defaultOrder = ['workplace', 'maternity', 'recovery', 'halal'] as const;
+const zhOrder = ['recovery', 'maternity', 'workplace', 'halal'] as const;
 
 export default function TargetAudienceSection() {
+  const locale = useLocale();
   const t = useTranslations('Index');
+  const orderedIds = locale === 'zh' ? zhOrder : defaultOrder;
+  const items = orderedIds.map((id) => itemRegistry[id]);
 
   return (
     <section className="scroll-mt-24 py-18 md:py-24" id="audience">

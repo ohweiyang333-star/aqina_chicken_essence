@@ -18,9 +18,9 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Aqina Singapore 滴鸡精｜Halal 认证・2-3天送达・真实口碑",
+  title: "Aqina 滴鸡精｜术后产后恢复期补养方案｜Halal认证・2-3天送达",
   description:
-    "Aqina 新加坡官方页面：满额免邮活动进行中，Halal 认证，2-3 天送达，50,000+ 销量与 4.9★ 用户评分，适合孕期、术后与高强度职场恢复。",
+    "面向术后与产后恢复阶段的日常补养方案：聚焦轻负担吸收与家庭照护场景，Halal 认证，2-3 天送达，支持 7/14/28/42 天周期化安排。",
   keywords: [
     "Aqina Singapore",
     "鸡精",

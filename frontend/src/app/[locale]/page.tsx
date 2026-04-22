@@ -23,6 +23,11 @@ import AuthorityPartnerSection from '@/components/AuthorityPartnerSection';
 import ShippingCountdownSection from '@/components/ShippingCountdownSection';
 import UGCReviewGrid from '@/components/UGCReviewGrid';
 import SocialProofToast, { type SocialProofEvent } from '@/components/SocialProofToast';
+import {
+  NlpMiddleStorySection,
+  NlpPriceReframeSection,
+  NlpTakeawaySection,
+} from '@/components/NlpStorySections';
 
 function parseSocialProofEvents(input: unknown): SocialProofEvent[] {
   if (!Array.isArray(input)) {
@@ -164,6 +169,7 @@ export default function HomePage() {
     <main className="page-grid flex min-h-screen flex-col pb-24">
       <PromoMarquee />
       <HeroFlashSection />
+      <NlpMiddleStorySection />
       <TrustStatsStrip />
       <UGCPhotoTicker />
       <AuthorityPartnerSection />
@@ -171,12 +177,14 @@ export default function HomePage() {
       <UGCReviewGrid />
       <TargetAudienceSection />
       <ScienceEndorsementSection />
+      <NlpPriceReframeSection />
       <ProductPricingSection
         products={products}
         isLoading={isLoading}
         onAddToCart={handleAddToCart}
         onBuyNow={handleBuyNow}
       />
+      <NlpTakeawaySection />
       <Footer />
       <MobileFloatingCTA />
       <SocialProofToast events={socialProofEvents} />
