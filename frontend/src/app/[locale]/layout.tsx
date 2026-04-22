@@ -18,9 +18,18 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Aqina Ancient Traditional Chicken Essence | 阿其纳古法滴鸡精",
-  description: "Authentic Malaysian recipe chicken essence. 100% natural, no additives. High protein and amino acids for your family vitality.",
-  keywords: ["Chicken Essence", "滴鸡精", "Aqina", "Health Supplement", "Singapore"],
+  title: "Aqina Singapore 滴鸡精｜Halal 认证・2-3天送达・真实口碑",
+  description:
+    "Aqina 新加坡官方页面：满额免邮活动进行中，Halal 认证，2-3 天送达，50,000+ 销量与 4.9★ 用户评分，适合孕期、术后与高强度职场恢复。",
+  keywords: [
+    "Aqina Singapore",
+    "鸡精",
+    "滴鸡精",
+    "Halal Certified",
+    "Free Shipping Singapore",
+    "2-3 days delivery",
+    "UGC Reviews",
+  ],
 };
 
 import Header from "@/components/Header";

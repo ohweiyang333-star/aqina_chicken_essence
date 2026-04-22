@@ -109,7 +109,8 @@
           "更适合长辈照护、送礼与团购需求",
           "整组单价优势最明显"
         ]
-      }
+      },
+      "freeShippingBadge": "满 SGD 70 免运费"
     },
     "Cart": {
       "title": "购物车",
@@ -129,7 +130,7 @@
         "delivery": "运费",
         "free": "免运费",
         "submit": "确认订单",
-        "terms": "点击确认即提交订单。支付将通过 Shopee 或 PayNow/PayLah! 完成。质量问题支持 7 天内退换。"
+        "terms": "点击确认即提交订单。支付将通过 PayNow 完成。质量问题支持 7 天内退换。"
       },
       "success": {
         "title": "订单已收到！",
@@ -138,10 +139,9 @@
       },
       "payment": {
         "title": "支付说明",
-        "cn": "下单后，请点击下方按钮跳转至 Shopee 完成支付。若选择 PayLah! / PayNow，请扫描下方 QR Code 并备注您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
-        "en": "After placing your order, please click the button below to complete payment on Shopee. For PayLah! / PayNow, please scan the QR Code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
-        "shopee": "在 Shopee 支付",
-        "paynow": "PayNow / PayLah!",
+        "cn": "下单后，请直接扫描下方 PayNow QR Code，并在参考栏填写您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
+        "en": "After placing your order, please scan the PayNow QR code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
+        "paynow": "PayNow",
         "qrUnavailable": "如需 PayNow QR，请在下单后通过 WhatsApp 获取支付二维码。",
         "qrNote": "备注：您的订单号",
         "whatsapp": "发送支付截图至 WhatsApp {phone} 以加快处理"
@@ -185,6 +185,189 @@
       },
       "copyright": "© 2026 Aqina Singapore. 版权所有。",
       "contactLine": "{phone} · {email}"
+    },
+    "marketing": {
+      "marquee": {
+        "ariaLabel": "顶部促销跑马灯",
+        "items": [
+          "满 SGD 70 限时免邮",
+          "Halal 清真认证",
+          "新加坡 2-3 天送达",
+          "50,000+ 已售盒",
+          "4.9★ 用户评分"
+        ]
+      },
+      "flashSale": {
+        "eyebrow": "Flash Sale 限时倒计时",
+        "imageAlt": "Aqina 新加坡高转化主视觉",
+        "badges": [
+          "限时满额免邮",
+          "Official Halal Certified",
+          "2-3 天送达新加坡"
+        ],
+        "buttonLabel": "立即锁定 Flash Sale"
+      },
+      "stats": {
+        "eyebrow": "新加坡用户信任数据",
+        "items": [
+          {
+            "value": "50,000+",
+            "label": "已售盒数"
+          },
+          {
+            "value": "4.9★",
+            "label": "综合用户评分"
+          },
+          {
+            "value": "20 年",
+            "label": "品牌工艺历史"
+          },
+          {
+            "value": "3,200+",
+            "label": "回购顾客"
+          }
+        ]
+      },
+      "ugcTicker": {
+        "eyebrow": "UGC 照片横幅",
+        "title": "真实生活场景，真实饮用反馈",
+        "verified": "Verified",
+        "items": [
+          {
+            "caption": "早晨厨房｜Linda 坐月子 / 术后补养"
+          },
+          {
+            "caption": "客厅沙发｜Aishah 孕期温和补养"
+          },
+          {
+            "caption": "办公室角落｜Wei Wei 职场高效补给"
+          },
+          {
+            "caption": "家居工作｜Shu Fen 坐月子恢复"
+          },
+          {
+            "caption": "瑜伽室场景｜Rajan 术后恢复支持"
+          }
+        ]
+      },
+      "authority": {
+        "partnerBadge": "Official Partner · 官方合作伙伴",
+        "title": "云顶合作与线下权威零售认可",
+        "description": "Aqina 与云顶合作，并在马来西亚多家知名零售渠道上架，持续强化品牌权威与购买信心。",
+        "retailEyebrow": "零售商认可墙",
+        "approved": "Approved"
+      },
+      "shippingCountdown": {
+        "eyebrow": "48 小时免邮倒计时",
+        "title": "限时满额免邮活动",
+        "description": "活动期间订单满 SGD 70 即享免邮，倒计时结束后自动重置下一轮并持续递减。",
+        "hours": "小时",
+        "minutes": "分钟",
+        "seconds": "秒",
+        "footnote": "系统将按访客会话持续倒计时并自动重置。"
+      },
+      "ugcReviews": {
+        "eyebrow": "UGC 顾客好评",
+        "title": "6 条真实感评论，覆盖关键人群场景",
+        "subtitle": "评论来源含 Facebook / Instagram / WhatsApp，并附带 Verified Buyer 标识。",
+        "verified": "Verified Buyer",
+        "items": [
+          {
+            "name": "Linda",
+            "persona": "坐月子 / 术后恢复",
+            "source": "Facebook",
+            "content": "每天早餐前喝一袋，恢复期更稳定，味道清爽不腻。"
+          },
+          {
+            "name": "Aishah",
+            "persona": "孕期护理",
+            "source": "Instagram",
+            "content": "孕期口味很敏感，这款喝起来很温和，而且 Halal 让我更放心。"
+          },
+          {
+            "name": "Wei Wei",
+            "persona": "职场精英",
+            "source": "Facebook",
+            "content": "通勤前喝完精神更集中，不会有传统补品的厚重负担。"
+          },
+          {
+            "name": "Shu Fen",
+            "persona": "坐月子",
+            "source": "WhatsApp",
+            "content": "产后前两周每天固定补充，体力回来的速度明显更快。"
+          },
+          {
+            "name": "Rajan",
+            "persona": "术后恢复",
+            "source": "Instagram",
+            "content": "术后食欲低的时候份量刚好，补养效率高，也比较好吸收。"
+          },
+          {
+            "name": "Yi Xuan",
+            "persona": "学生备考",
+            "source": "WhatsApp",
+            "content": "备考晚睡那阵子每天一袋，隔天专注度和状态都更稳定。"
+          }
+        ]
+      },
+      "socialProof": {
+        "verifiedPurchase": "✓ Verified Purchase",
+        "purchase": "Purchase",
+        "timePrefix": "{minutes} 分钟前购买了",
+        "boxUnit": "盒",
+        "boxUnitSuffix": "",
+        "events": [
+          {
+            "name": "Chloe T.",
+            "minutesAgo": 3,
+            "platform": "Facebook",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "name": "Amir H.",
+            "minutesAgo": 6,
+            "platform": "Instagram",
+            "boxes": 4,
+            "verified": true
+          },
+          {
+            "name": "Mei Lin",
+            "minutesAgo": 9,
+            "platform": "WhatsApp",
+            "boxes": 1,
+            "verified": true
+          },
+          {
+            "name": "Farah N.",
+            "minutesAgo": 12,
+            "platform": "Facebook",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "name": "Daniel K.",
+            "minutesAgo": 15,
+            "platform": "Instagram",
+            "boxes": 6,
+            "verified": true
+          },
+          {
+            "name": "Nur A.",
+            "minutesAgo": 18,
+            "platform": "WhatsApp",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "name": "Sharon L.",
+            "minutesAgo": 22,
+            "platform": "Facebook",
+            "boxes": 4,
+            "verified": true
+          }
+        ]
+      }
     }
   }
 }

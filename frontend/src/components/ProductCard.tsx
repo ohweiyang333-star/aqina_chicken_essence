@@ -21,6 +21,7 @@ export function ProductCard({
   const features = Array.isArray(rawFeatures)
     ? rawFeatures
     : [product.label, t("products.detailFallbackOne"), t("products.detailFallbackTwo")];
+  const freeShippingEligible = Number(product.price) >= 70;
 
   return (
     <article
@@ -66,6 +67,11 @@ export function ProductCard({
             {Number(product.price).toFixed(2)}
           </span>
         </div>
+        {freeShippingEligible && (
+          <span className="inline-flex items-center rounded-full border border-emerald-400/40 bg-emerald-500/15 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-emerald-200">
+            {t("products.freeShippingBadge")}
+          </span>
+        )}
       </div>
 
       <ul className="mb-6 flex-1 space-y-2 border-t border-primary/14 pt-5">
@@ -79,6 +85,7 @@ export function ProductCard({
 
       <div className="space-y-3">
         <button
+          id={`product-buy-now-${product.id}`}
           type="button"
           onClick={() => onBuyNow(product)}
           className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
@@ -87,6 +94,7 @@ export function ProductCard({
           <span>{t("products.buyNow")}</span>
         </button>
         <button
+          id={`product-add-cart-${product.id}`}
           type="button"
           onClick={() => onAddToCart(product)}
           className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/22 bg-background-dark/55 px-4 text-sm font-semibold uppercase tracking-[0.16em] text-text-light hover:border-primary/45 hover:text-primary"

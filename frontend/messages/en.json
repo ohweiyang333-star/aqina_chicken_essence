@@ -109,7 +109,8 @@
           "Suitable for gifting, sharing, and elder support",
           "Best unit economics across the full lineup"
         ]
-      }
+      },
+      "freeShippingBadge": "Free Shipping SGD 70+"
     },
     "Cart": {
       "title": "Shopping Cart",
@@ -129,7 +130,7 @@
         "delivery": "Delivery Fee",
         "free": "FREE",
         "submit": "Confirm Order",
-        "terms": "By clicking confirm, your order is submitted. Payment will be handled via Shopee or PayNow/PayLah!. Returns accepted within 7 days for quality issues."
+        "terms": "By clicking confirm, your order is submitted. Payment will be handled via PayNow. Returns accepted within 7 days for quality issues."
       },
       "success": {
         "title": "Order Received!",
@@ -138,10 +139,9 @@
       },
       "payment": {
         "title": "Payment Instructions",
-        "cn": "下单后，请点击下方按钮跳转至 Shopee 完成支付。若选择 PayLah! / PayNow，请扫描下方 QR Code 并备注您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
-        "en": "After placing your order, please click the button below to complete payment on Shopee. For PayLah! / PayNow, please scan the QR Code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
-        "shopee": "Pay on Shopee",
-        "paynow": "PayNow / PayLah!",
+        "cn": "下单后，请直接扫描下方 PayNow QR Code，并在参考栏填写您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
+        "en": "After placing your order, please scan the PayNow QR code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
+        "paynow": "PayNow",
         "qrUnavailable": "PayNow QR details will be shared after order confirmation.",
         "qrNote": "Reference: Your Order ID",
         "whatsapp": "Send payment screenshot to WhatsApp {phone} for faster processing"
@@ -185,6 +185,189 @@
       },
       "copyright": "© 2026 Aqina Singapore. All rights reserved.",
       "contactLine": "{phone} · {email}"
+    },
+    "marketing": {
+      "marquee": {
+        "ariaLabel": "Top promotional marquee",
+        "items": [
+          "Free Shipping for SGD 70+ Orders",
+          "Official Halal Certified",
+          "2-3 Days Delivery in Singapore",
+          "50,000+ Boxes Sold",
+          "4.9★ Customer Rating"
+        ]
+      },
+      "flashSale": {
+        "eyebrow": "Flash Sale Countdown",
+        "imageAlt": "Aqina Singapore conversion hero visual",
+        "badges": [
+          "Limited Free Shipping Offer",
+          "Official Halal Certified",
+          "2-3 Day SG Delivery"
+        ],
+        "buttonLabel": "Lock Flash Sale Now"
+      },
+      "stats": {
+        "eyebrow": "Singapore Trust Metrics",
+        "items": [
+          {
+            "value": "50,000+",
+            "label": "Boxes Sold"
+          },
+          {
+            "value": "4.9★",
+            "label": "Average Rating"
+          },
+          {
+            "value": "20 Years",
+            "label": "Heritage"
+          },
+          {
+            "value": "3,200+",
+            "label": "Repeat Customers"
+          }
+        ]
+      },
+      "ugcTicker": {
+        "eyebrow": "UGC Photo Banner",
+        "title": "Real lifestyle moments, real daily routines",
+        "verified": "Verified",
+        "items": [
+          {
+            "caption": "Morning Kitchen | Linda postpartum and recovery routine"
+          },
+          {
+            "caption": "Cozy Sofa | Aishah during pregnancy care"
+          },
+          {
+            "caption": "Office Corner | Wei Wei workplace performance support"
+          },
+          {
+            "caption": "Home Workspace | Shu Fen postpartum nourishment"
+          },
+          {
+            "caption": "Yoga Studio | Rajan post-surgery recovery support"
+          }
+        ]
+      },
+      "authority": {
+        "partnerBadge": "Official Partner",
+        "title": "Trusted partnerships and retail authority",
+        "description": "Aqina is featured through Genting collaboration and trusted offline retail channels across Malaysia to strengthen purchase confidence.",
+        "retailEyebrow": "Retailer Approval Wall",
+        "approved": "Approved"
+      },
+      "shippingCountdown": {
+        "eyebrow": "48-Hour Shipping Countdown",
+        "title": "Limited Free Shipping Window",
+        "description": "Enjoy free shipping for orders above SGD 70. The countdown auto-resets after expiry and continues in real time.",
+        "hours": "Hours",
+        "minutes": "Minutes",
+        "seconds": "Seconds",
+        "footnote": "Countdown is session-based and auto-resets continuously."
+      },
+      "ugcReviews": {
+        "eyebrow": "UGC Testimonials",
+        "title": "Six realistic reviews across key buyer personas",
+        "subtitle": "Each review is tagged by source: Facebook / Instagram / WhatsApp with Verified Buyer labels.",
+        "verified": "Verified Buyer",
+        "items": [
+          {
+            "name": "Linda",
+            "persona": "Postpartum / Recovery",
+            "source": "Facebook",
+            "content": "I drink one pouch before breakfast every day. Recovery feels steadier and the taste is light."
+          },
+          {
+            "name": "Aishah",
+            "persona": "Pregnancy Care",
+            "source": "Instagram",
+            "content": "My taste is sensitive during pregnancy and this one is gentle. Halal gives me extra confidence."
+          },
+          {
+            "name": "Wei Wei",
+            "persona": "Workplace Professional",
+            "source": "Facebook",
+            "content": "I drink it before commute and focus feels better without the heavy supplement feeling."
+          },
+          {
+            "name": "Shu Fen",
+            "persona": "Postpartum",
+            "source": "WhatsApp",
+            "content": "I took it daily in the first two weeks after delivery and energy came back faster."
+          },
+          {
+            "name": "Rajan",
+            "persona": "Post-Surgery Recovery",
+            "source": "Instagram",
+            "content": "Portion size is perfect when appetite is low after surgery. Easy to absorb and practical."
+          },
+          {
+            "name": "Yi Xuan",
+            "persona": "Student Exam Prep",
+            "source": "WhatsApp",
+            "content": "During late-night exam prep, one pouch a day helped me stay more stable the next morning."
+          }
+        ]
+      },
+      "socialProof": {
+        "verifiedPurchase": "✓ Verified Purchase",
+        "purchase": "Purchase",
+        "timePrefix": "{minutes} min ago purchased",
+        "boxUnit": "boxes",
+        "boxUnitSuffix": "",
+        "events": [
+          {
+            "name": "Chloe T.",
+            "minutesAgo": 3,
+            "platform": "Facebook",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "name": "Amir H.",
+            "minutesAgo": 6,
+            "platform": "Instagram",
+            "boxes": 4,
+            "verified": true
+          },
+          {
+            "name": "Mei Lin",
+            "minutesAgo": 9,
+            "platform": "WhatsApp",
+            "boxes": 1,
+            "verified": true
+          },
+          {
+            "name": "Farah N.",
+            "minutesAgo": 12,
+            "platform": "Facebook",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "name": "Daniel K.",
+            "minutesAgo": 15,
+            "platform": "Instagram",
+            "boxes": 6,
+            "verified": true
+          },
+          {
+            "name": "Nur A.",
+            "minutesAgo": 18,
+            "platform": "WhatsApp",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "name": "Sharon L.",
+            "minutesAgo": 22,
+            "platform": "Facebook",
+            "boxes": 4,
+            "verified": true
+          }
+        ]
+      }
     }
   }
 }

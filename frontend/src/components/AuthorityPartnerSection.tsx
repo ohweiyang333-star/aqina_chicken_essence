@@ -1,0 +1,104 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import Image from 'next/image';
+import { BadgeCheck, ShieldCheck } from 'lucide-react';
+
+const retailers = [
+  {
+    id: 'jaya-grocer',
+    name: 'Jaya Grocer',
+    src: '/brands/jaya-grocer.png',
+    width: 180,
+    height: 59,
+  },
+  {
+    id: 'aeon',
+    name: 'AEON',
+    src: '/brands/aeon.svg',
+    width: 180,
+    height: 60,
+  },
+  {
+    id: 'lotuss',
+    name: "Lotus's",
+    src: '/brands/lotuss.svg',
+    width: 220,
+    height: 72,
+  },
+  {
+    id: 'village-grocer',
+    name: 'Village Grocer',
+    src: '/brands/village-grocer.jpg',
+    width: 719,
+    height: 452,
+  },
+] as const;
+
+export default function AuthorityPartnerSection() {
+  const t = useTranslations('Index.marketing.authority');
+
+  return (
+    <section className="py-10" id="authority-partners">
+      <div className="section-shell space-y-6">
+        <div className="surface-panel rounded-[1.6rem] p-6 md:p-8">
+          <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
+            <article className="rounded-2xl border border-primary/20 bg-background-dark/55 p-5 md:p-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-200">
+                <BadgeCheck size={13} />
+                <span>{t('partnerBadge')}</span>
+              </div>
+
+              <h2 className="mt-4 font-heading text-4xl font-semibold text-text-light md:text-5xl">
+                {t('title')}
+              </h2>
+              <p className="mt-3 text-sm leading-7 text-text-light/80 md:text-base">{t('description')}</p>
+
+              <div className="mt-6 rounded-xl border border-primary/18 bg-white/95 px-5 py-4">
+                <div className="relative h-14 w-full">
+                  <Image
+                    src="/brands/genting.png"
+                    alt="Resorts World Genting"
+                    fill
+                    className="object-contain object-left"
+                    sizes="(max-width: 768px) 90vw, 420px"
+                  />
+                </div>
+              </div>
+            </article>
+
+            <article className="rounded-2xl border border-primary/20 bg-background-dark/55 p-5 md:p-6">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/18 bg-background-dark/70 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-primary">
+                <ShieldCheck size={13} />
+                <span>{t('retailEyebrow')}</span>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                {retailers.map((retailer) => (
+                  <article
+                    key={retailer.id}
+                    className="rounded-xl border border-primary/16 bg-white px-3 py-3 text-charcoal"
+                  >
+                    <div className="relative mb-3 h-11 w-full">
+                      <Image
+                        src={retailer.src}
+                        alt={retailer.name}
+                        fill
+                        sizes="(max-width: 768px) 44vw, 14vw"
+                        className="object-contain"
+                      />
+                    </div>
+                    <div className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
+                      <BadgeCheck size={12} />
+                      <span>{t('approved')}</span>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
