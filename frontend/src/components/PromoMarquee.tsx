@@ -1,7 +1,8 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { BadgeCheck } from 'lucide-react';
+import Image from 'next/image';
+import { BadgeCheck, Sparkles } from 'lucide-react';
 
 const LOOP_SEGMENTS = 6;
 
@@ -16,16 +17,27 @@ export default function PromoMarquee() {
     <section
       id="promo-marquee"
       aria-label={t('ariaLabel')}
-      className="relative z-30 mt-16 border-y border-[#f3bf2f]/28 bg-[linear-gradient(180deg,#1c210f_0%,#141f10_100%)]"
+      className="relative z-30 mt-16 overflow-hidden border-y border-[#f3bf2f]/28 bg-[linear-gradient(180deg,#272005_0%,#141f10_100%)]"
     >
+      <div className="absolute inset-y-0 left-0 w-56 bg-[radial-gradient(circle_at_left,rgba(255,205,63,0.28),transparent_72%)]" />
+      <div className="section-shell pointer-events-none absolute inset-y-0 left-0 right-0 z-[5] hidden items-center md:flex">
+        <div className="inline-flex items-center gap-2 rounded-full border border-[#ffd36a]/40 bg-[#30240c]/85 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#ffe9a6]">
+          <Sparkles size={12} />
+          <span>Top Pick</span>
+        </div>
+      </div>
+
       <div className="promo-marquee-shell">
         <div className="promo-marquee-loop" aria-hidden="true">
           {Array.from({ length: LOOP_SEGMENTS }).map((_, loopIndex) => (
             <div key={loopIndex} className="promo-marquee-segment">
+              <div className="promo-chip relative hidden h-8 w-8 overflow-hidden rounded-full border border-[#ffd36a]/40 bg-white/95 md:block">
+                <Image src="/images/pack-1.webp" alt="Aqina Product" fill sizes="32px" className="object-cover" />
+              </div>
               {items.map((item, index) => (
                 <div
                   key={`${loopIndex}-${item}-${index}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-[#f3bf2f]/40 bg-[linear-gradient(180deg,rgba(255,203,55,0.2),rgba(255,184,0,0.08))] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffe9a6]"
+                  className="promo-chip inline-flex items-center gap-2 rounded-full border border-[#f3bf2f]/40 bg-[linear-gradient(180deg,rgba(255,203,55,0.24),rgba(255,184,0,0.12))] px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#ffe9a6]"
                 >
                   <BadgeCheck size={13} className="text-[#ffc929]" />
                   <span>{item}</span>

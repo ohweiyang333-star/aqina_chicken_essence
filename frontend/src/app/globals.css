@@ -194,7 +194,7 @@ button {
   align-items: center;
   width: max-content;
   padding: 0.75rem 0;
-  animation: promo-marquee-scroll 48s linear infinite;
+  animation: promo-marquee-scroll 42s linear infinite;
   will-change: transform;
 }
 
@@ -204,6 +204,12 @@ button {
   gap: 0.75rem;
   padding-right: 0.75rem;
   flex-shrink: 0;
+}
+
+.promo-chip {
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 
 .ugc-ticker-shell {
@@ -219,6 +225,19 @@ button {
   animation: ugc-ticker-scroll 34s linear infinite;
 }
 
+.ugc-corner-shell {
+  overflow: hidden;
+  width: 100%;
+}
+
+.ugc-corner-track {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: max-content;
+  animation: ugc-corner-scroll 24s linear infinite;
+}
+
 @keyframes promo-marquee-scroll {
   from {
     transform: translate3d(0, 0, 0);
@@ -230,6 +249,16 @@ button {
 }
 
 @keyframes ugc-ticker-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes ugc-corner-scroll {
   from {
     transform: translateX(0);
   }

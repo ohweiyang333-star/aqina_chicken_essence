@@ -11,7 +11,7 @@ export const IMAGES = {
     box2: '/images/pack-2.webp',
     box4: '/images/pack-4.webp',
     box6: '/images/pack-6.webp',
-    boxMain: getFirebaseUrl('主图-纯白背景.png'),
+    boxMain: '/images/pack-1.webp',
   },
   audience: {
     workplace: [

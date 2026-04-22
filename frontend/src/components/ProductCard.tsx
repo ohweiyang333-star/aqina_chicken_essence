@@ -4,6 +4,7 @@ import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { CheckCircle2, Plus, ShoppingCart } from "lucide-react";
 import type { DisplayProduct } from "@/lib/product-service";
+import { resolveFixedProductImageByMeta } from "@/lib/product-service";
 
 interface ProductCardProps {
   product: DisplayProduct;
@@ -31,7 +32,15 @@ export function ProductCard({
     ? rawFeatures
     : [product.label, t("products.detailFallbackOne"), t("products.detailFallbackTwo")];
   const freeShippingEligible = Number(product.price) >= 70;
-  const cardImage = optimizedProductImages[product.id] ?? product.image;
+  const cardImage =
+    optimizedProductImages[product.id] ??
+    resolveFixedProductImageByMeta({
+      id: product.id,
+      packSize: product.label,
+      nameEn: product.name,
+      nameZh: product.name,
+      price: product.price,
+    });
 
   return (
     <article
