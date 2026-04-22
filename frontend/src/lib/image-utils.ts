@@ -7,10 +7,10 @@ export const IMAGES = {
   logo: getFirebaseUrl('Aqina Farm-Logo (Gold).png'),
   story: getFirebaseUrl('7天双重蒸煮.jpg'),
   products: {
-    box1: getFirebaseUrl('Aqina 一盒产品 - 客厅茶几.png'),
-    box2: getFirebaseUrl('Aqina 两盒产品 - 餐厅桌.png'),
-    box4: getFirebaseUrl('Aqina 四盒产品 - 厨房岛台（修正版）.png'),
-    box6: getFirebaseUrl('Aqina 六盒产品 - 家居吧台.png'),
+    box1: '/images/pack-1.webp',
+    box2: '/images/pack-2.webp',
+    box4: '/images/pack-4.webp',
+    box6: '/images/pack-6.webp',
     boxMain: getFirebaseUrl('主图-纯白背景.png'),
   },
   audience: {

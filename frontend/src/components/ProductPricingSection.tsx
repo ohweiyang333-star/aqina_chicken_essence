@@ -52,12 +52,13 @@ export default function ProductPricingSection({
                   </div>
                 </div>
               ))
-            : products.map((product) => (
+            : products.map((product, index) => (
                 <ProductCard
                   key={product.id}
                   product={product}
                   onAddToCart={onAddToCart}
                   onBuyNow={onBuyNow}
+                  priority={index < 2}
                 />
               ))}
         </div>

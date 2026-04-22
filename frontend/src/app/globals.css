@@ -165,15 +165,45 @@ button {
 .promo-marquee-shell {
   overflow: hidden;
   width: 100%;
+  position: relative;
 }
 
-.promo-marquee-track {
+.promo-marquee-shell::before,
+.promo-marquee-shell::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.promo-marquee-shell::before {
+  left: 0;
+  background: linear-gradient(90deg, rgba(16, 25, 14, 1), rgba(16, 25, 14, 0));
+}
+
+.promo-marquee-shell::after {
+  right: 0;
+  background: linear-gradient(270deg, rgba(16, 25, 14, 1), rgba(16, 25, 14, 0));
+}
+
+.promo-marquee-loop {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  padding: 0.75rem 0;
+  animation: promo-marquee-scroll 48s linear infinite;
+  will-change: transform;
+}
+
+.promo-marquee-segment {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  width: max-content;
-  padding: 0.75rem 1rem;
-  animation: promo-marquee-scroll 26s linear infinite;
+  padding-right: 0.75rem;
+  flex-shrink: 0;
 }
 
 .ugc-ticker-shell {
@@ -191,11 +221,11 @@ button {
 
 @keyframes promo-marquee-scroll {
   from {
-    transform: translateX(0);
+    transform: translate3d(0, 0, 0);
   }
 
   to {
-    transform: translateX(-50%);
+    transform: translate3d(-16.6666667%, 0, 0);
   }
 }
 

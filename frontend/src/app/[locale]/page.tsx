@@ -10,7 +10,6 @@ import {
   toDisplayProduct,
   type DisplayProduct,
 } from '@/lib/product-service';
-import IdentitySelector from '@/components/IdentitySelector';
 import TargetAudienceSection from '@/components/TargetAudienceSection';
 import ScienceEndorsementSection from '@/components/ScienceEndorsementSection';
 import ProductPricingSection from '@/components/ProductPricingSection';
@@ -39,14 +38,35 @@ function parseSocialProofEvents(input: unknown): SocialProofEvent[] {
       const name = 'name' in item && typeof item.name === 'string' ? item.name : '';
       const minutesAgo = 'minutesAgo' in item ? Number(item.minutesAgo) : NaN;
       const platform = 'platform' in item && typeof item.platform === 'string' ? item.platform : '';
-      const boxes = 'boxes' in item ? Number(item.boxes) : NaN;
       const verified = 'verified' in item ? Boolean(item.verified) : true;
+      const rawType = 'type' in item && typeof item.type === 'string' ? item.type : '';
+      const inferredType = rawType === 'review' ? 'review' : 'purchase';
 
-      if (!name || !platform || !Number.isFinite(minutesAgo) || !Number.isFinite(boxes)) {
+      if (!name || !platform || !Number.isFinite(minutesAgo)) {
         return null;
       }
 
+      if (inferredType === 'review') {
+        const rating = 'rating' in item ? Number(item.rating) : NaN;
+        if (!Number.isFinite(rating)) {
+          return null;
+        }
+        return {
+          type: 'review',
+          name,
+          minutesAgo,
+          platform,
+          rating,
+          verified,
+        };
+      }
+
+      const boxes = 'boxes' in item ? Number(item.boxes) : NaN;
+      if (!Number.isFinite(boxes)) {
+        return null;
+      }
       return {
+        type: 'purchase',
         name,
         minutesAgo,
         platform,
@@ -149,7 +169,6 @@ export default function HomePage() {
       <AuthorityPartnerSection />
       <ShippingCountdownSection />
       <UGCReviewGrid />
-      <IdentitySelector />
       <TargetAudienceSection />
       <ScienceEndorsementSection />
       <ProductPricingSection

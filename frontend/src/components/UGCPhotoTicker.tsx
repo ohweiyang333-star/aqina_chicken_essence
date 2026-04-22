@@ -6,14 +6,20 @@ import { BadgeCheck } from 'lucide-react';
 
 interface TickerItem {
   caption: string;
+  src: string;
 }
 
-const photoSources = [
-  '/ugc/morning-kitchen.jpg',
-  '/ugc/cozy-sofa.jpg',
-  '/ugc/office-corner.jpg',
-  '/ugc/home-study.jpg',
-  '/ugc/yoga-studio.jpg',
+const fallbackPhotoSources = [
+  '/ugc/sg-middle-aged-chinese-man.webp',
+  '/ugc/sg-middle-aged-malay-woman.webp',
+  '/ugc/sg-teenage-chinese-student.webp',
+  '/ugc/sg-young-chinese-woman-campus.webp',
+  '/ugc/sg-young-indian-office-man.webp',
+  '/ugc/sg-young-indian-home-woman.webp',
+  '/ugc/sg-young-malay-man-park.webp',
+  '/ugc/sg-young-fitness-woman.webp',
+  '/ugc/sg-elderly-chinese-woman.webp',
+  '/ugc/sg-older-malay-man.webp',
 ] as const;
 
 function parseTickerItems(input: unknown): TickerItem[] {
@@ -27,7 +33,14 @@ function parseTickerItems(input: unknown): TickerItem[] {
         return null;
       }
       const caption = 'caption' in item && typeof item.caption === 'string' ? item.caption : '';
-      return caption ? { caption } : null;
+      const src = 'src' in item && typeof item.src === 'string' ? item.src : '';
+      if (!caption) {
+        return null;
+      }
+      return {
+        caption,
+        src,
+      };
     })
     .filter((item): item is TickerItem => item !== null);
 }
@@ -35,9 +48,9 @@ function parseTickerItems(input: unknown): TickerItem[] {
 export default function UGCPhotoTicker() {
   const t = useTranslations('Index.marketing.ugcTicker');
   const tickerItems = parseTickerItems(t.raw('items'));
-  const merged = tickerItems.slice(0, photoSources.length).map((item, index) => ({
-    ...item,
-    src: photoSources[index],
+  const merged = tickerItems.map((item, index) => ({
+    caption: item.caption,
+    src: item.src || fallbackPhotoSources[index % fallbackPhotoSources.length],
   }));
   const loopItems = [...merged, ...merged];
 

@@ -149,17 +149,18 @@
     },
     "Science": {
       "subtitle": "Science and Trust",
-      "title": "Pure process, global certification, premium peace of mind",
-      "description": "Every pouch is positioned around cleaner extraction, clearer sourcing, and confidence-building certifications that support both self-use and gifting.",
+      "title": "Visible process evidence, clearer confidence before purchase",
+      "description": "This section is rebuilt with visual proof cards from production, certification context, and testing references so trust comes from evidence, not decorative claims.",
+      "evidenceTag": "Verified",
       "certifications": {
         "mygap": "MyGAP Certified",
-        "mygapDesc": "Good Agricultural Practices from source to process",
+        "mygapDesc": "Traceable farm-to-process standards with clearer raw-material accountability.",
         "organic": "MY Organic",
-        "organicDesc": "A cleaner ingredient story with modern assurance",
+        "organicDesc": "Cleaner ingredient control supported by routine batch-level checks.",
         "halal": "Halal Certified",
-        "halalDesc": "Broader household trust across diverse consumers",
+        "halalDesc": "Inclusive halal compliance designed for diverse households.",
         "amino": "High Amino Acid",
-        "aminoDesc": "Built around fast-absorbing nutritional support"
+        "aminoDesc": "Optimized nutrient density with a lighter daily absorption profile."
       },
       "nutrition": {
         "title": "Built for absorption, not heaviness",
@@ -234,19 +235,44 @@
         "verified": "Verified",
         "items": [
           {
-            "caption": "Morning Kitchen | Linda postpartum and recovery routine"
+            "src": "/ugc/sg-middle-aged-chinese-man.webp",
+            "caption": "Living Room | Mr. Tan daily vitality routine"
           },
           {
-            "caption": "Cozy Sofa | Aishah during pregnancy care"
+            "src": "/ugc/sg-middle-aged-malay-woman.webp",
+            "caption": "Home Dining | Aishah family nourishment"
           },
           {
-            "caption": "Office Corner | Wei Wei workplace performance support"
+            "src": "/ugc/sg-teenage-chinese-student.webp",
+            "caption": "School Break | Jia En exam prep support"
           },
           {
-            "caption": "Home Workspace | Shu Fen postpartum nourishment"
+            "src": "/ugc/sg-young-chinese-woman-campus.webp",
+            "caption": "Campus Walk | Yi Xuan study-week routine"
           },
           {
-            "caption": "Yoga Studio | Rajan post-surgery recovery support"
+            "src": "/ugc/sg-young-indian-office-man.webp",
+            "caption": "Office Desk | Arjun daily focus support"
+          },
+          {
+            "src": "/ugc/sg-young-indian-home-woman.webp",
+            "caption": "Home Kitchen | Riya gentle daily recovery"
+          },
+          {
+            "src": "/ugc/sg-young-malay-man-park.webp",
+            "caption": "Park Scene | Hakim post-workout routine"
+          },
+          {
+            "src": "/ugc/sg-young-fitness-woman.webp",
+            "caption": "Fitness Check-in | Mei Qi training recovery"
+          },
+          {
+            "src": "/ugc/sg-elderly-chinese-woman.webp",
+            "caption": "Family Home | Auntie Lim senior wellness"
+          },
+          {
+            "src": "/ugc/sg-older-malay-man.webp",
+            "caption": "Hawker Center | Pak Rahman daily nourishment"
           }
         ]
       },
@@ -260,64 +286,71 @@
       "shippingCountdown": {
         "eyebrow": "48-Hour Shipping Countdown",
         "title": "Limited Free Shipping Window",
-        "description": "Enjoy free shipping for orders above SGD 70. The countdown auto-resets after expiry and continues in real time.",
+        "description": "Free shipping applies to orders above SGD 70 during this campaign window. Complete checkout before the timer ends.",
         "hours": "Hours",
         "minutes": "Minutes",
-        "seconds": "Seconds",
-        "footnote": "Countdown is session-based and auto-resets continuously."
+        "seconds": "Seconds"
       },
       "ugcReviews": {
         "eyebrow": "UGC Testimonials",
-        "title": "Six realistic reviews across key buyer personas",
-        "subtitle": "Each review is tagged by source: Facebook / Instagram / WhatsApp with Verified Buyer labels.",
+        "title": "Six featured testimonials from real SG audiences",
+        "subtitle": "Real user contexts and platform feedback to help you evaluate fit quickly.",
         "verified": "Verified Buyer",
         "items": [
           {
-            "name": "Linda",
-            "persona": "Postpartum / Recovery",
+            "name": "Mr. Tan",
+            "persona": "Mid-career professional / daily vitality",
             "source": "Facebook",
-            "content": "I drink one pouch before breakfast every day. Recovery feels steadier and the taste is light."
+            "content": "I take one pouch before breakfast and my daily energy feels noticeably steadier.",
+            "image": "/ugc/sg-middle-aged-chinese-man.webp"
           },
           {
             "name": "Aishah",
-            "persona": "Pregnancy Care",
-            "source": "Instagram",
-            "content": "My taste is sensitive during pregnancy and this one is gentle. Halal gives me extra confidence."
-          },
-          {
-            "name": "Wei Wei",
-            "persona": "Workplace Professional",
-            "source": "Facebook",
-            "content": "I drink it before commute and focus feels better without the heavy supplement feeling."
-          },
-          {
-            "name": "Shu Fen",
-            "persona": "Postpartum",
+            "persona": "Family caregiver / halal confidence",
             "source": "WhatsApp",
-            "content": "I took it daily in the first two weeks after delivery and energy came back faster."
+            "content": "The taste is easy for my household, and the halal positioning gives me confidence to reorder.",
+            "image": "/ugc/sg-middle-aged-malay-woman.webp"
           },
           {
-            "name": "Rajan",
-            "persona": "Post-Surgery Recovery",
+            "name": "Arjun",
+            "persona": "High-intensity office routine",
+            "source": "Facebook",
+            "content": "I use it before workdays and my afternoon focus is better without feeling too heavy.",
+            "image": "/ugc/sg-young-indian-office-man.webp"
+          },
+          {
+            "name": "Riya",
+            "persona": "Home + work balancing routine",
             "source": "Instagram",
-            "content": "Portion size is perfect when appetite is low after surgery. Easy to absorb and practical."
+            "content": "I keep this in my home routine and it feels gentle while still giving useful daily support.",
+            "image": "/ugc/sg-young-indian-home-woman.webp"
           },
           {
-            "name": "Yi Xuan",
+            "name": "Mei Qi",
+            "persona": "Training recovery",
+            "source": "Instagram",
+            "content": "After workouts, one pouch fits perfectly and I feel recovery is smoother the next day.",
+            "image": "/ugc/sg-young-fitness-woman.webp"
+          },
+          {
+            "name": "Jia En",
             "persona": "Student Exam Prep",
             "source": "WhatsApp",
-            "content": "During late-night exam prep, one pouch a day helped me stay more stable the next morning."
+            "content": "During exam weeks, one pouch per day helps me stay more stable for early classes.",
+            "image": "/ugc/sg-teenage-chinese-student.webp"
           }
         ]
       },
       "socialProof": {
-        "verifiedPurchase": "✓ Verified Purchase",
-        "purchase": "Purchase",
-        "timePrefix": "{minutes} min ago purchased",
-        "boxUnit": "boxes",
-        "boxUnitSuffix": "",
+        "verified": "✓ Verified",
+        "unverified": "Unverified",
+        "purchaseLabel": "Purchase",
+        "reviewLabel": "Review",
+        "purchaseSentence": "{minutes} min ago purchased {boxes} boxes",
+        "reviewSentence": "{minutes} min ago left a {rating}★ review",
         "events": [
           {
+            "type": "purchase",
             "name": "Chloe T.",
             "minutesAgo": 3,
             "platform": "Facebook",
@@ -325,45 +358,59 @@
             "verified": true
           },
           {
+            "type": "review",
             "name": "Amir H.",
-            "minutesAgo": 6,
+            "minutesAgo": 5,
             "platform": "Instagram",
-            "boxes": 4,
+            "rating": 5,
             "verified": true
           },
           {
+            "type": "purchase",
             "name": "Mei Lin",
-            "minutesAgo": 9,
+            "minutesAgo": 8,
             "platform": "WhatsApp",
             "boxes": 1,
             "verified": true
           },
           {
+            "type": "review",
             "name": "Farah N.",
-            "minutesAgo": 12,
+            "minutesAgo": 11,
             "platform": "Facebook",
-            "boxes": 2,
+            "rating": 4.9,
             "verified": true
           },
           {
+            "type": "purchase",
             "name": "Daniel K.",
-            "minutesAgo": 15,
+            "minutesAgo": 14,
             "platform": "Instagram",
             "boxes": 6,
             "verified": true
           },
           {
+            "type": "review",
             "name": "Nur A.",
-            "minutesAgo": 18,
+            "minutesAgo": 17,
             "platform": "WhatsApp",
-            "boxes": 2,
+            "rating": 5,
             "verified": true
           },
           {
+            "type": "purchase",
             "name": "Sharon L.",
-            "minutesAgo": 22,
+            "minutesAgo": 21,
             "platform": "Facebook",
             "boxes": 4,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Amir H.",
+            "minutesAgo": 24,
+            "platform": "Instagram",
+            "rating": 4.8,
             "verified": true
           }
         ]

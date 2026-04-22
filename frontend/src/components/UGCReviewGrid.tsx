@@ -9,15 +9,16 @@ interface UGCReview {
   persona: string;
   source: string;
   content: string;
+  image?: string;
 }
 
 const reviewVisuals = [
-  { src: '/ugc/morning-kitchen.jpg', objectPosition: 'object-center' },
-  { src: '/ugc/cozy-sofa.jpg', objectPosition: 'object-center' },
-  { src: '/ugc/office-corner.jpg', objectPosition: 'object-center' },
-  { src: '/ugc/home-study.jpg', objectPosition: 'object-center' },
-  { src: '/ugc/yoga-studio.jpg', objectPosition: 'object-center' },
-  { src: '/ugc/morning-kitchen.jpg', objectPosition: 'object-left' },
+  { src: '/ugc/sg-middle-aged-chinese-man.webp', objectPosition: 'object-center' },
+  { src: '/ugc/sg-middle-aged-malay-woman.webp', objectPosition: 'object-center' },
+  { src: '/ugc/sg-young-indian-office-man.webp', objectPosition: 'object-center' },
+  { src: '/ugc/sg-young-indian-home-woman.webp', objectPosition: 'object-center' },
+  { src: '/ugc/sg-young-fitness-woman.webp', objectPosition: 'object-center' },
+  { src: '/ugc/sg-teenage-chinese-student.webp', objectPosition: 'object-center' },
 ] as const;
 
 function parseReviews(input: unknown): UGCReview[] {
@@ -25,24 +26,27 @@ function parseReviews(input: unknown): UGCReview[] {
     return [];
   }
 
-  return input
-    .map((item) => {
-      if (typeof item !== 'object' || !item) {
-        return null;
-      }
+  const parsed: UGCReview[] = [];
 
-      const name = 'name' in item && typeof item.name === 'string' ? item.name : '';
-      const persona = 'persona' in item && typeof item.persona === 'string' ? item.persona : '';
-      const source = 'source' in item && typeof item.source === 'string' ? item.source : '';
-      const content = 'content' in item && typeof item.content === 'string' ? item.content : '';
+  for (const item of input) {
+    if (typeof item !== 'object' || !item) {
+      continue;
+    }
 
-      if (!name || !persona || !source || !content) {
-        return null;
-      }
+    const name = 'name' in item && typeof item.name === 'string' ? item.name : '';
+    const persona = 'persona' in item && typeof item.persona === 'string' ? item.persona : '';
+    const source = 'source' in item && typeof item.source === 'string' ? item.source : '';
+    const content = 'content' in item && typeof item.content === 'string' ? item.content : '';
+    const image = 'image' in item && typeof item.image === 'string' ? item.image : undefined;
 
-      return { name, persona, source, content };
-    })
-    .filter((item): item is UGCReview => item !== null);
+    if (!name || !persona || !source || !content) {
+      continue;
+    }
+
+    parsed.push({ name, persona, source, content, image });
+  }
+
+  return parsed;
 }
 
 export default function UGCReviewGrid() {
@@ -61,14 +65,16 @@ export default function UGCReviewGrid() {
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {reviews.slice(0, 6).map((review, index) => {
             const visual = reviewVisuals[index] ?? reviewVisuals[0];
+            const visualSrc = review.image || visual.src;
 
             return (
               <article key={`${review.name}-${review.source}-${index}`} className="surface-panel rounded-2xl p-4">
                 <div className="relative mb-4 aspect-[16/10] overflow-hidden rounded-xl">
                   <Image
-                    src={visual.src}
+                    src={visualSrc}
                     alt={`${review.name} review`}
                     fill
+                    priority={index < 3}
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                     className={`object-cover ${visual.objectPosition}`}
                   />

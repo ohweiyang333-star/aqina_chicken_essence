@@ -30,8 +30,8 @@ const retailers = [
     id: 'village-grocer',
     name: 'Village Grocer',
     src: '/brands/village-grocer.jpg',
-    width: 719,
-    height: 452,
+    width: 300,
+    height: 188,
   },
 ] as const;
 
@@ -54,14 +54,14 @@ export default function AuthorityPartnerSection() {
               </h2>
               <p className="mt-3 text-sm leading-7 text-text-light/80 md:text-base">{t('description')}</p>
 
-              <div className="mt-6 rounded-xl border border-primary/18 bg-white/95 px-5 py-4">
-                <div className="relative h-14 w-full">
+              <div className="mt-6 rounded-xl border border-primary/18 bg-white px-5 py-4">
+                <div className="relative h-16 w-full">
                   <Image
-                    src="/brands/genting.png"
+                    src="/brands/genting-red.png"
                     alt="Resorts World Genting"
                     fill
                     className="object-contain object-left"
-                    sizes="(max-width: 768px) 90vw, 420px"
+                    sizes="(max-width: 768px) 90vw, 460px"
                   />
                 </div>
               </div>
@@ -79,13 +79,13 @@ export default function AuthorityPartnerSection() {
                     key={retailer.id}
                     className="rounded-xl border border-primary/16 bg-white px-3 py-3 text-charcoal"
                   >
-                    <div className="relative mb-3 h-11 w-full">
+                    <div className="relative mb-3 h-12 w-full">
                       <Image
                         src={retailer.src}
                         alt={retailer.name}
                         fill
                         sizes="(max-width: 768px) 44vw, 14vw"
-                        className="object-contain"
+                        className="object-contain px-1"
                       />
                     </div>
                     <div className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">

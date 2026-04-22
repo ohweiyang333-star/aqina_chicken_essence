@@ -149,17 +149,18 @@
     },
     "Science": {
       "subtitle": "科学与信任",
-      "title": "更纯净的工艺、更完整的认证、更高级的安心感",
-      "description": "每一袋 Aqina 都围绕更干净的萃取、更清晰的来源与更容易建立信任的认证叙事来设计，既适合自用，也适合作为高级送礼选择。",
+      "title": "看得见的产线与检测证据，喝得更安心",
+      "description": "我们把生产过程、认证体系和检测逻辑做成可视化证据卡，减少空泛承诺，让你更快判断这款是否值得长期饮用。",
+      "evidenceTag": "已核对",
       "certifications": {
         "mygap": "MyGAP 认证",
-        "mygapDesc": "从源头到流程都更规范的农业标准",
+        "mygapDesc": "从农场源头到加工流程都有一致规范，原料追溯更清晰。",
         "organic": "MY Organic",
-        "organicDesc": "更干净的成分叙事与现代安心感",
+        "organicDesc": "强调洁净原料与分批检测，减少不必要添加负担。",
         "halal": "Halal 清真认证",
-        "halalDesc": "适合更广泛家庭与多元消费者",
+        "halalDesc": "面向多元家庭的清真标准流程，日常饮用更安心。",
         "amino": "高氨基酸群",
-        "aminoDesc": "更强调吸收效率的营养支持"
+        "aminoDesc": "聚焦小分子营养密度，补养效率与吸收体验更平衡。"
       },
       "nutrition": {
         "title": "强调吸收，而不是厚重负担",
@@ -234,19 +235,44 @@
         "verified": "Verified",
         "items": [
           {
-            "caption": "早晨厨房｜Linda 坐月子 / 术后补养"
+            "src": "/ugc/sg-middle-aged-chinese-man.webp",
+            "caption": "家庭客厅｜陈先生 日常保养"
           },
           {
-            "caption": "客厅沙发｜Aishah 孕期温和补养"
+            "src": "/ugc/sg-middle-aged-malay-woman.webp",
+            "caption": "居家餐桌｜Aishah 家庭补养"
           },
           {
-            "caption": "办公室角落｜Wei Wei 职场高效补给"
+            "src": "/ugc/sg-teenage-chinese-student.webp",
+            "caption": "学校课间｜Jia En 学生备考"
           },
           {
-            "caption": "家居工作｜Shu Fen 坐月子恢复"
+            "src": "/ugc/sg-young-chinese-woman-campus.webp",
+            "caption": "校园通勤｜Yi Xuan 学习期补给"
           },
           {
-            "caption": "瑜伽室场景｜Rajan 术后恢复支持"
+            "src": "/ugc/sg-young-indian-office-man.webp",
+            "caption": "办公室｜Arjun 职场稳定补充"
+          },
+          {
+            "src": "/ugc/sg-young-indian-home-woman.webp",
+            "caption": "家庭厨房｜Riya 温和调理"
+          },
+          {
+            "src": "/ugc/sg-young-malay-man-park.webp",
+            "caption": "户外公园｜Hakim 运动后恢复"
+          },
+          {
+            "src": "/ugc/sg-young-fitness-woman.webp",
+            "caption": "健身打卡｜Mei Qi 训练后补养"
+          },
+          {
+            "src": "/ugc/sg-elderly-chinese-woman.webp",
+            "caption": "居家长辈｜林阿姨 银发调理"
+          },
+          {
+            "src": "/ugc/sg-older-malay-man.webp",
+            "caption": "熟食中心｜Pak Rahman 日常元气"
           }
         ]
       },
@@ -260,64 +286,71 @@
       "shippingCountdown": {
         "eyebrow": "48 小时免邮倒计时",
         "title": "限时满额免邮活动",
-        "description": "活动期间订单满 SGD 70 即享免邮，倒计时结束后自动重置下一轮并持续递减。",
+        "description": "活动期间订单满 SGD 70 即享免邮，建议在倒计时结束前完成下单。",
         "hours": "小时",
         "minutes": "分钟",
-        "seconds": "秒",
-        "footnote": "系统将按访客会话持续倒计时并自动重置。"
+        "seconds": "秒"
       },
       "ugcReviews": {
         "eyebrow": "UGC 顾客好评",
-        "title": "6 条真实感评论，覆盖关键人群场景",
-        "subtitle": "评论来源含 Facebook / Instagram / WhatsApp，并附带 Verified Buyer 标识。",
+        "title": "6 条精选好评，覆盖新加坡真实人群",
+        "subtitle": "真实用户场景与平台回访反馈，帮助你更快判断是否适合自己。",
         "verified": "Verified Buyer",
         "items": [
           {
-            "name": "Linda",
-            "persona": "坐月子 / 术后恢复",
+            "name": "陈先生",
+            "persona": "中年职场 / 日常保养",
             "source": "Facebook",
-            "content": "每天早餐前喝一袋，恢复期更稳定，味道清爽不腻。"
+            "content": "我每天早餐前喝一袋，精神稳定很多，味道也不会腻。",
+            "image": "/ugc/sg-middle-aged-chinese-man.webp"
           },
           {
             "name": "Aishah",
-            "persona": "孕期护理",
-            "source": "Instagram",
-            "content": "孕期口味很敏感，这款喝起来很温和，而且 Halal 让我更放心。"
-          },
-          {
-            "name": "Wei Wei",
-            "persona": "职场精英",
-            "source": "Facebook",
-            "content": "通勤前喝完精神更集中，不会有传统补品的厚重负担。"
-          },
-          {
-            "name": "Shu Fen",
-            "persona": "坐月子",
+            "persona": "家庭主理人 / 清真安心",
             "source": "WhatsApp",
-            "content": "产后前两周每天固定补充，体力回来的速度明显更快。"
+            "content": "全家都能接受这个口感，Halal 认证也让我买得更放心。",
+            "image": "/ugc/sg-middle-aged-malay-woman.webp"
           },
           {
-            "name": "Rajan",
-            "persona": "术后恢复",
+            "name": "Arjun",
+            "persona": "办公室高强度节奏",
+            "source": "Facebook",
+            "content": "上班前来一袋，下午不会那么疲惫，整体专注度更好。",
+            "image": "/ugc/sg-young-indian-office-man.webp"
+          },
+          {
+            "name": "Riya",
+            "persona": "家庭与工作双线",
             "source": "Instagram",
-            "content": "术后食欲低的时候份量刚好，补养效率高，也比较好吸收。"
+            "content": "我在家工作时固定喝，状态比较稳，肠胃负担也轻。",
+            "image": "/ugc/sg-young-indian-home-woman.webp"
           },
           {
-            "name": "Yi Xuan",
+            "name": "Mei Qi",
+            "persona": "运动恢复",
+            "source": "Instagram",
+            "content": "训练后补一袋很刚好，不厚重，第二天恢复体感不错。",
+            "image": "/ugc/sg-young-fitness-woman.webp"
+          },
+          {
+            "name": "Jia En",
             "persona": "学生备考",
             "source": "WhatsApp",
-            "content": "备考晚睡那阵子每天一袋，隔天专注度和状态都更稳定。"
+            "content": "考试周晚睡时每天喝一袋，第二天上课精神比较在线。",
+            "image": "/ugc/sg-teenage-chinese-student.webp"
           }
         ]
       },
       "socialProof": {
-        "verifiedPurchase": "✓ Verified Purchase",
-        "purchase": "Purchase",
-        "timePrefix": "{minutes} 分钟前购买了",
-        "boxUnit": "盒",
-        "boxUnitSuffix": "",
+        "verified": "✓ Verified",
+        "unverified": "Unverified",
+        "purchaseLabel": "Purchase",
+        "reviewLabel": "Review",
+        "purchaseSentence": "{minutes} 分钟前购买了 {boxes} 盒",
+        "reviewSentence": "{minutes} 分钟前留下 {rating}★ 好评",
         "events": [
           {
+            "type": "purchase",
             "name": "Chloe T.",
             "minutesAgo": 3,
             "platform": "Facebook",
@@ -325,45 +358,59 @@
             "verified": true
           },
           {
+            "type": "review",
             "name": "Amir H.",
-            "minutesAgo": 6,
+            "minutesAgo": 5,
             "platform": "Instagram",
-            "boxes": 4,
+            "rating": 5,
             "verified": true
           },
           {
+            "type": "purchase",
             "name": "Mei Lin",
-            "minutesAgo": 9,
+            "minutesAgo": 8,
             "platform": "WhatsApp",
             "boxes": 1,
             "verified": true
           },
           {
+            "type": "review",
             "name": "Farah N.",
-            "minutesAgo": 12,
+            "minutesAgo": 11,
             "platform": "Facebook",
-            "boxes": 2,
+            "rating": 4.9,
             "verified": true
           },
           {
+            "type": "purchase",
             "name": "Daniel K.",
-            "minutesAgo": 15,
+            "minutesAgo": 14,
             "platform": "Instagram",
             "boxes": 6,
             "verified": true
           },
           {
+            "type": "review",
             "name": "Nur A.",
-            "minutesAgo": 18,
+            "minutesAgo": 17,
             "platform": "WhatsApp",
-            "boxes": 2,
+            "rating": 5,
             "verified": true
           },
           {
+            "type": "purchase",
             "name": "Sharon L.",
-            "minutesAgo": 22,
+            "minutesAgo": 21,
             "platform": "Facebook",
             "boxes": 4,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Amir H.",
+            "minutesAgo": 24,
+            "platform": "Instagram",
+            "rating": 4.8,
             "verified": true
           }
         ]

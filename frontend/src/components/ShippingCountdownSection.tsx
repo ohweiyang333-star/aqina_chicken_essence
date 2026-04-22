@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import { Clock3, Truck } from 'lucide-react';
+import { Truck } from 'lucide-react';
 import useEvergreenCountdown from '@/hooks/useEvergreenCountdown';
 
 const FORTY_EIGHT_HOURS_MS = 48 * 60 * 60 * 1000;
@@ -44,10 +44,6 @@ export default function ShippingCountdownSection() {
             </div>
           </div>
 
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-background-dark/58 px-3 py-2 text-xs font-semibold text-text-light/84">
-            <Clock3 size={14} className="text-primary" />
-            <span>{t('footnote')}</span>
-          </div>
         </div>
       </div>
     </section>

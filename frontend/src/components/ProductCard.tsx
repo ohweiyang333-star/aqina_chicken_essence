@@ -9,12 +9,21 @@ interface ProductCardProps {
   product: DisplayProduct;
   onAddToCart: (product: DisplayProduct) => void;
   onBuyNow: (product: DisplayProduct) => void;
+  priority?: boolean;
 }
+
+const optimizedProductImages: Record<string, string> = {
+  pack1: '/images/pack-1.webp',
+  pack2: '/images/pack-2.webp',
+  pack4: '/images/pack-4.webp',
+  pack6: '/images/pack-6.webp',
+};
 
 export function ProductCard({
   product,
   onAddToCart,
   onBuyNow,
+  priority = false,
 }: ProductCardProps) {
   const t = useTranslations("Index");
   const rawFeatures = t.raw(`products.details.${product.id}`);
@@ -22,6 +31,7 @@ export function ProductCard({
     ? rawFeatures
     : [product.label, t("products.detailFallbackOne"), t("products.detailFallbackTwo")];
   const freeShippingEligible = Number(product.price) >= 70;
+  const cardImage = optimizedProductImages[product.id] ?? product.image;
 
   return (
     <article
@@ -40,9 +50,11 @@ export function ProductCard({
 
       <div className="premium-outline relative mb-5 mt-6 aspect-[4/5] overflow-hidden rounded-[1.2rem] bg-[radial-gradient(circle_at_top,rgba(255,184,0,0.16),transparent_36%),linear-gradient(180deg,rgba(17,43,34,0.6),rgba(9,26,20,0.9))]">
         <Image
-          src={product.image}
+          src={cardImage}
           alt={product.name}
           fill
+          priority={priority}
+          loading={priority ? "eager" : "lazy"}
           className="object-contain p-6"
           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 25vw"
         />
