@@ -1,7 +1,7 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CheckoutModal from '@/components/CheckoutModal';
 import useCartStore from '@/lib/cart-store';
 import { IMAGES } from '@/lib/image-utils';
@@ -10,92 +10,23 @@ import {
   toDisplayProduct,
   type DisplayProduct,
 } from '@/lib/product-service';
-import TargetAudienceSection from '@/components/TargetAudienceSection';
-import ScienceEndorsementSection from '@/components/ScienceEndorsementSection';
 import ProductPricingSection from '@/components/ProductPricingSection';
 import MobileFloatingCTA from '@/components/MobileFloatingCTA';
 import Footer from '@/components/Footer';
 import PromoMarquee from '@/components/PromoMarquee';
 import HeroFlashSection from '@/components/HeroFlashSection';
-import TrustStatsStrip from '@/components/TrustStatsStrip';
-import UGCPhotoTicker from '@/components/UGCPhotoTicker';
 import AuthorityPartnerSection from '@/components/AuthorityPartnerSection';
-import ShippingCountdownSection from '@/components/ShippingCountdownSection';
 import UGCReviewGrid from '@/components/UGCReviewGrid';
-import SocialProofToast, { type SocialProofEvent } from '@/components/SocialProofToast';
-import {
-  NlpMiddleStorySection,
-  NlpPriceReframeSection,
-  NlpTakeawaySection,
-} from '@/components/NlpStorySections';
-
-function parseSocialProofEvents(input: unknown): SocialProofEvent[] {
-  if (!Array.isArray(input)) {
-    return [];
-  }
-
-  return input
-    .map((item) => {
-      if (typeof item !== 'object' || !item) {
-        return null;
-      }
-
-      const name = 'name' in item && typeof item.name === 'string' ? item.name : '';
-      const minutesAgo = 'minutesAgo' in item ? Number(item.minutesAgo) : NaN;
-      const platform = 'platform' in item && typeof item.platform === 'string' ? item.platform : '';
-      const verified = 'verified' in item ? Boolean(item.verified) : true;
-      const rawType = 'type' in item && typeof item.type === 'string' ? item.type : '';
-      const inferredType = rawType === 'review' ? 'review' : 'purchase';
-
-      if (!name || !platform || !Number.isFinite(minutesAgo)) {
-        return null;
-      }
-
-      if (inferredType === 'review') {
-        const rating = 'rating' in item ? Number(item.rating) : NaN;
-        if (!Number.isFinite(rating)) {
-          return null;
-        }
-        return {
-          type: 'review',
-          name,
-          minutesAgo,
-          platform,
-          rating,
-          verified,
-        };
-      }
-
-      const boxes = 'boxes' in item ? Number(item.boxes) : NaN;
-      if (!Number.isFinite(boxes)) {
-        return null;
-      }
-      return {
-        type: 'purchase',
-        name,
-        minutesAgo,
-        platform,
-        boxes,
-        verified,
-      };
-    })
-    .filter((item): item is SocialProofEvent => item !== null);
-}
+import StoryExperienceSection from '@/components/StoryExperienceSection';
 
 export default function HomePage() {
   const t = useTranslations('Index');
-  const socialProofT = useTranslations('Index.marketing.socialProof');
   const locale = useLocale();
   const [selectedProduct, setSelectedProduct] = useState<DisplayProduct | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const addItem = useCartStore((state) => state.addItem);
-
-  const socialProofEvents = useMemo(
-    () => parseSocialProofEvents(socialProofT.raw('events')),
-    [socialProofT],
-  );
 
   useEffect(() => {
     async function loadProducts() {
@@ -169,25 +100,17 @@ export default function HomePage() {
     <main className="page-grid flex min-h-screen flex-col pb-24">
       <PromoMarquee />
       <HeroFlashSection />
-      <NlpMiddleStorySection />
-      <TrustStatsStrip />
-      <UGCPhotoTicker />
-      <AuthorityPartnerSection />
-      <ShippingCountdownSection />
+      <StoryExperienceSection />
       <UGCReviewGrid />
-      <TargetAudienceSection />
-      <ScienceEndorsementSection />
-      <NlpPriceReframeSection />
+      <AuthorityPartnerSection />
       <ProductPricingSection
         products={products}
         isLoading={isLoading}
         onAddToCart={handleAddToCart}
         onBuyNow={handleBuyNow}
       />
-      <NlpTakeawaySection />
       <Footer />
       <MobileFloatingCTA />
-      <SocialProofToast events={socialProofEvents} />
       <CheckoutModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

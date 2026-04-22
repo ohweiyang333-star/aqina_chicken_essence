@@ -26,8 +26,43 @@ service cloud.firestore {
 
     // Chatbot Settings - 只有 admin 可读写
     match /chatbotSettings/{docId} {
-      allow read: if true;
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Marketing checkout sessions - 只有 admin 可读写（公开页通过后端 token 路由读取）
+    match /marketing_checkout_sessions/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Marketing escalations - 只有 admin 可读写
+    match /marketing_escalations/{docId} {
       allow write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+      allow read: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    // Marketing Automation - 只有 admin 可读写
+    match /marketing_contacts/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /marketing_contacts/{docId}/{document=**} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /marketing_conversations/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /marketing_conversations/{docId}/{document=**} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /marketing_follow_up_jobs/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /marketing_events/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
     }
 
     // Admin Users - 只有 super admin 可读写

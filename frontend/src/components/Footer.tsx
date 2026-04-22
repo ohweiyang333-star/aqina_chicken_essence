@@ -25,11 +25,11 @@ export default function Footer() {
           </div>
 
           <nav className="flex flex-wrap gap-4 text-xs font-bold uppercase tracking-[0.22em] text-text-light/72">
-            <Link href="#audience" className="hover:text-primary">
-              {t('footer.nav.audience')}
+            <Link href="#story-experience" className="hover:text-primary">
+              {t('footer.nav.story')}
             </Link>
-            <Link href="#science" className="hover:text-primary">
-              {t('footer.nav.science')}
+            <Link href="#ugc-reviews" className="hover:text-primary">
+              {t('footer.nav.reviews')}
             </Link>
             <Link href="#products" className="hover:text-primary">
               {t('footer.nav.products')}

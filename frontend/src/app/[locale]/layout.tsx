@@ -18,9 +18,17 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Aqina 滴鸡精｜术后产后恢复期补养方案｜Halal认证・2-3天送达",
+  title: "Aqina 滴鸡精｜零负担吸收的纯粹能量｜黄梨酵素滴鸡精",
   description:
-    "面向术后与产后恢复阶段的日常补养方案：聚焦轻负担吸收与家庭照护场景，Halal 认证，2-3 天送达，支持 7/14/28/42 天周期化安排。",
+    "给身体最纯粹的能量，从零负担吸收开始。Aqina 黄梨酵素滴鸡精，聚焦好吸收、轻负担与每日可持续的温热补养。",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico", type: "image/x-icon" },
+    ],
+    shortcut: ["/favicon.ico"],
+    apple: ["/apple-icon.png"],
+  },
   keywords: [
     "Aqina Singapore",
     "鸡精",

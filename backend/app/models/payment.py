@@ -8,7 +8,7 @@ class CreatePaymentRequest(BaseModel):
     """Request model for creating a new payment record."""
 
     order_id: str = Field(..., description="Associated order ID")
-    method: Literal["shopee", "paynow", "paylah"] = Field(..., description="Payment method")
+    method: Literal["paynow"] = Field(..., description="Payment method")
     amount: float = Field(..., ge=0, description="Payment amount in SGD")
     transaction_id: Optional[str] = Field(None, description="External transaction ID")
     screenshot_url: Optional[str] = Field(None, description="Payment screenshot URL")

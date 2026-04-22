@@ -20,10 +20,22 @@ from app.models.customer import (
 )
 from app.models.chatbot import (
     FAQItem,
-    AbandonedCartMessage,
-    ReplenishmentReminder,
+    ChatbotPackage,
+    KnowledgeBase,
+    PaymentSettings,
+    EscalationSettings,
     ChatbotSettingsResponse,
     UpdateChatbotSettingsRequest,
+    SalesConversationTurn,
+    FollowUpTurnResult,
+    EscalationRecord,
+    CheckoutSessionResponse,
+)
+from app.models.marketing import (
+    ProcessMarketingEventRequest,
+    ProcessFollowUpJobRequest,
+    ReconcileDueJobsRequest,
+    NormalizedMarketingEvent,
 )
 
 __all__ = [
@@ -45,8 +57,19 @@ __all__ = [
     "ListCustomersResponse",
     # Chatbot models
     "FAQItem",
-    "AbandonedCartMessage",
-    "ReplenishmentReminder",
+    "ChatbotPackage",
+    "KnowledgeBase",
+    "PaymentSettings",
+    "EscalationSettings",
     "ChatbotSettingsResponse",
     "UpdateChatbotSettingsRequest",
+    "SalesConversationTurn",
+    "FollowUpTurnResult",
+    "EscalationRecord",
+    "CheckoutSessionResponse",
+    # Marketing models
+    "ProcessMarketingEventRequest",
+    "ProcessFollowUpJobRequest",
+    "ReconcileDueJobsRequest",
+    "NormalizedMarketingEvent",
 ]

@@ -1,7 +1,7 @@
 const DEFAULT_WHATSAPP_DISPLAY = "+65 9000 0000";
 const DEFAULT_WHATSAPP_LINK = "6590000000";
 const DEFAULT_CONTACT_EMAIL = "sg-sales@aqina.com";
-const DEFAULT_SHOPEE_URL = "https://shopee.sg/checkout";
+const DEFAULT_PAYNOW_QR_IMAGE = "/paynow/aqina-paynow-qr-designed.png";
 const DEFAULT_WHATSAPP_MESSAGE =
   "Hi Aqina SG, I'm interested in your premium chicken essence.";
 
@@ -36,14 +36,13 @@ export const aqinaSiteConfig = {
     ),
   },
   commerce: {
-    shopeeUrl: readPublicEnv(
-      process.env.NEXT_PUBLIC_SHOPEE_URL,
-      DEFAULT_SHOPEE_URL,
+    paymentQrImage: readPublicEnv(
+      process.env.NEXT_PUBLIC_PAYMENT_QR_IMAGE,
+      DEFAULT_PAYNOW_QR_IMAGE,
     ),
-    paymentQrImage: readPublicEnv(process.env.NEXT_PUBLIC_PAYMENT_QR_IMAGE),
     paymentQrAlt: readPublicEnv(
       process.env.NEXT_PUBLIC_PAYMENT_QR_ALT,
-      "Aqina payment QR code",
+      "Aqina BP PayNow QR",
     ),
   },
   messaging: {

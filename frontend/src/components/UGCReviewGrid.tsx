@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { BadgeCheck, MessageCircle, Star } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 interface UGCReview {
   name: string;
@@ -13,12 +13,9 @@ interface UGCReview {
 }
 
 const reviewVisuals = [
+  { src: '/ugc/sg-young-chinese-woman-campus.webp', objectPosition: 'object-center' },
   { src: '/ugc/sg-middle-aged-chinese-man.webp', objectPosition: 'object-center' },
-  { src: '/ugc/sg-middle-aged-malay-woman.webp', objectPosition: 'object-center' },
-  { src: '/ugc/sg-young-indian-office-man.webp', objectPosition: 'object-center' },
-  { src: '/ugc/sg-young-indian-home-woman.webp', objectPosition: 'object-center' },
-  { src: '/ugc/sg-young-fitness-woman.webp', objectPosition: 'object-center' },
-  { src: '/ugc/sg-teenage-chinese-student.webp', objectPosition: 'object-center' },
+  { src: '/ugc/sg-elderly-chinese-woman.webp', objectPosition: 'object-center' },
 ] as const;
 
 function parseReviews(input: unknown): UGCReview[] {
@@ -62,8 +59,8 @@ export default function UGCReviewGrid() {
           <p className="mx-auto max-w-3xl text-sm leading-7 text-muted md:text-base">{t('subtitle')}</p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {reviews.slice(0, 6).map((review, index) => {
+        <div className="grid gap-4 lg:grid-cols-3">
+          {reviews.slice(0, 3).map((review, index) => {
             const visual = reviewVisuals[index] ?? reviewVisuals[0];
             const visualSrc = review.image || visual.src;
 
@@ -78,20 +75,10 @@ export default function UGCReviewGrid() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                     className={`object-cover ${visual.objectPosition}`}
                   />
-                  <div className="absolute left-3 top-3 inline-flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white">
-                    <BadgeCheck size={12} />
-                    <span>{t('verified')}</span>
-                  </div>
                 </div>
 
                 <div className="space-y-3">
-                  <div className="flex items-center gap-1 text-amber-300">
-                    {Array.from({ length: 5 }).map((_, starIndex) => (
-                      <Star key={starIndex} size={14} className="fill-amber-300" />
-                    ))}
-                  </div>
-
-                  <p className="text-sm leading-7 text-text-light/86">“{review.content}”</p>
+                  <p className="text-sm leading-8 text-text-light/86">“{review.content}”</p>
 
                   <div className="gold-divider" />
 

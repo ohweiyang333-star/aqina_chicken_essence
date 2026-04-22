@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CheckCircle, Loader2, ExternalLink, QrCode } from 'lucide-react';
+import { X, CheckCircle, Loader2, QrCode } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { createOrder } from '@/lib/order-service';
 import { aqinaSiteConfig, getWhatsAppHref } from '@/lib/site-config';
@@ -85,35 +85,22 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               {ct('payment.title') || 'Payment Instructions'}
             </h3>
 
-            {/* Chinese Instructions */}
             <div className="p-4 bg-ivory/50 rounded-xl space-y-2">
               <p className="text-sm text-charcoal leading-relaxed">
-                {ct('payment.cn') || '下单后，请点击下方按钮跳转至 Shopee 完成支付。若选择 PayLah! / PayNow，请扫描下方 QR Code 并备注您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。'}
+                {ct('payment.cn') || '下单后，请直接扫描下方 PayNow QR Code，并在参考栏填写您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们会尽快为您安排发货。'}
               </p>
             </div>
 
-            {/* English Instructions */}
             <div className="p-4 bg-ivory/50 rounded-xl space-y-2">
               <p className="text-sm text-charcoal leading-relaxed">
-                {ct('payment.en') || 'After placing your order, please click the button below to complete payment on Shopee. For PayLah! / PayNow, please scan the QR Code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.'}
+                {ct('payment.en') || 'After placing your order, please scan the PayNow QR code below and include your Order ID in the payment reference. Send your payment screenshot to our WhatsApp support so we can arrange delivery quickly.'}
               </p>
             </div>
-
-            {/* Shopee Link */}
-            <a
-              href={aqinaSiteConfig.commerce.shopeeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600 transition-all shadow-lg"
-            >
-              <ExternalLink size={20} />
-              <span>{ct('payment.shopee') || 'Pay on Shopee'}</span>
-            </a>
 
             {/* PayNow QR Code */}
             <div className="space-y-3">
               <p className="text-sm font-semibold text-charcoal text-center">
-                {ct('payment.paynow') || 'PayNow / PayLah!'}
+                {ct('payment.paynow') || 'PayNow'}
               </p>
               <div className="flex justify-center">
                 {aqinaSiteConfig.commerce.paymentQrImage ? (
@@ -247,7 +234,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
           </button>
 
           <p className="text-[10px] text-center text-charcoal/30 leading-relaxed">
-            {ct('form.terms') || 'By clicking confirm, your order is submitted. Payment will be handled via Shopee or PayNow/PayLah!. Returns accepted within 7 days for quality issues.'}
+            {ct('form.terms') || 'By clicking confirm, your order is submitted. Payment will be handled via PayNow. Returns accepted within 7 days for quality issues.'}
           </p>
         </form>
       </div>

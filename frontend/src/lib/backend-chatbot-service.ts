@@ -1,46 +1,75 @@
-/**
- * Backend Chatbot Service
- *
- * Communicates with FastAPI Backend /api/v1/chatbot endpoints
- */
+import { apiClient } from "@/lib/api-client";
 
-import { apiClient } from './api-client';
+export interface FAQItem {
+  keywords: string[];
+  response_en: string;
+  response_zh: string;
+  recommend_product_id?: string | null;
+}
 
-// Types
+export interface ChatbotPackage {
+  code: string;
+  name_zh: string;
+  name_en: string;
+  description_zh: string;
+  description_en: string;
+  price_sgd: number;
+  pack_count: number;
+  target_audience: Array<
+    "self_care" | "pregnancy" | "postpartum" | "gift_elder" | "unknown"
+  >;
+  hero: boolean;
+  free_shipping_eligible: boolean;
+}
+
+export interface KnowledgeBaseFaq {
+  question: string;
+  answer: string;
+}
+
+export interface KnowledgeBase {
+  usps: string[];
+  faq: KnowledgeBaseFaq[];
+  medical_disclaimer: string;
+  logistics: string;
+  consumption: string;
+  comparisons: string;
+}
+
+export interface FollowUpRuleCell {
+  instruction: string;
+}
+
 export interface ChatbotSettings {
-  faq: Array<{
-    question: string;
-    answer: string;
-    order?: number;
-  }>;
-  cart_abandonment_message?: string;
-  restock_reminder_enabled?: boolean;
-  restock_reminder_message?: string;
-  updated_at: string;
+  system_prompt: string;
+  handoff_message: string;
+  packages: Record<string, ChatbotPackage>;
+  knowledge_base: KnowledgeBase;
+  crm_follow_up_rules: Record<string, Record<string, FollowUpRuleCell>>;
+  payment: {
+    paynow: {
+      enabled: boolean;
+      payment_qr_image: string;
+      payment_qr_alt: string;
+      payment_reference_prefix: string;
+      payment_note: string;
+    };
+  };
+  escalation: {
+    enabled: boolean;
+    private_whatsapp_number: string;
+    whatsapp_template_name: string;
+    pause_automation_on_handoff: boolean;
+  };
+  faq: FAQItem[];
 }
 
-/**
- * Get chatbot settings (public endpoint)
- */
 export async function getChatbotSettings(): Promise<ChatbotSettings> {
-  try {
-    const settings = await apiClient.get<ChatbotSettings>('/api/v1/chatbot/settings');
-    return settings;
-  } catch (error) {
-    console.error('Error fetching chatbot settings:', error);
-    throw new Error(error instanceof Error ? error.message : 'Failed to fetch chatbot settings');
-  }
+  return apiClient.get<ChatbotSettings>("/api/v1/chatbot/settings");
 }
 
-/**
- * Update chatbot settings (admin only)
- */
-export async function updateChatbotSettings(settings: Partial<ChatbotSettings>): Promise<ChatbotSettings> {
-  try {
-    const updated = await apiClient.put<ChatbotSettings>('/api/v1/chatbot/settings', settings);
-    return updated;
-  } catch (error) {
-    console.error('Error updating chatbot settings:', error);
-    throw new Error(error instanceof Error ? error.message : 'Failed to update chatbot settings');
-  }
+export async function updateChatbotSettings(
+  settings: Partial<ChatbotSettings>,
+): Promise<ChatbotSettings> {
+  return apiClient.put<ChatbotSettings>("/api/v1/chatbot/settings", settings);
 }

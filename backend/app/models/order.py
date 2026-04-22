@@ -19,7 +19,7 @@ class CustomerInfo(BaseModel):
     """Customer information for an order."""
 
     name: str = Field(..., min_length=1, max_length=100)
-    email: str = Field(..., pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
+    email: Optional[str] = Field(None, pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
     whatsapp: str = Field(..., min_length=8, max_length=20, description="WhatsApp phone number")
     address: str = Field(..., min_length=10, max_length=500)
 
@@ -30,8 +30,11 @@ class CreateOrderRequest(BaseModel):
     customer: CustomerInfo
     items: list[OrderItem] = Field(..., min_length=1, max_length=20)
     total_amount: float = Field(..., ge=0, description="Total order amount in SGD")
-    payment_method: Literal["shopee", "paynow", "paylah"] = "shopee"
+    payment_method: Literal["paynow"] = "paynow"
     notes: Optional[str] = Field(None, max_length=1000)
+    source: Optional[str] = Field(default="web_checkout", max_length=100)
+    marketing_contact_id: Optional[str] = Field(default=None, max_length=200)
+    checkout_session_id: Optional[str] = Field(default=None, max_length=200)
 
 
 class OrderResponse(BaseModel):
@@ -45,6 +48,9 @@ class OrderResponse(BaseModel):
     payment_status: Literal["pending", "paid", "failed", "refunded"]
     order_status: Literal["pending", "processing", "shipped", "delivered", "cancelled"]
     notes: Optional[str] = None
+    source: Optional[str] = None
+    marketing_contact_id: Optional[str] = None
+    checkout_session_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

@@ -2,7 +2,7 @@
 
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
-import { BadgeCheck, ShieldCheck } from 'lucide-react';
+import { BadgeCheck, Building2, ShieldCheck } from 'lucide-react';
 
 const retailers = [
   {
@@ -54,16 +54,15 @@ export default function AuthorityPartnerSection() {
               </h2>
               <p className="mt-3 text-sm leading-7 text-text-light/80 md:text-base">{t('description')}</p>
 
-              <div className="mt-6 rounded-xl border border-primary/18 bg-white px-5 py-4">
-                <div className="relative h-16 w-full">
-                  <Image
-                    src="/brands/genting-red.png"
-                    alt="Resorts World Genting"
-                    fill
-                    className="object-contain object-left"
-                    sizes="(max-width: 768px) 90vw, 460px"
-                  />
+              <div className="mt-6 rounded-xl border border-primary/18 bg-background-dark/65 px-5 py-5">
+                <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background-dark/75 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
+                  <Building2 size={12} />
+                  <span>{t('currentBrand')}</span>
                 </div>
+                <p className="mt-3 font-heading text-3xl font-semibold text-text-light md:text-4xl">
+                  {t('resortWorldName')}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-text-light/76">{t('resortWorldNote')}</p>
               </div>
             </article>
 
@@ -88,10 +87,7 @@ export default function AuthorityPartnerSection() {
                         className="object-contain px-1"
                       />
                     </div>
-                    <div className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">
-                      <BadgeCheck size={12} />
-                      <span>{t('approved')}</span>
-                    </div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-charcoal/72">{retailer.name}</p>
                   </article>
                 ))}
               </div>

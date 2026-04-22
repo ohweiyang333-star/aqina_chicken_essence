@@ -129,6 +129,9 @@ async def create_order(order_data: CreateOrderRequest, db: DB):
         "payment_status": "pending",
         "order_status": "pending",
         "notes": order_data.notes,
+        "source": order_data.source,
+        "marketing_contact_id": order_data.marketing_contact_id,
+        "checkout_session_id": order_data.checkout_session_id,
         "created_at": SERVER_TIMESTAMP,
         "updated_at": SERVER_TIMESTAMP,
     }
@@ -137,7 +140,8 @@ async def create_order(order_data: CreateOrderRequest, db: DB):
     db.collection("orders").document(order_id).set(order_dict)
 
     # Also create/update customer record
-    customer_id = f"customer_{order_data.customer.email}"
+    customer_seed = order_data.customer.email or order_data.customer.whatsapp
+    customer_id = f"customer_{customer_seed}"
     customer_ref = db.collection("customers").document(customer_id)
     customer_doc = customer_ref.get()
 

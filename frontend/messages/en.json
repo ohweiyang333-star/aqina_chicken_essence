@@ -3,14 +3,13 @@
     "title": "Aqina Premium Chicken Essence",
     "subtitle": "Pure extraction, crafted for modern recovery and daily resilience",
     "hero": {
-      "badge": "20 Years of Pure Extraction",
-      "title": "No Water Added.",
-      "highlight": "Only Golden Chicken Essence.",
-      "description": "From pineapple-fed farm chickens to small-molecule extraction, each pouch is built for clean taste, quick absorption, and a premium daily ritual that feels effortless.",
-      "cta": "Shop Now",
-      "secondaryCta": "Learn More",
-      "noteOne": "Halal Certified",
-      "noteTwo": "Small Peptide Absorption"
+      "badge": "Aqina Pineapple Enzyme Chicken Essence",
+      "title": "Pure energy for your body,",
+      "highlight": "starts with effortless absorption.",
+      "subheading": "Real nourishment should not feel heavy. Aqina is made for fast, clean intake that supports your energy when you need it most.",
+      "cta": "Choose Your Daily / Intensive Pure Care Plan",
+      "note": "Fast Absorption · Low Burden · Easy Warm Intake",
+      "imageAlt": "Aqina pineapple enzyme chicken essence hero visual"
     },
     "identity": {
       "title": "Choose Your Identity",
@@ -60,12 +59,12 @@
       }
     },
     "products": {
-      "eyebrow": "Premium Collection",
-      "title": "Choose your dedicated nourishment plan",
-      "subtitle": "Four high-conviction packs for daily upkeep, targeted recovery, and family replenishment.",
+      "eyebrow": "Pure Care Plans",
+      "title": "Choose Your Daily / Intensive Pure Care Plan",
+      "subtitle": "From light daily support to intensive periods, pick a routine that stays easy to follow every day.",
       "recommended": "Recommended",
-      "buyNow": "Buy Now",
-      "addToCart": "Add to Cart",
+      "buyNow": "Choose Plan",
+      "addToCart": "Add Plan",
       "featuresLabel": "Key Features",
       "currency": "SGD",
       "detailFallbackOne": "Premium extraction with no added water",
@@ -147,55 +146,28 @@
         "whatsapp": "Send payment screenshot to WhatsApp {phone} for faster processing"
       }
     },
-    "Science": {
-      "subtitle": "Science and Trust",
-      "title": "Visible process evidence, clearer confidence before purchase",
-      "description": "This section is rebuilt with visual proof cards from production, certification context, and testing references so trust comes from evidence, not decorative claims.",
-      "evidenceTag": "Verified",
-      "certifications": {
-        "mygap": "MyGAP Certified",
-        "mygapDesc": "Traceable farm-to-process standards with clearer raw-material accountability.",
-        "organic": "MY Organic",
-        "organicDesc": "Cleaner ingredient control supported by routine batch-level checks.",
-        "halal": "Halal Certified",
-        "halalDesc": "Inclusive halal compliance designed for diverse households.",
-        "amino": "High Amino Acid",
-        "aminoDesc": "Optimized nutrient density with a lighter daily absorption profile."
-      },
-      "nutrition": {
-        "title": "Built for absorption, not heaviness",
-        "description": "Aqina focuses on concentrated essence, clean taste, and small-molecule support so it fits demanding schedules, sensitive recovery periods, and premium wellness routines without burden.",
-        "facts": {
-          "zeroFat": "0% Fat",
-          "zeroCholesterol": "0% Cholesterol",
-          "noHormones": "No Hormones",
-          "highProtein": "High Protein"
-        }
-      }
-    },
     "mobileCta": {
-      "label": "Claim Your Pack",
+      "label": "Choose Care Plan",
       "whatsappLabel": "Chat with Specialist"
     },
     "footer": {
       "tagline": "Premium chicken essence designed for modern families, disciplined recovery, and daily resilience.",
       "nav": {
-        "audience": "Audience",
-        "science": "Science",
-        "products": "Products"
+        "story": "Absorption Story",
+        "reviews": "Real Reviews",
+        "products": "Plans"
       },
       "copyright": "© 2026 Aqina Singapore. All rights reserved.",
       "contactLine": "{phone} · {email}"
     },
     "marketing": {
       "marquee": {
-        "ariaLabel": "Top promotional marquee",
+        "ariaLabel": "Top highlights",
         "items": [
-          "Free Shipping for SGD 70+ Orders",
-          "Official Halal Certified",
-          "2-3 Days Delivery in Singapore",
-          "50,000+ Boxes Sold",
-          "4.9★ Customer Rating"
+          "Pineapple Enzyme Chicken Essence",
+          "Effortless Absorption",
+          "2-3 Day Delivery in Singapore",
+          "Free Shipping for SGD 70+"
         ]
       },
       "flashSale": {
@@ -277,11 +249,13 @@
         ]
       },
       "authority": {
-        "partnerBadge": "Official Partner",
-        "title": "Trusted partnerships and retail authority",
-        "description": "Aqina is featured through Genting collaboration and trusted offline retail channels across Malaysia to strengthen purchase confidence.",
-        "retailEyebrow": "Retailer Approval Wall",
-        "approved": "Approved"
+        "partnerBadge": "Authority Channel Collaboration",
+        "title": "Resorts World Genting and retail channel visibility",
+        "description": "Trust cues are kept minimal: one core authority collaboration and key retail channels, so product experience and clear copy do the persuasion.",
+        "currentBrand": "Current Brand Name",
+        "resortWorldName": "Resorts World Genting",
+        "resortWorldNote": "Named as Resorts World Genting (not legacy Genting logo)",
+        "retailEyebrow": "Offline Retail Channels"
       },
       "shippingCountdown": {
         "eyebrow": "48-Hour Shipping Countdown",
@@ -292,52 +266,30 @@
         "seconds": "Seconds"
       },
       "ugcReviews": {
-        "eyebrow": "UGC Testimonials",
-        "title": "Six featured testimonials from real SG audiences",
-        "subtitle": "Real user contexts and platform feedback to help you evaluate fit quickly.",
-        "verified": "Verified Buyer",
+        "eyebrow": "Real Testimonials",
+        "title": "Different people, same priority: easy taste, easy absorption, quick recovery feel.",
+        "subtitle": "These testimonials emphasize sensory details and lived routines over generic claims.",
         "items": [
           {
-            "name": "Mr. Tan",
-            "persona": "Mid-career professional / daily vitality",
-            "source": "Facebook",
-            "content": "I take one pouch before breakfast and my daily energy feels noticeably steadier.",
+            "name": "@SzeYing_",
+            "persona": "Sensitive palate",
+            "source": "WhatsApp",
+            "content": "I am extremely sensitive to gamey taste and usually avoid chicken soup. With Aqina, the aroma after heating was clean and lightly sweet with no oil film. One warm serving in the morning makes my stomach feel comfortable and my day feels steadier.",
             "image": "/ugc/sg-middle-aged-chinese-man.webp"
           },
           {
-            "name": "Aishah",
-            "persona": "Family caregiver / halal confidence",
-            "source": "WhatsApp",
-            "content": "The taste is easy for my household, and the halal positioning gives me confidence to reorder.",
-            "image": "/ugc/sg-middle-aged-malay-woman.webp"
-          },
-          {
-            "name": "Arjun",
-            "persona": "High-intensity office routine",
+            "name": "Da Wei",
+            "persona": "Heavy overtime recovery",
             "source": "Facebook",
-            "content": "I use it before workdays and my afternoon focus is better without feeling too heavy.",
+            "content": "After weeks of late-night project work I felt drained every morning. I started high-purity chicken essence daily and within one week the afternoon crash was clearly reduced. Absorption feels fast and the return of energy feels grounded.",
             "image": "/ugc/sg-young-indian-office-man.webp"
           },
           {
-            "name": "Riya",
-            "persona": "Home + work balancing routine",
+            "name": "@Lin_Family",
+            "persona": "Bought for mother",
             "source": "Instagram",
-            "content": "I keep this in my home routine and it feels gentle while still giving useful daily support.",
-            "image": "/ugc/sg-young-indian-home-woman.webp"
-          },
-          {
-            "name": "Mei Qi",
-            "persona": "Training recovery",
-            "source": "Instagram",
-            "content": "After workouts, one pouch fits perfectly and I feel recovery is smoother the next day.",
-            "image": "/ugc/sg-young-fitness-woman.webp"
-          },
-          {
-            "name": "Jia En",
-            "persona": "Student Exam Prep",
-            "source": "WhatsApp",
-            "content": "During exam weeks, one pouch per day helps me stay more stable for early classes.",
-            "image": "/ugc/sg-teenage-chinese-student.webp"
+            "content": "My mother often says many foods are hard to digest. Since we switched to pineapple enzyme chicken essence, she drinks it willingly because it feels like a light clear soup and does not cause bloating. Her complexion looked better when I visited last week.",
+            "image": "/ugc/sg-elderly-chinese-woman.webp"
           }
         ]
       },
@@ -414,6 +366,29 @@
             "verified": true
           }
         ]
+      }
+    },
+    "story": {
+      "storyOne": {
+        "eyebrow": "Craft Story",
+        "title": "Why are our chickens raised with pineapple enzymes?",
+        "body": "We believe the best nourishment should work with the body. Natural pineapple enzymes act like a gentle pre-digestion step, breaking dense proteins into finer nutrients. That means when you or your family drinks Aqina, the stomach does less heavy work and the body receives support faster."
+      },
+      "storyTwo": {
+        "eyebrow": "Purity Contrast",
+        "title": "Do not let “tonic” become extra burden.",
+        "body": "Traditional boiled chicken soup often comes with heavy oils and hard-to-digest residue. During fatigue and recovery, the body needs clean support, not digestive pressure. Aqina goes through deep oil-removal extraction and keeps only clear, golden essence for easier intake."
+      },
+      "emotional": {
+        "eyebrow": "Care Value",
+        "title": "The highest level of care is what the body can truly accept.",
+        "body": "Whether you are caring for yourself after long days or supporting someone in recovery, the best choice is not simply the most expensive one. It is the one the body can absorb consistently. A warm serving of Aqina becomes a quiet way to say: stay well, do not push too hard."
+      },
+      "valueCta": {
+        "eyebrow": "Value & Action",
+        "title": "Every drop is worth feeling with intention.",
+        "body": "Non-compromised purity, built to provide steady support at critical moments.",
+        "button": "Choose Your Daily / Intensive Pure Care Plan"
       }
     }
   }
