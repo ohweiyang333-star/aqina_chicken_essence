@@ -209,43 +209,43 @@
         "verified": "Verified",
         "items": [
           {
-            "src": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d",
+            "src": "/ugc/sg-middle-aged-chinese-man.webp",
             "caption": "Living Room | Mr. Tan daily vitality routine"
           },
           {
-            "src": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d",
+            "src": "/ugc/sg-middle-aged-malay-woman.webp",
             "caption": "Home Dining | Aishah family nourishment"
           },
           {
-            "src": "/ugc/sg-teenage-chinese-student.webp?v=20260423d",
+            "src": "/ugc/sg-teenage-chinese-student.webp",
             "caption": "School Break | Jia En exam prep support"
           },
           {
-            "src": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d",
+            "src": "/ugc/sg-young-chinese-woman-campus.webp",
             "caption": "Campus Walk | Yi Xuan study-week routine"
           },
           {
-            "src": "/ugc/sg-young-indian-office-man.webp?v=20260423d",
+            "src": "/ugc/sg-young-indian-office-man.webp",
             "caption": "Office Desk | Rahul daily focus support"
           },
           {
-            "src": "/ugc/sg-young-indian-home-woman.webp?v=20260423d",
+            "src": "/ugc/sg-young-indian-home-woman.webp",
             "caption": "Home Kitchen | Riya gentle daily recovery"
           },
           {
-            "src": "/ugc/sg-young-malay-man-park.webp?v=20260423d",
+            "src": "/ugc/sg-young-malay-man-park.webp",
             "caption": "Park Scene | Hakim post-workout routine"
           },
           {
-            "src": "/ugc/sg-young-fitness-woman.webp?v=20260423d",
+            "src": "/ugc/sg-young-fitness-woman.webp",
             "caption": "Fitness Check-in | Mei Qi training recovery"
           },
           {
-            "src": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d",
+            "src": "/ugc/sg-elderly-chinese-woman.webp",
             "caption": "Family Home | Auntie Lim senior wellness"
           },
           {
-            "src": "/ugc/sg-older-malay-man.webp?v=20260423d",
+            "src": "/ugc/sg-older-malay-man.webp",
             "caption": "Hawker Center | Pak Rahman daily nourishment"
           }
         ]
@@ -254,8 +254,15 @@
         "partnerBadge": "Authority Channel Collaboration",
         "title": "Resorts World Genting and retail channel visibility",
         "description": "Trust cues are kept minimal: one core authority collaboration and key retail channels, so product experience and clear copy do the persuasion.",
-        "complianceAlt": "Aqina compliance certification mark",
-        "complianceLabel": "HACCP / GMP / ISO Certified",
+        "complianceTitle": "Sales Compliance Certifications",
+        "compliance": {
+          "haccpGmpIsoAlt": "HACCP GMP ISO certification",
+          "haccpGmpIsoLabel": "HACCP / GMP / ISO9001",
+          "halalAlt": "JAKIM Halal certification",
+          "halalLabel": "JAKIM Halal",
+          "veterinaryAlt": "Malaysian veterinary certification",
+          "veterinaryLabel": "JPH Veterinary Mark"
+        },
         "currentBrand": "Current Brand Name",
         "resortWorldName": "Resorts World",
         "resortWorldNote": "At Resorts World Genting, Aqina chicken essence can be redeemed with Genting membership points.",
@@ -278,105 +285,105 @@
             "persona": "Home caregiving mom",
             "source": "Facebook",
             "content": "After settling the kids at night, I warm one pouch. It tastes clean like light soup, and I wake up steadier the next morning.",
-            "image": "/ugc/cozy-sofa.jpg?v=20260423d"
+            "image": "/ugc/cozy-sofa.jpg"
           },
           {
             "name": "Jia En",
             "persona": "Exam-week student",
             "source": "Instagram",
             "content": "During revision weeks, I need something simple before class. This is easy to drink warm and helps me stay more focused through morning lessons.",
-            "image": "/ugc/home-study.jpg?v=20260423d"
+            "image": "/ugc/home-study.jpg"
           },
           {
             "name": "Alicia",
             "persona": "Working mom",
             "source": "WhatsApp",
             "content": "I heat one while preparing breakfast, so the routine is easy to keep. No oily after-feel, and I can head to work feeling lighter.",
-            "image": "/ugc/morning-kitchen.jpg?v=20260423d"
+            "image": "/ugc/morning-kitchen.jpg"
           },
           {
             "name": "Min Yi",
             "persona": "Tech project manager",
             "source": "LinkedIn",
             "content": "Over the last two months, I was juggling multiple launches at once and constantly jumping between meetings and docs. By mid-afternoon, I used to crash and rely on coffee just to push through. I switched to one warm pouch in the afternoon, and it felt like clear chicken soup with no oily heaviness. After a week, the biggest difference was staying mentally sharper in late meetings and still having energy when I got home.",
-            "image": "/ugc/office-corner.jpg?v=20260423d"
+            "image": "/ugc/office-corner.jpg"
           },
           {
             "name": "Li Tong",
             "persona": "A-Level candidate",
             "source": "Xiaohongshu",
             "content": "During exam season, my days were packed with classes, tuition, and late-night revision, and mornings felt especially heavy. I started taking one warm pouch before study sessions because it is easy to drink and does not upset my stomach. After a week, I noticed fewer afternoon energy dips and better focus during long review blocks. What matters most is that I can actually keep this routine daily without forcing it.",
-            "image": "/ugc/sg-teenage-chinese-student.webp?v=20260423d"
+            "image": "/ugc/sg-teenage-chinese-student.webp"
           },
           {
             "name": "Emma",
             "persona": "Yoga instructor",
             "source": "Instagram",
             "content": "I teach multiple classes a day, and the hardest part used to be the late-afternoon drop in stamina. I now warm one pouch between classes because it is gentle, clean-tasting, and never feels too heavy before the next session. After a few days, I could feel less end-of-day fatigue and a smoother start the following morning. For coaches, that kind of steady recovery is far more useful than short bursts of energy.",
-            "image": "/ugc/yoga-studio.jpg?v=20260423d"
+            "image": "/ugc/yoga-studio.jpg"
           },
           {
             "name": "Mr. Tan",
             "persona": "Sales lead with frequent overtime",
             "source": "Facebook",
             "content": "Business travel and late dinners used to drain me fast. With this daily routine, I feel less of that afternoon crash and can keep my pace better.",
-            "image": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d"
+            "image": "/ugc/sg-middle-aged-chinese-man.webp"
           },
           {
             "name": "Aishah",
             "persona": "Ibu yang urus keluarga",
             "source": "WhatsApp",
             "content": "Rasa dia ringan dan senang minum setiap pagi. Lepas seminggu, badan rasa lebih bertenaga untuk urus anak dan kerja rumah.",
-            "image": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d"
+            "image": "/ugc/sg-middle-aged-malay-woman.webp"
           },
           {
             "name": "Yi Xuan",
             "persona": "University student",
             "source": "Instagram",
             "content": "On report weeks, heavy food slows me down. This warm serving is simple, clean in taste, and easy to keep as part of my campus routine.",
-            "image": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d"
+            "image": "/ugc/sg-young-chinese-woman-campus.webp"
           },
           {
             "name": "Rahul",
             "persona": "Finance analyst",
             "source": "LinkedIn",
             "content": "Morning market sessions start early, so convenience matters. One pouch before work gives me a smoother start without feeling overly full.",
-            "image": "/ugc/sg-young-indian-office-man.webp?v=20260423d"
+            "image": "/ugc/sg-young-indian-office-man.webp"
           },
           {
             "name": "Riya",
             "persona": "Work-from-home mom",
             "source": "WhatsApp",
             "content": "Between meetings and school runs, I need something quick and gentle. This has become my easiest daily routine because it is warm and light.",
-            "image": "/ugc/sg-young-indian-home-woman.webp?v=20260423d"
+            "image": "/ugc/sg-young-indian-home-woman.webp"
           },
           {
             "name": "Hakim",
             "persona": "Recreational runner",
             "source": "Instagram",
             "content": "Lepas larian petang, saya minum panas-panas. Badan rasa cepat lega dan esok pagi bangun pun lebih ringan.",
-            "image": "/ugc/sg-young-malay-man-park.webp?v=20260423d"
+            "image": "/ugc/sg-young-malay-man-park.webp"
           },
           {
             "name": "Mei Qi",
             "persona": "Fitness coach",
             "source": "Facebook",
             "content": "My training days are packed, so I value routines that are easy to repeat. This is clean tasting and sits comfortably even between sessions.",
-            "image": "/ugc/sg-young-fitness-woman.webp?v=20260423d"
+            "image": "/ugc/sg-young-fitness-woman.webp"
           },
           {
             "name": "Auntie Lim",
             "persona": "Senior daily wellness",
             "source": "WhatsApp",
             "content": "My appetite is small and my stomach is sensitive. This feels like light soup and is easy for me to take every day.",
-            "image": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d"
+            "image": "/ugc/sg-elderly-chinese-woman.webp"
           },
           {
             "name": "Pak Rahman",
             "persona": "Morning market vendor",
             "source": "Facebook",
             "content": "Saya mula kerja sangat awal setiap hari. Minuman ini senang disediakan dan bantu saya kekal bertenaga sampai tengah hari.",
-            "image": "/ugc/sg-older-malay-man.webp?v=20260423d"
+            "image": "/ugc/sg-older-malay-man.webp"
           }
         ]
       },

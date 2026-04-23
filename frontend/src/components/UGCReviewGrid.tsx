@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { MessageCircle } from 'lucide-react';
-import { withImageVersion } from '@/lib/image-utils';
+import { IMAGES } from '@/lib/image-utils';
 
 interface UGCReview {
   name: string;
@@ -14,24 +14,7 @@ interface UGCReview {
   image?: string;
 }
 
-const fallbackReviewImages = [
-  withImageVersion('/ugc/cozy-sofa.jpg'),
-  withImageVersion('/ugc/home-study.jpg'),
-  withImageVersion('/ugc/morning-kitchen.jpg'),
-  withImageVersion('/ugc/office-corner.jpg'),
-  withImageVersion('/ugc/student-exam.webp'),
-  withImageVersion('/ugc/yoga-studio.jpg'),
-  withImageVersion('/ugc/sg-middle-aged-chinese-man.webp'),
-  withImageVersion('/ugc/sg-middle-aged-malay-woman.webp'),
-  withImageVersion('/ugc/sg-teenage-chinese-student.webp'),
-  withImageVersion('/ugc/sg-young-chinese-woman-campus.webp'),
-  withImageVersion('/ugc/sg-young-indian-office-man.webp'),
-  withImageVersion('/ugc/sg-young-indian-home-woman.webp'),
-  withImageVersion('/ugc/sg-young-malay-man-park.webp'),
-  withImageVersion('/ugc/sg-young-fitness-woman.webp'),
-  withImageVersion('/ugc/sg-elderly-chinese-woman.webp'),
-  withImageVersion('/ugc/sg-older-malay-man.webp'),
-] as const;
+const fallbackReviewImages = IMAGES.ugc.reviews;
 
 const AUTO_SCROLL_STEP_PX = 1;
 const AUTO_SCROLL_INTERVAL_MS = 22;
@@ -71,7 +54,11 @@ export default function UGCReviewGrid() {
   const parsedReviews = parseReviews(t.raw('items'));
   const reviews = parsedReviews.map((review, index) => ({
     ...review,
-    image: withImageVersion(review.image || fallbackReviewImages[index % fallbackReviewImages.length]),
+    // Prefer V2 gallery images when locale JSON still points to legacy local assets.
+    image:
+      review.image && !review.image.startsWith('/')
+        ? review.image
+        : fallbackReviewImages[index % fallbackReviewImages.length],
   }));
   const loopReviews = [...reviews, ...reviews];
 

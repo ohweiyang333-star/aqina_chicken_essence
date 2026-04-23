@@ -209,43 +209,43 @@
         "verified": "Verified",
         "items": [
           {
-            "src": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d",
+            "src": "/ugc/sg-middle-aged-chinese-man.webp",
             "caption": "家庭客厅｜陈先生 日常保养"
           },
           {
-            "src": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d",
+            "src": "/ugc/sg-middle-aged-malay-woman.webp",
             "caption": "Meja makan rumah | Aishah rutin penjagaan keluarga"
           },
           {
-            "src": "/ugc/sg-teenage-chinese-student.webp?v=20260423d",
+            "src": "/ugc/sg-teenage-chinese-student.webp",
             "caption": "学校课间｜Jia En 学生备考"
           },
           {
-            "src": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d",
+            "src": "/ugc/sg-young-chinese-woman-campus.webp",
             "caption": "校园通勤｜Yi Xuan 学习期补给"
           },
           {
-            "src": "/ugc/sg-young-indian-office-man.webp?v=20260423d",
+            "src": "/ugc/sg-young-indian-office-man.webp",
             "caption": "Office desk | Rahul daily energy support"
           },
           {
-            "src": "/ugc/sg-young-indian-home-woman.webp?v=20260423d",
+            "src": "/ugc/sg-young-indian-home-woman.webp",
             "caption": "Home kitchen | Riya gentle daily support"
           },
           {
-            "src": "/ugc/sg-young-malay-man-park.webp?v=20260423d",
+            "src": "/ugc/sg-young-malay-man-park.webp",
             "caption": "Taman rekreasi | Hakim pemulihan selepas bersenam"
           },
           {
-            "src": "/ugc/sg-young-fitness-woman.webp?v=20260423d",
+            "src": "/ugc/sg-young-fitness-woman.webp",
             "caption": "健身打卡｜Mei Qi 训练后补养"
           },
           {
-            "src": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d",
+            "src": "/ugc/sg-elderly-chinese-woman.webp",
             "caption": "居家长辈｜林阿姨 银发调理"
           },
           {
-            "src": "/ugc/sg-older-malay-man.webp?v=20260423d",
+            "src": "/ugc/sg-older-malay-man.webp",
             "caption": "Pusat penjaja | Pak Rahman rutin tenaga harian"
           }
         ]
@@ -254,8 +254,15 @@
         "partnerBadge": "权威渠道合作",
         "title": "Resorts World Genting 与线下渠道合作露出",
         "description": "我们采用更克制的信任表达：保留最核心的权威合作与主流零售渠道露出，让产品本身的体验和文案去说服你。",
-        "complianceAlt": "Aqina 合规认证图标",
-        "complianceLabel": "HACCP / GMP / ISO 合规认证",
+        "complianceTitle": "销售合规认证",
+        "compliance": {
+          "haccpGmpIsoAlt": "HACCP GMP ISO 认证",
+          "haccpGmpIsoLabel": "HACCP / GMP / ISO9001",
+          "halalAlt": "JAKIM Halal 认证",
+          "halalLabel": "JAKIM Halal",
+          "veterinaryAlt": "马来西亚兽医局认证",
+          "veterinaryLabel": "JPH Veterinary Mark"
+        },
         "currentBrand": "当前品牌命名",
         "resortWorldName": "Resorts World",
         "resortWorldNote": "在云顶名胜世界可通过云顶会员积分兑换 Aqina 滴鸡精。",
@@ -278,105 +285,105 @@
             "persona": "居家照护妈妈",
             "source": "Facebook",
             "content": "晚上照顾完孩子后喝一包，口感像清汤，不会有厚重负担。隔天早上起床比较有精神，做家务也更顺。",
-            "image": "/ugc/cozy-sofa.jpg?v=20260423d"
+            "image": "/ugc/cozy-sofa.jpg"
           },
           {
             "name": "Jia En",
             "persona": "考试期学生",
             "source": "Instagram",
             "content": "复习到很晚时最怕隔天脑袋发胀，这款温热喝下去很顺。连续喝几天后，早课时精神比较稳。",
-            "image": "/ugc/home-study.jpg?v=20260423d"
+            "image": "/ugc/home-study.jpg"
           },
           {
             "name": "Alicia",
             "persona": "双职家庭上班族",
             "source": "WhatsApp",
             "content": "早上在厨房准备早餐时顺便加热一包，节奏很容易坚持。不会腥、不会油，喝完去公司也很轻松。",
-            "image": "/ugc/morning-kitchen.jpg?v=20260423d"
+            "image": "/ugc/morning-kitchen.jpg"
           },
           {
             "name": "敏仪",
             "persona": "科技公司项目经理",
             "source": "LinkedIn",
             "content": "这两个月项目同时上线，我几乎每天都在会议和文档之间来回冲。以前下午三四点就会发虚，只能硬靠咖啡。后来改成午后热一包 Aqina，入口像清鸡汤，不油不腻，胃里不会顶着难受。连续喝了一周后，晚间开会时脑子更清楚，回到家还有体力陪孩子。",
-            "image": "/ugc/office-corner.jpg?v=20260423d"
+            "image": "/ugc/office-corner.jpg"
           },
           {
             "name": "李同学",
             "persona": "A-Level 备考生",
             "source": "小红书",
             "content": "备考那段时间每天都要上课、补习、刷题到很晚，最怕早上醒来整个人发沉。我把它当成晨读前的固定热饮，喝完胃是舒服的，不会腥也不会腻。连续一周后，下午自习不再一直打哈欠，专注度明显比之前稳。对我这种要长期撑节奏的人，最重要是它真的喝得下、坚持得住。",
-            "image": "/ugc/sg-teenage-chinese-student.webp?v=20260423d"
+            "image": "/ugc/sg-teenage-chinese-student.webp"
           },
           {
             "name": "Emma",
             "persona": "瑜伽教练",
             "source": "Instagram",
             "content": "我一天要带好几节课，以前中午后段最怕体力掉得太快。后来在课间固定热一包，入口温和，没有厚重感，马上要上下一节也不会觉得负担。连续喝了几天后，晚课结束的疲惫感明显少很多，第二天起床身体也更轻。对教练来说，这种稳定续航比短暂提神更有价值。",
-            "image": "/ugc/yoga-studio.jpg?v=20260423d"
+            "image": "/ugc/yoga-studio.jpg"
           },
           {
             "name": "陈先生",
             "persona": "长期加班的销售主管",
             "source": "Facebook",
             "content": "连续出差和应酬后容易整个人发虚，这款我能每天坚持。下午不再那么容易掉电，讲话也比较有力。",
-            "image": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d"
+            "image": "/ugc/sg-middle-aged-chinese-man.webp"
           },
           {
             "name": "Aishah",
             "persona": "Ibu yang urus keluarga",
             "source": "WhatsApp",
             "content": "Rasa dia ringan dan senang minum setiap pagi. Lepas seminggu, badan rasa lebih bertenaga untuk urus anak dan kerja rumah.",
-            "image": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d"
+            "image": "/ugc/sg-middle-aged-malay-woman.webp"
           },
           {
             "name": "Yi Xuan",
             "persona": "大学生",
             "source": "Instagram",
             "content": "赶报告时最怕吃太油会昏沉，这个味道很干净。放在宿舍加热就能喝，复习期比较容易维持状态。",
-            "image": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d"
+            "image": "/ugc/sg-young-chinese-woman-campus.webp"
           },
           {
             "name": "Rahul",
             "persona": "金融行业分析师",
             "source": "LinkedIn",
             "content": "Morning markets start early, so I need something fast and light. This fits well into my routine and keeps energy steadier through noon.",
-            "image": "/ugc/sg-young-indian-office-man.webp?v=20260423d"
+            "image": "/ugc/sg-young-indian-office-man.webp"
           },
           {
             "name": "Riya",
             "persona": "在家办公妈妈",
             "source": "WhatsApp",
             "content": "I warm one pouch between meetings and school runs. It is gentle on my stomach, and I do not feel that heavy food slump afterward.",
-            "image": "/ugc/sg-young-indian-home-woman.webp?v=20260423d"
+            "image": "/ugc/sg-young-indian-home-woman.webp"
           },
           {
             "name": "Hakim",
             "persona": "跑步爱好者",
             "source": "Instagram",
             "content": "Lepas larian petang, saya minum panas-panas. Badan rasa cepat lega dan esok pagi bangun pun lebih ringan.",
-            "image": "/ugc/sg-young-malay-man-park.webp?v=20260423d"
+            "image": "/ugc/sg-young-malay-man-park.webp"
           },
           {
             "name": "Mei Qi",
             "persona": "健身教练",
             "source": "Facebook",
             "content": "训练课之间时间很碎，这个一包就够方便。味道清爽、没有油感，课排满时也比较扛得住。",
-            "image": "/ugc/sg-young-fitness-woman.webp?v=20260423d"
+            "image": "/ugc/sg-young-fitness-woman.webp"
           },
           {
             "name": "林阿姨",
             "persona": "银发族日常保养",
             "source": "WhatsApp",
             "content": "我肠胃比较敏感，这款喝起来像清汤，比较不会胀。每天固定一包，精神和食欲都比以前稳定。",
-            "image": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d"
+            "image": "/ugc/sg-elderly-chinese-woman.webp"
           },
           {
             "name": "Pak Rahman",
             "persona": "早市摊主",
             "source": "Facebook",
             "content": "Saya mula kerja sangat awal setiap hari. Minuman ini senang disediakan dan bantu saya kekal bertenaga sampai tengah hari.",
-            "image": "/ugc/sg-older-malay-man.webp?v=20260423d"
+            "image": "/ugc/sg-older-malay-man.webp"
           }
         ]
       },

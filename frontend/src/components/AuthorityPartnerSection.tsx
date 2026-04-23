@@ -36,30 +36,63 @@ const retailers = [
   },
 ] as const;
 
+const certifications = [
+  {
+    id: 'haccp-gmp-iso',
+    src: IMAGES.trust.complianceBadge,
+    altKey: 'compliance.haccpGmpIsoAlt',
+    labelKey: 'compliance.haccpGmpIsoLabel',
+  },
+  {
+    id: 'jakim-halal',
+    src: IMAGES.trust.halalBadge,
+    altKey: 'compliance.halalAlt',
+    labelKey: 'compliance.halalLabel',
+  },
+  {
+    id: 'veterinary',
+    src: IMAGES.trust.veterinaryBadge,
+    altKey: 'compliance.veterinaryAlt',
+    labelKey: 'compliance.veterinaryLabel',
+  },
+] as const;
+
 export default function AuthorityPartnerSection() {
   const t = useTranslations('Index.marketing.authority');
 
   return (
     <section className="py-10" id="authority-partners">
       <div className="section-shell space-y-6">
-        <div className="surface-panel relative rounded-[1.6rem] p-6 md:p-8">
-          <aside
-            id="authority-certification-badge"
-            className="mb-4 inline-flex flex-col rounded-xl border border-emerald-300/45 bg-white/96 px-3 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.2)] backdrop-blur-sm md:absolute md:right-6 md:top-6 md:z-20 md:mb-0"
+        <div className="surface-panel rounded-[1.6rem] p-6 md:p-8">
+          <article
+            id="authority-certification-group"
+            className="mb-6 rounded-2xl border border-emerald-400/30 bg-gradient-to-r from-emerald-500/16 to-background-dark/38 p-4 md:p-5"
           >
-            <div className="relative h-6 w-[7.4rem] md:h-8 md:w-[9.2rem]">
-              <Image
-                src={IMAGES.trust.complianceBadge}
-                alt={t('complianceAlt')}
-                fill
-                sizes="(max-width: 768px) 120px, 150px"
-                className="object-contain"
-              />
-            </div>
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700 md:text-[11px]">
-              {t('complianceLabel')}
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-200">
+              {t('complianceTitle')}
             </p>
-          </aside>
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              {certifications.map((certification) => (
+                <div
+                  key={certification.id}
+                  className="rounded-xl border border-emerald-300/45 bg-white px-3 py-3 text-charcoal"
+                >
+                  <div className="relative h-16 w-full">
+                    <Image
+                      src={certification.src}
+                      alt={t(certification.altKey)}
+                      fill
+                      sizes="(max-width: 768px) 30vw, 220px"
+                      className="object-contain"
+                    />
+                  </div>
+                  <p className="mt-2 text-center text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700 md:text-[11px]">
+                    {t(certification.labelKey)}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </article>
 
           <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
             <article className="rounded-2xl border border-primary/20 bg-background-dark/55 p-5 md:p-6">
