@@ -32,7 +32,7 @@ const fallbackReviewImages = [
   '/ugc/sg-older-malay-man.webp',
 ] as const;
 
-const AUTO_SCROLL_SPEED = 0.45;
+const AUTO_SCROLL_SPEED_PX_PER_SECOND = 28;
 const AUTO_RESUME_DELAY_MS = 1800;
 
 function parseReviews(input: unknown): UGCReview[] {
@@ -73,6 +73,7 @@ export default function UGCReviewGrid() {
   const loopReviews = [...reviews, ...reviews];
 
   const trackRef = useRef<HTMLDivElement>(null);
+  const autoScrollLeftRef = useRef(0);
   const isDraggingRef = useRef(false);
   const isAutoplayPausedRef = useRef(false);
   const startXRef = useRef(0);
@@ -93,14 +94,21 @@ export default function UGCReviewGrid() {
   const normalizeLoopPosition = useCallback((element: HTMLDivElement) => {
     const half = element.scrollWidth / 2;
     if (!half) {
-      return;
+      return element.scrollLeft;
     }
 
-    if (element.scrollLeft >= half) {
-      element.scrollLeft -= half;
-    } else if (element.scrollLeft <= 0) {
-      element.scrollLeft += half;
+    let nextScrollLeft = element.scrollLeft;
+    if (nextScrollLeft >= half) {
+      nextScrollLeft -= half;
+    } else if (nextScrollLeft <= 0) {
+      nextScrollLeft += half;
     }
+
+    if (nextScrollLeft !== element.scrollLeft) {
+      element.scrollLeft = nextScrollLeft;
+    }
+
+    return nextScrollLeft;
   }, []);
 
   const stopDragging = useCallback((pointerId?: number) => {
@@ -115,6 +123,7 @@ export default function UGCReviewGrid() {
 
     isDraggingRef.current = false;
     track.classList.remove('is-dragging');
+    autoScrollLeftRef.current = track.scrollLeft;
     pauseAutoplay();
   }, [pauseAutoplay]);
 
@@ -125,11 +134,20 @@ export default function UGCReviewGrid() {
     }
 
     let rafId = 0;
+    let lastTimestamp = 0;
+    autoScrollLeftRef.current = normalizeLoopPosition(track);
 
-    const animate = () => {
+    const animate = (timestamp: number) => {
+      if (!lastTimestamp) {
+        lastTimestamp = timestamp;
+      }
+      const elapsedMs = Math.min(timestamp - lastTimestamp, 64);
+      lastTimestamp = timestamp;
+
       if (!isAutoplayPausedRef.current && !isDraggingRef.current) {
-        track.scrollLeft += AUTO_SCROLL_SPEED;
-        normalizeLoopPosition(track);
+        autoScrollLeftRef.current += (AUTO_SCROLL_SPEED_PX_PER_SECOND * elapsedMs) / 1000;
+        track.scrollLeft = autoScrollLeftRef.current;
+        autoScrollLeftRef.current = normalizeLoopPosition(track);
       }
       rafId = window.requestAnimationFrame(animate);
     };
@@ -155,8 +173,6 @@ export default function UGCReviewGrid() {
         <div className="space-y-2 text-center">
           <p className="text-xs font-bold uppercase tracking-[0.26em] text-primary">{t('eyebrow')}</p>
           <h2 className="font-heading text-4xl font-semibold text-text-light md:text-5xl">{t('title')}</h2>
-          <p className="mx-auto max-w-3xl text-sm leading-7 text-muted md:text-base">{t('subtitle')}</p>
-          <p className="text-xs font-semibold tracking-[0.08em] text-primary/88">{t('dragHint')}</p>
         </div>
 
         <div
@@ -175,6 +191,7 @@ export default function UGCReviewGrid() {
             isDraggingRef.current = true;
             startXRef.current = event.clientX;
             startScrollLeftRef.current = track.scrollLeft;
+            autoScrollLeftRef.current = track.scrollLeft;
             track.classList.add('is-dragging');
             track.setPointerCapture(event.pointerId);
             pauseAutoplay(10000);
@@ -199,10 +216,17 @@ export default function UGCReviewGrid() {
                 startScrollLeftRef.current += half;
               }
             }
+            autoScrollLeftRef.current = track.scrollLeft;
           }}
           onPointerUp={(event) => stopDragging(event.pointerId)}
           onPointerCancel={(event) => stopDragging(event.pointerId)}
-          onWheel={() => pauseAutoplay(2600)}
+          onWheel={() => {
+            const track = trackRef.current;
+            if (track) {
+              autoScrollLeftRef.current = track.scrollLeft;
+            }
+            pauseAutoplay(2600);
+          }}
         >
           <div className="review-interactive-track">
             {loopReviews.map((review, index) => (

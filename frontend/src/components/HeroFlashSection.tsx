@@ -3,33 +3,13 @@
 import { useLocale, useTranslations } from 'next-intl';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Camera, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { IMAGES } from '@/lib/image-utils';
-
-const ugcCornerPhotos = [
-  '/ugc/cozy-sofa.jpg',
-  '/ugc/home-study.jpg',
-  '/ugc/morning-kitchen.jpg',
-  '/ugc/office-corner.jpg',
-  '/ugc/student-exam.webp',
-  '/ugc/yoga-studio.jpg',
-  '/ugc/sg-middle-aged-chinese-man.webp',
-  '/ugc/sg-middle-aged-malay-woman.webp',
-  '/ugc/sg-teenage-chinese-student.webp',
-  '/ugc/sg-young-chinese-woman-campus.webp',
-  '/ugc/sg-young-indian-office-man.webp',
-  '/ugc/sg-young-indian-home-woman.webp',
-  '/ugc/sg-young-malay-man-park.webp',
-  '/ugc/sg-young-fitness-woman.webp',
-  '/ugc/sg-elderly-chinese-woman.webp',
-  '/ugc/sg-older-malay-man.webp',
-] as const;
 
 export default function HeroFlashSection() {
   const locale = useLocale();
   const t = useTranslations('Index');
   const isZh = locale === 'zh';
-  const loopPhotos = [...ugcCornerPhotos, ...ugcCornerPhotos];
 
   return (
     <section className="relative isolate flex min-h-[80vh] items-end overflow-hidden pt-6 lg:min-h-[84vh]" id="hero">
@@ -38,10 +18,11 @@ export default function HeroFlashSection() {
         alt={t('hero.imageAlt')}
         fill
         priority
-        className="object-cover object-center opacity-45"
+        className="object-cover object-[74%_center] opacity-80"
       />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,26,20,0.2)_0%,rgba(9,26,20,0.6)_42%,rgba(9,26,20,0.97)_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,184,0,0.2),transparent_30%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(100deg,rgba(9,26,20,0.92)_0%,rgba(9,26,20,0.88)_34%,rgba(9,26,20,0.44)_66%,rgba(9,26,20,0.16)_100%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(9,26,20,0.04)_0%,rgba(9,26,20,0.2)_54%,rgba(9,26,20,0.76)_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_42%,rgba(255,184,0,0.22),transparent_34%)]" />
 
       <div className="section-shell relative z-10 w-full pb-14 pt-24 md:pb-20">
         <div className="min-w-0 max-w-[44rem] space-y-6">
@@ -75,31 +56,6 @@ export default function HeroFlashSection() {
             <p className="text-xs font-semibold tracking-[0.08em] text-text-light/72">{t('hero.note')}</p>
           </div>
         </div>
-
-        <aside className="mt-8 w-full max-w-[44rem] overflow-hidden rounded-2xl border border-primary/20 bg-background-dark/82 p-3 shadow-[0_20px_38px_rgba(0,0,0,0.42)] backdrop-blur-sm">
-          <div className="mb-2 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.14em] text-primary">
-            <Camera size={12} />
-            <span>{t('hero.photoWallLabel')}</span>
-          </div>
-          <div className="ugc-corner-shell">
-            <div className="ugc-corner-track">
-              {loopPhotos.map((src, index) => (
-                <div
-                  key={`${src}-${index}`}
-                  className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-primary/22 sm:h-12 sm:w-12"
-                >
-                  <Image
-                    src={src}
-                    alt={t('hero.photoWallItemAlt', { index: index + 1 })}
-                    fill
-                    sizes="48px"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
       </div>
     </section>
   );

@@ -18,6 +18,7 @@ import HeroFlashSection from '@/components/HeroFlashSection';
 import AuthorityPartnerSection from '@/components/AuthorityPartnerSection';
 import UGCReviewGrid from '@/components/UGCReviewGrid';
 import StoryExperienceSection from '@/components/StoryExperienceSection';
+import SocialProofToast from '@/components/SocialProofToast';
 
 export default function HomePage() {
   const t = useTranslations('Index');
@@ -110,6 +111,7 @@ export default function HomePage() {
         onBuyNow={handleBuyNow}
       />
       <Footer />
+      <SocialProofToast />
       <MobileFloatingCTA />
       <CheckoutModal
         isOpen={isModalOpen}

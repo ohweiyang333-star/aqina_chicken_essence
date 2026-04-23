@@ -25,8 +25,67 @@ export interface ReviewSocialProofEvent extends BaseSocialProofEvent {
 export type SocialProofEvent = PurchaseSocialProofEvent | ReviewSocialProofEvent;
 
 interface SocialProofToastProps {
-  events: SocialProofEvent[];
+  events?: SocialProofEvent[];
   intervalMs?: number;
+}
+
+function parseSocialProofEvents(input: unknown): SocialProofEvent[] {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  const parsed: SocialProofEvent[] = [];
+
+  for (const item of input) {
+    if (typeof item !== 'object' || !item) {
+      continue;
+    }
+
+    const candidate = item as Record<string, unknown>;
+    const type = candidate.type;
+    const name = candidate.name;
+    const minutesAgo = candidate.minutesAgo;
+    const platform = candidate.platform;
+    const verified = Boolean(candidate.verified);
+
+    if ((type !== 'purchase' && type !== 'review')
+      || typeof name !== 'string'
+      || typeof platform !== 'string'
+      || typeof minutesAgo !== 'number') {
+      continue;
+    }
+
+    if (type === 'purchase') {
+      const boxes = candidate.boxes;
+      if (typeof boxes !== 'number') {
+        continue;
+      }
+      parsed.push({
+        type,
+        name,
+        minutesAgo,
+        platform,
+        boxes,
+        verified,
+      });
+      continue;
+    }
+
+    const rating = candidate.rating;
+    if (typeof rating !== 'number') {
+      continue;
+    }
+    parsed.push({
+      type,
+      name,
+      minutesAgo,
+      platform,
+      rating,
+      verified,
+    });
+  }
+
+  return parsed;
 }
 
 export default function SocialProofToast({
@@ -35,10 +94,12 @@ export default function SocialProofToast({
 }: SocialProofToastProps) {
   const t = useTranslations('Index.marketing.socialProof');
   const [activeIndex, setActiveIndex] = useState(0);
+  const translatedEvents = useMemo(() => parseSocialProofEvents(t.raw('events')), [t]);
+  const sourceEvents = events && events.length > 0 ? events : translatedEvents;
 
   const safeEvents = useMemo(
     () =>
-      events.filter((event) => {
+      sourceEvents.filter((event) => {
         if (!event.name || !event.platform || !Number.isFinite(event.minutesAgo)) {
           return false;
         }
@@ -49,7 +110,7 @@ export default function SocialProofToast({
 
         return Number.isFinite(event.boxes) && event.boxes > 0;
       }),
-    [events],
+    [sourceEvents],
   );
 
   useEffect(() => {
