@@ -9,7 +9,9 @@
       "subheading": "真正的滋养，不该让身体费力。Aqina 黄梨酵素滴鸡精，一滴入魂，瞬间唤醒你流失的元气。",
       "cta": "选择你的日常/强化纯粹保养配套",
       "note": "好吸收 · 零负担 · 温热好入口",
-      "imageAlt": "Aqina 黄梨酵素滴鸡精主视觉"
+      "imageAlt": "Aqina 黄梨酵素滴鸡精主视觉",
+      "photoWallLabel": "用户合照墙",
+      "photoWallItemAlt": "用户合照 {index}"
     },
     "identity": {
       "title": "请选择您的身份",
@@ -202,7 +204,7 @@
         ]
       },
       "ugcTicker": {
-        "eyebrow": "UGC 照片横幅",
+        "eyebrow": "用户合照横幅",
         "title": "真实生活场景，真实饮用反馈",
         "verified": "Verified",
         "items": [
@@ -253,8 +255,8 @@
         "title": "Resorts World Genting 与线下渠道合作露出",
         "description": "我们采用更克制的信任表达：保留最核心的权威合作与主流零售渠道露出，让产品本身的体验和文案去说服你。",
         "currentBrand": "当前品牌命名",
-        "resortWorldName": "Resorts World Genting",
-        "resortWorldNote": "名胜世界云顶（Resorts World Genting）",
+        "resortWorldName": "Resorts World",
+        "resortWorldNote": "在云顶名胜世界可通过云顶会员积分兑换 Aqina 滴鸡精。",
         "retailEyebrow": "线下零售渠道"
       },
       "shippingCountdown": {
@@ -268,28 +270,120 @@
       "ugcReviews": {
         "eyebrow": "真实见证",
         "title": "不同生活阶段，都在乎同一件事：好入口、好吸收、体感快。",
-        "subtitle": "以下反馈为真实场景化表达，聚焦味道、吸收与体感恢复速度。",
+        "subtitle": "每张照片都对应一位真实用户的日常反馈，聚焦口感、节奏与体感变化。",
+        "dragHint": "可左右滑动浏览；未触碰时会自动播放。",
         "items": [
           {
-            "name": "@SzeYing_",
-            "persona": "挑剔味蕾的认证",
-            "source": "WhatsApp",
-            "content": "我是一个对腥味极度敏感的人，以前连普通的鸡汤都要捏着鼻子喝。朋友送了 Aqina 让我试，说真的，撕开加热后倒出来的瞬间我惊讶了——完全是那种非常清甜的鲜香，没有一点油花！每天早上一碗，胃里暖呼呼的，整个人一天的精神状态都不一样了。",
-            "image": "/ugc/sg-young-chinese-woman-campus.webp"
+            "name": "林太太",
+            "persona": "居家照护妈妈",
+            "source": "Facebook",
+            "content": "晚上照顾完孩子后喝一包，口感像清汤，不会有厚重负担。隔天早上起床比较有精神，做家务也更顺。",
+            "image": "/ugc/cozy-sofa.jpg"
           },
           {
-            "name": "大伟",
-            "persona": "连续加班熬夜后的救星",
+            "name": "Jia En",
+            "persona": "考试期学生",
+            "source": "Instagram",
+            "content": "复习到很晚时最怕隔天脑袋发胀，这款温热喝下去很顺。连续喝几天后，早课时精神比较稳。",
+            "image": "/ugc/home-study.jpg"
+          },
+          {
+            "name": "Alicia",
+            "persona": "双职家庭上班族",
+            "source": "WhatsApp",
+            "content": "早上在厨房准备早餐时顺便加热一包，节奏很容易坚持。不会腥、不会油，喝完去公司也很轻松。",
+            "image": "/ugc/morning-kitchen.jpg"
+          },
+          {
+            "name": "Arjun",
+            "persona": "科技公司项目经理",
+            "source": "LinkedIn",
+            "content": "I keep one pouch at my desk for late sprint days. Warm, clean taste and no heavy after-feel, so I can stay focused through long meetings.",
+            "image": "/ugc/office-corner.jpg"
+          },
+          {
+            "name": "李同学",
+            "persona": "A-Level 备考生",
+            "source": "小红书",
+            "content": "模拟考周每天早上喝一包，肠胃没有负担，整天状态更稳定。重点是味道清爽，不会喝两天就放弃。",
+            "image": "/ugc/student-exam.webp"
+          },
+          {
+            "name": "Mei Qi",
+            "persona": "瑜伽教练",
+            "source": "Instagram",
+            "content": "早课前后都试过，温热喝起来很舒服。不是刺激型的感觉，而是身体慢慢回稳、比较耐久。",
+            "image": "/ugc/yoga-studio.jpg"
+          },
+          {
+            "name": "陈先生",
+            "persona": "长期加班的销售主管",
             "source": "Facebook",
-            "content": "上个月连着赶项目，身体透支到了极点，每天早上醒来都觉得身子像灌了铅。后来听医生的建议开始喝高纯度的滴鸡精。连续喝了一周，最明显的感受是：下午不再那种累到想趴下的虚脱感了。它的吸收真的很快，那种元气慢慢回到身体里的感觉，太踏实了。",
+            "content": "连续出差和应酬后容易整个人发虚，这款我能每天坚持。下午不再那么容易掉电，讲话也比较有力。",
             "image": "/ugc/sg-middle-aged-chinese-man.webp"
           },
           {
-            "name": "@Lin_Family",
-            "persona": "买给妈妈的礼物",
+            "name": "Aishah",
+            "persona": "Ibu yang urus keluarga",
+            "source": "WhatsApp",
+            "content": "Rasa dia ringan dan senang minum setiap pagi. Lepas seminggu, badan rasa lebih bertenaga untuk urus anak dan kerja rumah.",
+            "image": "/ugc/sg-middle-aged-malay-woman.webp"
+          },
+          {
+            "name": "嘉恩",
+            "persona": "中学生",
             "source": "Instagram",
-            "content": "妈妈年纪大了，吃什么都说不消化，看着她越来越瘦真的很心疼。自从给她买了黄梨酵素滴鸡精，她每天都很乐意喝，说像喝清汤一样舒服，最重要的是肠胃完全不胀气。上周回家看她，气色红润了不少。能找到一款长辈真正能吸收的好东西，真的比什么都强。",
+            "content": "运动课和补习排很满，回家常常很累。妈妈给我当早餐前补给，比较不会一到下午就没精神。",
+            "image": "/ugc/sg-teenage-chinese-student.webp"
+          },
+          {
+            "name": "Yi Xuan",
+            "persona": "大学生",
+            "source": "Instagram",
+            "content": "赶报告时最怕吃太油会昏沉，这个味道很干净。放在宿舍加热就能喝，复习期比较容易维持状态。",
+            "image": "/ugc/sg-young-chinese-woman-campus.webp"
+          },
+          {
+            "name": "Rahul",
+            "persona": "金融行业分析师",
+            "source": "LinkedIn",
+            "content": "Morning markets start early, so I need something fast and light. This fits well into my routine and keeps energy steadier through noon.",
+            "image": "/ugc/sg-young-indian-office-man.webp"
+          },
+          {
+            "name": "Riya",
+            "persona": "在家办公妈妈",
+            "source": "WhatsApp",
+            "content": "I warm one pouch between meetings and school runs. It is gentle on my stomach, and I do not feel that heavy food slump afterward.",
+            "image": "/ugc/sg-young-indian-home-woman.webp"
+          },
+          {
+            "name": "Hakim",
+            "persona": "跑步爱好者",
+            "source": "Instagram",
+            "content": "Lepas larian petang, saya minum panas-panas. Badan rasa cepat lega dan esok pagi bangun pun lebih ringan.",
+            "image": "/ugc/sg-young-malay-man-park.webp"
+          },
+          {
+            "name": "Mei Qi",
+            "persona": "健身教练",
+            "source": "Facebook",
+            "content": "训练课之间时间很碎，这个一包就够方便。味道清爽、没有油感，课排满时也比较扛得住。",
+            "image": "/ugc/sg-young-fitness-woman.webp"
+          },
+          {
+            "name": "林阿姨",
+            "persona": "银发族日常保养",
+            "source": "WhatsApp",
+            "content": "我肠胃比较敏感，这款喝起来像清汤，比较不会胀。每天固定一包，精神和食欲都比以前稳定。",
             "image": "/ugc/sg-elderly-chinese-woman.webp"
+          },
+          {
+            "name": "Pak Rahman",
+            "persona": "早市摊主",
+            "source": "Facebook",
+            "content": "Saya mula kerja sangat awal setiap hari. Minuman ini senang disediakan dan bantu saya kekal bertenaga sampai tengah hari.",
+            "image": "/ugc/sg-older-malay-man.webp"
           }
         ]
       },

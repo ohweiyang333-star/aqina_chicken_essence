@@ -239,6 +239,33 @@ button {
   animation: ugc-corner-scroll 24s linear infinite;
 }
 
+.review-interactive-shell {
+  overflow-x: auto;
+  width: 100%;
+  min-width: 0;
+  touch-action: pan-x;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  cursor: grab;
+}
+
+.review-interactive-shell::-webkit-scrollbar {
+  display: none;
+}
+
+.review-interactive-shell.is-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.review-interactive-track {
+  display: flex;
+  align-items: stretch;
+  gap: 1rem;
+  width: max-content;
+  padding: 0.5rem 0.25rem;
+}
+
 @keyframes promo-marquee-scroll {
   from {
     transform: translate3d(0, 0, 0);

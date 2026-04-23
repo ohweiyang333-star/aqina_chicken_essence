@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     "Halal Certified",
     "Free Shipping Singapore",
     "2-3 days delivery",
-    "UGC Reviews",
+    "Customer Reviews",
   ],
 };
 

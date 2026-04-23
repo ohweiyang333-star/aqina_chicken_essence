@@ -9,7 +9,9 @@
       "subheading": "Real nourishment should not feel heavy. Aqina is made for fast, clean intake that supports your energy when you need it most.",
       "cta": "Choose Your Daily / Intensive Pure Care Plan",
       "note": "Fast Absorption · Low Burden · Easy Warm Intake",
-      "imageAlt": "Aqina pineapple enzyme chicken essence hero visual"
+      "imageAlt": "Aqina pineapple enzyme chicken essence hero visual",
+      "photoWallLabel": "Customer Photo Wall",
+      "photoWallItemAlt": "Customer photo {index}"
     },
     "identity": {
       "title": "Choose Your Identity",
@@ -202,7 +204,7 @@
         ]
       },
       "ugcTicker": {
-        "eyebrow": "UGC Photo Banner",
+        "eyebrow": "Customer Photo Banner",
         "title": "Real lifestyle moments, real daily routines",
         "verified": "Verified",
         "items": [
@@ -253,8 +255,8 @@
         "title": "Resorts World Genting and retail channel visibility",
         "description": "Trust cues are kept minimal: one core authority collaboration and key retail channels, so product experience and clear copy do the persuasion.",
         "currentBrand": "Current Brand Name",
-        "resortWorldName": "Resorts World Genting",
-        "resortWorldNote": "Named as Resorts World Genting (not legacy Genting logo)",
+        "resortWorldName": "Resorts World",
+        "resortWorldNote": "At Resorts World Genting, Aqina chicken essence can be redeemed with Genting membership points.",
         "retailEyebrow": "Offline Retail Channels"
       },
       "shippingCountdown": {
@@ -268,28 +270,120 @@
       "ugcReviews": {
         "eyebrow": "Real Testimonials",
         "title": "Different people, same priority: easy taste, easy absorption, quick recovery feel.",
-        "subtitle": "These testimonials emphasize sensory details and lived routines over generic claims.",
+        "subtitle": "Each photo is paired with one real routine note, focused on taste, consistency, and daily recovery feel.",
+        "dragHint": "Swipe left or right to browse. It auto-plays when untouched.",
         "items": [
           {
-            "name": "@SzeYing_",
-            "persona": "Sensitive palate",
+            "name": "Mrs. Lim",
+            "persona": "Home caregiving mom",
+            "source": "Facebook",
+            "content": "After settling the kids at night, I warm one pouch. It tastes clean like light soup, and I wake up steadier the next morning.",
+            "image": "/ugc/cozy-sofa.jpg"
+          },
+          {
+            "name": "Jia En",
+            "persona": "Exam-week student",
+            "source": "Instagram",
+            "content": "During revision weeks, I need something simple before class. This is easy to drink warm and helps me stay more focused through morning lessons.",
+            "image": "/ugc/home-study.jpg"
+          },
+          {
+            "name": "Alicia",
+            "persona": "Working mom",
             "source": "WhatsApp",
-            "content": "I am extremely sensitive to gamey taste and usually avoid chicken soup. With Aqina, the aroma after heating was clean and lightly sweet with no oil film. One warm serving in the morning makes my stomach feel comfortable and my day feels steadier.",
+            "content": "I heat one while preparing breakfast, so the routine is easy to keep. No oily after-feel, and I can head to work feeling lighter.",
+            "image": "/ugc/morning-kitchen.jpg"
+          },
+          {
+            "name": "Arjun",
+            "persona": "Tech project manager",
+            "source": "LinkedIn",
+            "content": "I keep one pouch at my desk for late sprint days. Warm, clean taste and no heavy after-feel, so I can stay focused through long meetings.",
+            "image": "/ugc/office-corner.jpg"
+          },
+          {
+            "name": "Li Tong",
+            "persona": "A-Level candidate",
+            "source": "Xiaohongshu",
+            "content": "My schedule is packed with mock exams and tuition. One serving in the morning feels light on my stomach and keeps my energy more stable in the afternoon.",
+            "image": "/ugc/student-exam.webp"
+          },
+          {
+            "name": "Mei Qi",
+            "persona": "Yoga instructor",
+            "source": "Instagram",
+            "content": "I use it around early classes because it is gentle and easy to warm quickly. The recovery feel is steady, not a sharp spike-and-drop.",
+            "image": "/ugc/yoga-studio.jpg"
+          },
+          {
+            "name": "Mr. Tan",
+            "persona": "Sales lead with frequent overtime",
+            "source": "Facebook",
+            "content": "Business travel and late dinners used to drain me fast. With this daily routine, I feel less of that afternoon crash and can keep my pace better.",
             "image": "/ugc/sg-middle-aged-chinese-man.webp"
           },
           {
-            "name": "Da Wei",
-            "persona": "Heavy overtime recovery",
-            "source": "Facebook",
-            "content": "After weeks of late-night project work I felt drained every morning. I started high-purity chicken essence daily and within one week the afternoon crash was clearly reduced. Absorption feels fast and the return of energy feels grounded.",
+            "name": "Aishah",
+            "persona": "Ibu yang urus keluarga",
+            "source": "WhatsApp",
+            "content": "Rasa dia ringan dan senang minum setiap pagi. Lepas seminggu, badan rasa lebih bertenaga untuk urus anak dan kerja rumah.",
+            "image": "/ugc/sg-middle-aged-malay-woman.webp"
+          },
+          {
+            "name": "Jia En",
+            "persona": "Secondary school student",
+            "source": "Instagram",
+            "content": "Sports and study days can get long. I take one before school and feel less tired by evening classes.",
+            "image": "/ugc/sg-teenage-chinese-student.webp"
+          },
+          {
+            "name": "Yi Xuan",
+            "persona": "University student",
+            "source": "Instagram",
+            "content": "On report weeks, heavy food slows me down. This warm serving is simple, clean in taste, and easy to keep as part of my campus routine.",
+            "image": "/ugc/sg-young-chinese-woman-campus.webp"
+          },
+          {
+            "name": "Rahul",
+            "persona": "Finance analyst",
+            "source": "LinkedIn",
+            "content": "Morning market sessions start early, so convenience matters. One pouch before work gives me a smoother start without feeling overly full.",
             "image": "/ugc/sg-young-indian-office-man.webp"
           },
           {
-            "name": "@Lin_Family",
-            "persona": "Bought for mother",
+            "name": "Riya",
+            "persona": "Work-from-home mom",
+            "source": "WhatsApp",
+            "content": "Between meetings and school runs, I need something quick and gentle. This has become my easiest daily routine because it is warm and light.",
+            "image": "/ugc/sg-young-indian-home-woman.webp"
+          },
+          {
+            "name": "Hakim",
+            "persona": "Recreational runner",
             "source": "Instagram",
-            "content": "My mother often says many foods are hard to digest. Since we switched to pineapple enzyme chicken essence, she drinks it willingly because it feels like a light clear soup and does not cause bloating. Her complexion looked better when I visited last week.",
+            "content": "Lepas larian petang, saya minum panas-panas. Badan rasa cepat lega dan esok pagi bangun pun lebih ringan.",
+            "image": "/ugc/sg-young-malay-man-park.webp"
+          },
+          {
+            "name": "Mei Qi",
+            "persona": "Fitness coach",
+            "source": "Facebook",
+            "content": "My training days are packed, so I value routines that are easy to repeat. This is clean tasting and sits comfortably even between sessions.",
+            "image": "/ugc/sg-young-fitness-woman.webp"
+          },
+          {
+            "name": "Auntie Lim",
+            "persona": "Senior daily wellness",
+            "source": "WhatsApp",
+            "content": "My appetite is small and my stomach is sensitive. This feels like light soup and is easy for me to take every day.",
             "image": "/ugc/sg-elderly-chinese-woman.webp"
+          },
+          {
+            "name": "Pak Rahman",
+            "persona": "Morning market vendor",
+            "source": "Facebook",
+            "content": "Saya mula kerja sangat awal setiap hari. Minuman ini senang disediakan dan bantu saya kekal bertenaga sampai tengah hari.",
+            "image": "/ugc/sg-older-malay-man.webp"
           }
         ]
       },

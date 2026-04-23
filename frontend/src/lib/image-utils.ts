@@ -3,7 +3,7 @@ export function getFirebaseUrl(filename: string) {
 }
 
 export const IMAGES = {
-  hero: getFirebaseUrl('温暖家庭场景Hero Banner.png'),
+  hero: '/images/hero-farm-banner.jpg',
   logo: getFirebaseUrl('Aqina Farm-Logo (Gold).png'),
   story: getFirebaseUrl('7天双重蒸煮.jpg'),
   products: {

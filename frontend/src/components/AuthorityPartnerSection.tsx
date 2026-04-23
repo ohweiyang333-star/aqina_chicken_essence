@@ -57,8 +57,8 @@ export default function AuthorityPartnerSection() {
               <div className="mt-6 rounded-xl border border-primary/18 bg-white px-5 py-5">
                 <div className="relative h-16 w-full">
                   <Image
-                    src="/brands/resorts-world-genting.jpg"
-                    alt="Resorts World Genting"
+                    src="/brands/resorts-world-sentosa.png"
+                    alt="Resorts World"
                     fill
                     className="object-contain object-left"
                     sizes="(max-width: 768px) 90vw, 460px"
