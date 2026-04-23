@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BadgeCheck, MessageSquareText, ShoppingBag } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -27,6 +27,20 @@ export type SocialProofEvent = PurchaseSocialProofEvent | ReviewSocialProofEvent
 interface SocialProofToastProps {
   events?: SocialProofEvent[];
   intervalMs?: number;
+}
+
+function shuffleIndices(length: number, avoidFirstIndex: number | null) {
+  const indices = Array.from({ length }, (_, index) => index);
+  for (let i = indices.length - 1; i > 0; i -= 1) {
+    const randomIndex = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[randomIndex]] = [indices[randomIndex], indices[i]];
+  }
+
+  if (avoidFirstIndex !== null && indices.length > 1 && indices[0] === avoidFirstIndex) {
+    [indices[0], indices[1]] = [indices[1], indices[0]];
+  }
+
+  return indices;
 }
 
 function parseSocialProofEvents(input: unknown): SocialProofEvent[] {
@@ -90,12 +104,14 @@ function parseSocialProofEvents(input: unknown): SocialProofEvent[] {
 
 export default function SocialProofToast({
   events,
-  intervalMs = 6200,
+  intervalMs = 6800,
 }: SocialProofToastProps) {
   const t = useTranslations('Index.marketing.socialProof');
   const [activeIndex, setActiveIndex] = useState(0);
   const translatedEvents = useMemo(() => parseSocialProofEvents(t.raw('events')), [t]);
   const sourceEvents = events && events.length > 0 ? events : translatedEvents;
+  const queueRef = useRef<number[]>([]);
+  const lastShownIndexRef = useRef<number | null>(null);
 
   const safeEvents = useMemo(
     () =>
@@ -113,19 +129,58 @@ export default function SocialProofToast({
     [sourceEvents],
   );
 
+  const refillQueue = useCallback(() => {
+    if (safeEvents.length <= 1) {
+      queueRef.current = safeEvents.length === 1 ? [0] : [];
+      return;
+    }
+    queueRef.current = shuffleIndices(safeEvents.length, lastShownIndexRef.current);
+  }, [safeEvents.length]);
+
+  const getNextIndex = useCallback(() => {
+    if (safeEvents.length === 0) {
+      return null;
+    }
+    if (safeEvents.length === 1) {
+      return 0;
+    }
+    if (queueRef.current.length === 0) {
+      refillQueue();
+    }
+    const next = queueRef.current.shift();
+    if (typeof next !== 'number') {
+      return 0;
+    }
+    return next;
+  }, [refillQueue, safeEvents.length]);
+
+  useEffect(() => {
+    queueRef.current = [];
+    if (safeEvents.length === 0) {
+      lastShownIndexRef.current = null;
+      return;
+    }
+    lastShownIndexRef.current = activeIndex % safeEvents.length;
+  }, [activeIndex, safeEvents.length]);
+
   useEffect(() => {
     if (safeEvents.length <= 1) {
       return;
     }
 
     const timerId = window.setInterval(() => {
-      setActiveIndex((previous) => (previous + 1) % safeEvents.length);
+      const nextIndex = getNextIndex();
+      if (typeof nextIndex !== 'number') {
+        return;
+      }
+      lastShownIndexRef.current = nextIndex;
+      setActiveIndex(nextIndex);
     }, intervalMs);
 
     return () => {
       window.clearInterval(timerId);
     };
-  }, [intervalMs, safeEvents.length]);
+  }, [getNextIndex, intervalMs, safeEvents.length]);
 
   if (!safeEvents.length) {
     return null;

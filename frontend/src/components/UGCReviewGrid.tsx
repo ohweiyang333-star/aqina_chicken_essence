@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { MessageCircle } from 'lucide-react';
+import { withImageVersion } from '@/lib/image-utils';
 
 interface UGCReview {
   name: string;
@@ -14,26 +15,28 @@ interface UGCReview {
 }
 
 const fallbackReviewImages = [
-  '/ugc/cozy-sofa.jpg',
-  '/ugc/home-study.jpg',
-  '/ugc/morning-kitchen.jpg',
-  '/ugc/office-corner.jpg',
-  '/ugc/student-exam.webp',
-  '/ugc/yoga-studio.jpg',
-  '/ugc/sg-middle-aged-chinese-man.webp',
-  '/ugc/sg-middle-aged-malay-woman.webp',
-  '/ugc/sg-teenage-chinese-student.webp',
-  '/ugc/sg-young-chinese-woman-campus.webp',
-  '/ugc/sg-young-indian-office-man.webp',
-  '/ugc/sg-young-indian-home-woman.webp',
-  '/ugc/sg-young-malay-man-park.webp',
-  '/ugc/sg-young-fitness-woman.webp',
-  '/ugc/sg-elderly-chinese-woman.webp',
-  '/ugc/sg-older-malay-man.webp',
+  withImageVersion('/ugc/cozy-sofa.jpg'),
+  withImageVersion('/ugc/home-study.jpg'),
+  withImageVersion('/ugc/morning-kitchen.jpg'),
+  withImageVersion('/ugc/office-corner.jpg'),
+  withImageVersion('/ugc/student-exam.webp'),
+  withImageVersion('/ugc/yoga-studio.jpg'),
+  withImageVersion('/ugc/sg-middle-aged-chinese-man.webp'),
+  withImageVersion('/ugc/sg-middle-aged-malay-woman.webp'),
+  withImageVersion('/ugc/sg-teenage-chinese-student.webp'),
+  withImageVersion('/ugc/sg-young-chinese-woman-campus.webp'),
+  withImageVersion('/ugc/sg-young-indian-office-man.webp'),
+  withImageVersion('/ugc/sg-young-indian-home-woman.webp'),
+  withImageVersion('/ugc/sg-young-malay-man-park.webp'),
+  withImageVersion('/ugc/sg-young-fitness-woman.webp'),
+  withImageVersion('/ugc/sg-elderly-chinese-woman.webp'),
+  withImageVersion('/ugc/sg-older-malay-man.webp'),
 ] as const;
 
-const AUTO_SCROLL_SPEED_PX_PER_SECOND = 28;
+const AUTO_SCROLL_STEP_PX = 1;
+const AUTO_SCROLL_INTERVAL_MS = 22;
 const AUTO_RESUME_DELAY_MS = 1800;
+const LOOP_EDGE_BUFFER_PX = 2;
 
 function parseReviews(input: unknown): UGCReview[] {
   if (!Array.isArray(input)) {
@@ -68,12 +71,11 @@ export default function UGCReviewGrid() {
   const parsedReviews = parseReviews(t.raw('items'));
   const reviews = parsedReviews.map((review, index) => ({
     ...review,
-    image: review.image || fallbackReviewImages[index % fallbackReviewImages.length],
+    image: withImageVersion(review.image || fallbackReviewImages[index % fallbackReviewImages.length]),
   }));
   const loopReviews = [...reviews, ...reviews];
 
   const trackRef = useRef<HTMLDivElement>(null);
-  const autoScrollLeftRef = useRef(0);
   const isDraggingRef = useRef(false);
   const isAutoplayPausedRef = useRef(false);
   const startXRef = useRef(0);
@@ -91,24 +93,26 @@ export default function UGCReviewGrid() {
     }, delay);
   }, []);
 
-  const normalizeLoopPosition = useCallback((element: HTMLDivElement) => {
+  const normalizeLoopPosition = useCallback((element: HTMLDivElement, syncDragAnchor = false) => {
     const half = element.scrollWidth / 2;
-    if (!half) {
-      return element.scrollLeft;
+    if (half <= element.clientWidth) {
+      return;
     }
 
-    let nextScrollLeft = element.scrollLeft;
-    if (nextScrollLeft >= half) {
-      nextScrollLeft -= half;
-    } else if (nextScrollLeft <= 0) {
-      nextScrollLeft += half;
+    if (element.scrollLeft < LOOP_EDGE_BUFFER_PX) {
+      element.scrollLeft += half;
+      if (syncDragAnchor) {
+        startScrollLeftRef.current += half;
+      }
+      return;
     }
 
-    if (nextScrollLeft !== element.scrollLeft) {
-      element.scrollLeft = nextScrollLeft;
+    if (element.scrollLeft > half + LOOP_EDGE_BUFFER_PX) {
+      element.scrollLeft -= half;
+      if (syncDragAnchor) {
+        startScrollLeftRef.current -= half;
+      }
     }
-
-    return nextScrollLeft;
   }, []);
 
   const stopDragging = useCallback((pointerId?: number) => {
@@ -123,9 +127,9 @@ export default function UGCReviewGrid() {
 
     isDraggingRef.current = false;
     track.classList.remove('is-dragging');
-    autoScrollLeftRef.current = track.scrollLeft;
+    normalizeLoopPosition(track);
     pauseAutoplay();
-  }, [pauseAutoplay]);
+  }, [normalizeLoopPosition, pauseAutoplay]);
 
   useEffect(() => {
     const track = trackRef.current;
@@ -133,29 +137,44 @@ export default function UGCReviewGrid() {
       return;
     }
 
-    let rafId = 0;
-    let lastTimestamp = 0;
-    autoScrollLeftRef.current = normalizeLoopPosition(track);
-
-    const animate = (timestamp: number) => {
-      if (!lastTimestamp) {
-        lastTimestamp = timestamp;
+    const initializeTrackPosition = () => {
+      const half = track.scrollWidth / 2;
+      if (half <= track.clientWidth) {
+        return;
       }
-      const elapsedMs = Math.min(timestamp - lastTimestamp, 64);
-      lastTimestamp = timestamp;
-
-      if (!isAutoplayPausedRef.current && !isDraggingRef.current) {
-        autoScrollLeftRef.current += (AUTO_SCROLL_SPEED_PX_PER_SECOND * elapsedMs) / 1000;
-        track.scrollLeft = autoScrollLeftRef.current;
-        autoScrollLeftRef.current = normalizeLoopPosition(track);
+      if (track.scrollLeft < LOOP_EDGE_BUFFER_PX) {
+        track.scrollLeft = half * 0.35;
       }
-      rafId = window.requestAnimationFrame(animate);
+      normalizeLoopPosition(track);
     };
+    initializeTrackPosition();
+    const delayedInitTimerId = window.setTimeout(initializeTrackPosition, 420);
 
-    rafId = window.requestAnimationFrame(animate);
+    const intervalId = window.setInterval(() => {
+      if (isAutoplayPausedRef.current || isDraggingRef.current) {
+        return;
+      }
+
+      const half = track.scrollWidth / 2;
+      if (half <= track.clientWidth) {
+        return;
+      }
+
+      track.scrollLeft += AUTO_SCROLL_STEP_PX;
+      if (track.scrollLeft > half + LOOP_EDGE_BUFFER_PX) {
+        track.scrollLeft -= half;
+      }
+    }, AUTO_SCROLL_INTERVAL_MS);
+
+    const handleResize = () => {
+      initializeTrackPosition();
+    };
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      window.cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', handleResize);
+      window.clearInterval(intervalId);
+      window.clearTimeout(delayedInitTimerId);
       if (resumeTimerRef.current) {
         clearTimeout(resumeTimerRef.current);
         resumeTimerRef.current = null;
@@ -191,10 +210,9 @@ export default function UGCReviewGrid() {
             isDraggingRef.current = true;
             startXRef.current = event.clientX;
             startScrollLeftRef.current = track.scrollLeft;
-            autoScrollLeftRef.current = track.scrollLeft;
             track.classList.add('is-dragging');
             track.setPointerCapture(event.pointerId);
-            pauseAutoplay(10000);
+            pauseAutoplay(9000);
             event.preventDefault();
           }}
           onPointerMove={(event) => {
@@ -205,28 +223,11 @@ export default function UGCReviewGrid() {
 
             const deltaX = event.clientX - startXRef.current;
             track.scrollLeft = startScrollLeftRef.current - deltaX;
-
-            const half = track.scrollWidth / 2;
-            if (half > 0) {
-              if (track.scrollLeft >= half) {
-                track.scrollLeft -= half;
-                startScrollLeftRef.current -= half;
-              } else if (track.scrollLeft <= 0) {
-                track.scrollLeft += half;
-                startScrollLeftRef.current += half;
-              }
-            }
-            autoScrollLeftRef.current = track.scrollLeft;
+            normalizeLoopPosition(track, true);
           }}
           onPointerUp={(event) => stopDragging(event.pointerId)}
           onPointerCancel={(event) => stopDragging(event.pointerId)}
-          onWheel={() => {
-            const track = trackRef.current;
-            if (track) {
-              autoScrollLeftRef.current = track.scrollLeft;
-            }
-            pauseAutoplay(2600);
-          }}
+          onWheel={() => pauseAutoplay(2600)}
         >
           <div className="review-interactive-track">
             {loopReviews.map((review, index) => (

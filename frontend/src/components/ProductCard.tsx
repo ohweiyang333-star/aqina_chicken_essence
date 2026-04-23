@@ -5,6 +5,7 @@ import Image from "next/image";
 import { CheckCircle2, Plus, ShoppingCart } from "lucide-react";
 import type { DisplayProduct } from "@/lib/product-service";
 import { resolveFixedProductImageByMeta } from "@/lib/product-service";
+import { withImageVersion } from "@/lib/image-utils";
 
 interface ProductCardProps {
   product: DisplayProduct;
@@ -14,10 +15,10 @@ interface ProductCardProps {
 }
 
 const optimizedProductImages: Record<string, string> = {
-  pack1: '/images/pack-1.webp',
-  pack2: '/images/pack-2.webp',
-  pack4: '/images/pack-4.webp',
-  pack6: '/images/pack-6.webp',
+  pack1: withImageVersion('/images/pack-1.webp'),
+  pack2: withImageVersion('/images/pack-2.webp'),
+  pack4: withImageVersion('/images/pack-4.webp'),
+  pack6: withImageVersion('/images/pack-6.webp'),
 };
 
 export function ProductCard({

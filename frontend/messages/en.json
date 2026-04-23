@@ -209,43 +209,43 @@
         "verified": "Verified",
         "items": [
           {
-            "src": "/ugc/sg-middle-aged-chinese-man.webp",
+            "src": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d",
             "caption": "Living Room | Mr. Tan daily vitality routine"
           },
           {
-            "src": "/ugc/sg-middle-aged-malay-woman.webp",
+            "src": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d",
             "caption": "Home Dining | Aishah family nourishment"
           },
           {
-            "src": "/ugc/sg-teenage-chinese-student.webp",
+            "src": "/ugc/sg-teenage-chinese-student.webp?v=20260423d",
             "caption": "School Break | Jia En exam prep support"
           },
           {
-            "src": "/ugc/sg-young-chinese-woman-campus.webp",
+            "src": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d",
             "caption": "Campus Walk | Yi Xuan study-week routine"
           },
           {
-            "src": "/ugc/sg-young-indian-office-man.webp",
+            "src": "/ugc/sg-young-indian-office-man.webp?v=20260423d",
             "caption": "Office Desk | Rahul daily focus support"
           },
           {
-            "src": "/ugc/sg-young-indian-home-woman.webp",
+            "src": "/ugc/sg-young-indian-home-woman.webp?v=20260423d",
             "caption": "Home Kitchen | Riya gentle daily recovery"
           },
           {
-            "src": "/ugc/sg-young-malay-man-park.webp",
+            "src": "/ugc/sg-young-malay-man-park.webp?v=20260423d",
             "caption": "Park Scene | Hakim post-workout routine"
           },
           {
-            "src": "/ugc/sg-young-fitness-woman.webp",
+            "src": "/ugc/sg-young-fitness-woman.webp?v=20260423d",
             "caption": "Fitness Check-in | Mei Qi training recovery"
           },
           {
-            "src": "/ugc/sg-elderly-chinese-woman.webp",
+            "src": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d",
             "caption": "Family Home | Auntie Lim senior wellness"
           },
           {
-            "src": "/ugc/sg-older-malay-man.webp",
+            "src": "/ugc/sg-older-malay-man.webp?v=20260423d",
             "caption": "Hawker Center | Pak Rahman daily nourishment"
           }
         ]
@@ -276,112 +276,105 @@
             "persona": "Home caregiving mom",
             "source": "Facebook",
             "content": "After settling the kids at night, I warm one pouch. It tastes clean like light soup, and I wake up steadier the next morning.",
-            "image": "/ugc/cozy-sofa.jpg"
+            "image": "/ugc/cozy-sofa.jpg?v=20260423d"
           },
           {
             "name": "Jia En",
             "persona": "Exam-week student",
             "source": "Instagram",
             "content": "During revision weeks, I need something simple before class. This is easy to drink warm and helps me stay more focused through morning lessons.",
-            "image": "/ugc/home-study.jpg"
+            "image": "/ugc/home-study.jpg?v=20260423d"
           },
           {
             "name": "Alicia",
             "persona": "Working mom",
             "source": "WhatsApp",
             "content": "I heat one while preparing breakfast, so the routine is easy to keep. No oily after-feel, and I can head to work feeling lighter.",
-            "image": "/ugc/morning-kitchen.jpg"
+            "image": "/ugc/morning-kitchen.jpg?v=20260423d"
           },
           {
             "name": "Min Yi",
             "persona": "Tech project manager",
             "source": "LinkedIn",
             "content": "Over the last two months, I was juggling multiple launches at once and constantly jumping between meetings and docs. By mid-afternoon, I used to crash and rely on coffee just to push through. I switched to one warm pouch in the afternoon, and it felt like clear chicken soup with no oily heaviness. After a week, the biggest difference was staying mentally sharper in late meetings and still having energy when I got home.",
-            "image": "/ugc/office-corner.jpg"
+            "image": "/ugc/office-corner.jpg?v=20260423d"
           },
           {
             "name": "Li Tong",
             "persona": "A-Level candidate",
             "source": "Xiaohongshu",
             "content": "During exam season, my days were packed with classes, tuition, and late-night revision, and mornings felt especially heavy. I started taking one warm pouch before study sessions because it is easy to drink and does not upset my stomach. After a week, I noticed fewer afternoon energy dips and better focus during long review blocks. What matters most is that I can actually keep this routine daily without forcing it.",
-            "image": "/ugc/sg-teenage-chinese-student.webp"
+            "image": "/ugc/sg-teenage-chinese-student.webp?v=20260423d"
           },
           {
             "name": "Emma",
             "persona": "Yoga instructor",
             "source": "Instagram",
             "content": "I teach multiple classes a day, and the hardest part used to be the late-afternoon drop in stamina. I now warm one pouch between classes because it is gentle, clean-tasting, and never feels too heavy before the next session. After a few days, I could feel less end-of-day fatigue and a smoother start the following morning. For coaches, that kind of steady recovery is far more useful than short bursts of energy.",
-            "image": "/ugc/yoga-studio.jpg"
+            "image": "/ugc/yoga-studio.jpg?v=20260423d"
           },
           {
             "name": "Mr. Tan",
             "persona": "Sales lead with frequent overtime",
             "source": "Facebook",
             "content": "Business travel and late dinners used to drain me fast. With this daily routine, I feel less of that afternoon crash and can keep my pace better.",
-            "image": "/ugc/sg-middle-aged-chinese-man.webp"
+            "image": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d"
           },
           {
             "name": "Aishah",
             "persona": "Ibu yang urus keluarga",
             "source": "WhatsApp",
             "content": "Rasa dia ringan dan senang minum setiap pagi. Lepas seminggu, badan rasa lebih bertenaga untuk urus anak dan kerja rumah.",
-            "image": "/ugc/sg-middle-aged-malay-woman.webp"
-          },
-          {
-            "name": "Sofia",
-            "persona": "IB exam candidate",
-            "source": "Instagram",
-            "content": "During IB prep weeks, my schedule was nonstop from classes to tuition, and I often felt mentally drained by late afternoon. I started warming one pouch before heading out because it is lighter than a rushed heavy breakfast. After sticking to it, my evening study sessions felt more stable and I was less likely to hit a hard slump. The best part is that it fits into exam-week routines without adding digestive stress.",
-            "image": "/ugc/student-exam.webp"
+            "image": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d"
           },
           {
             "name": "Yi Xuan",
             "persona": "University student",
             "source": "Instagram",
             "content": "On report weeks, heavy food slows me down. This warm serving is simple, clean in taste, and easy to keep as part of my campus routine.",
-            "image": "/ugc/sg-young-chinese-woman-campus.webp"
+            "image": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d"
           },
           {
             "name": "Rahul",
             "persona": "Finance analyst",
             "source": "LinkedIn",
             "content": "Morning market sessions start early, so convenience matters. One pouch before work gives me a smoother start without feeling overly full.",
-            "image": "/ugc/sg-young-indian-office-man.webp"
+            "image": "/ugc/sg-young-indian-office-man.webp?v=20260423d"
           },
           {
             "name": "Riya",
             "persona": "Work-from-home mom",
             "source": "WhatsApp",
             "content": "Between meetings and school runs, I need something quick and gentle. This has become my easiest daily routine because it is warm and light.",
-            "image": "/ugc/sg-young-indian-home-woman.webp"
+            "image": "/ugc/sg-young-indian-home-woman.webp?v=20260423d"
           },
           {
             "name": "Hakim",
             "persona": "Recreational runner",
             "source": "Instagram",
             "content": "Lepas larian petang, saya minum panas-panas. Badan rasa cepat lega dan esok pagi bangun pun lebih ringan.",
-            "image": "/ugc/sg-young-malay-man-park.webp"
+            "image": "/ugc/sg-young-malay-man-park.webp?v=20260423d"
           },
           {
             "name": "Mei Qi",
             "persona": "Fitness coach",
             "source": "Facebook",
             "content": "My training days are packed, so I value routines that are easy to repeat. This is clean tasting and sits comfortably even between sessions.",
-            "image": "/ugc/sg-young-fitness-woman.webp"
+            "image": "/ugc/sg-young-fitness-woman.webp?v=20260423d"
           },
           {
             "name": "Auntie Lim",
             "persona": "Senior daily wellness",
             "source": "WhatsApp",
             "content": "My appetite is small and my stomach is sensitive. This feels like light soup and is easy for me to take every day.",
-            "image": "/ugc/sg-elderly-chinese-woman.webp"
+            "image": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d"
           },
           {
             "name": "Pak Rahman",
             "persona": "Morning market vendor",
             "source": "Facebook",
             "content": "Saya mula kerja sangat awal setiap hari. Minuman ini senang disediakan dan bantu saya kekal bertenaga sampai tengah hari.",
-            "image": "/ugc/sg-older-malay-man.webp"
+            "image": "/ugc/sg-older-malay-man.webp?v=20260423d"
           }
         ]
       },
@@ -396,7 +389,7 @@
           {
             "type": "purchase",
             "name": "Chloe T.",
-            "minutesAgo": 3,
+            "minutesAgo": 2,
             "platform": "Facebook",
             "boxes": 2,
             "verified": true
@@ -404,7 +397,7 @@
           {
             "type": "review",
             "name": "Amir H.",
-            "minutesAgo": 5,
+            "minutesAgo": 3,
             "platform": "Instagram",
             "rating": 5,
             "verified": true
@@ -412,7 +405,7 @@
           {
             "type": "purchase",
             "name": "Mei Lin",
-            "minutesAgo": 8,
+            "minutesAgo": 4,
             "platform": "WhatsApp",
             "boxes": 1,
             "verified": true
@@ -420,7 +413,7 @@
           {
             "type": "review",
             "name": "Farah N.",
-            "minutesAgo": 11,
+            "minutesAgo": 6,
             "platform": "Facebook",
             "rating": 4.9,
             "verified": true
@@ -428,7 +421,7 @@
           {
             "type": "purchase",
             "name": "Daniel K.",
-            "minutesAgo": 14,
+            "minutesAgo": 7,
             "platform": "Instagram",
             "boxes": 6,
             "verified": true
@@ -436,7 +429,7 @@
           {
             "type": "review",
             "name": "Nur A.",
-            "minutesAgo": 17,
+            "minutesAgo": 9,
             "platform": "WhatsApp",
             "rating": 5,
             "verified": true
@@ -444,15 +437,175 @@
           {
             "type": "purchase",
             "name": "Sharon L.",
-            "minutesAgo": 21,
+            "minutesAgo": 10,
             "platform": "Facebook",
             "boxes": 4,
             "verified": true
           },
           {
             "type": "review",
-            "name": "Amir H.",
+            "name": "Raymond T.",
+            "minutesAgo": 12,
+            "platform": "Instagram",
+            "rating": 4.8,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Alicia G.",
+            "minutesAgo": 13,
+            "platform": "WhatsApp",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Hakim R.",
+            "minutesAgo": 15,
+            "platform": "Facebook",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Sofia C.",
+            "minutesAgo": 16,
+            "platform": "Instagram",
+            "boxes": 3,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Min Yi",
+            "minutesAgo": 18,
+            "platform": "LinkedIn",
+            "rating": 4.9,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Auntie Lim",
+            "minutesAgo": 19,
+            "platform": "WhatsApp",
+            "boxes": 1,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Pak Rahman",
+            "minutesAgo": 21,
+            "platform": "Facebook",
+            "rating": 4.8,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Jia En",
+            "minutesAgo": 22,
+            "platform": "Instagram",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Emma W.",
             "minutesAgo": 24,
+            "platform": "Instagram",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Riya S.",
+            "minutesAgo": 27,
+            "platform": "WhatsApp",
+            "boxes": 4,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Mr. Tan",
+            "minutesAgo": 29,
+            "platform": "Facebook",
+            "rating": 4.9,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Yi Xuan",
+            "minutesAgo": 31,
+            "platform": "Instagram",
+            "boxes": 1,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Aishah",
+            "minutesAgo": 33,
+            "platform": "WhatsApp",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Rahul N.",
+            "minutesAgo": 36,
+            "platform": "LinkedIn",
+            "boxes": 3,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Sze Ying",
+            "minutesAgo": 39,
+            "platform": "Instagram",
+            "rating": 4.8,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Kevin L.",
+            "minutesAgo": 42,
+            "platform": "Facebook",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Maya T.",
+            "minutesAgo": 45,
+            "platform": "WhatsApp",
+            "rating": 4.9,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Joanna P.",
+            "minutesAgo": 48,
+            "platform": "Instagram",
+            "boxes": 5,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Ariff H.",
+            "minutesAgo": 51,
+            "platform": "Facebook",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Celine K.",
+            "minutesAgo": 54,
+            "platform": "WhatsApp",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Nadia R.",
+            "minutesAgo": 57,
             "platform": "Instagram",
             "rating": 4.8,
             "verified": true

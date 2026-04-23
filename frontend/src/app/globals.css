@@ -244,8 +244,10 @@ button {
   width: 100%;
   min-width: 0;
   touch-action: pan-x;
+  scroll-behavior: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   cursor: grab;
 }
 

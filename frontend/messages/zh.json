@@ -209,43 +209,43 @@
         "verified": "Verified",
         "items": [
           {
-            "src": "/ugc/sg-middle-aged-chinese-man.webp",
+            "src": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d",
             "caption": "家庭客厅｜陈先生 日常保养"
           },
           {
-            "src": "/ugc/sg-middle-aged-malay-woman.webp",
+            "src": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d",
             "caption": "Meja makan rumah | Aishah rutin penjagaan keluarga"
           },
           {
-            "src": "/ugc/sg-teenage-chinese-student.webp",
+            "src": "/ugc/sg-teenage-chinese-student.webp?v=20260423d",
             "caption": "学校课间｜Jia En 学生备考"
           },
           {
-            "src": "/ugc/sg-young-chinese-woman-campus.webp",
+            "src": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d",
             "caption": "校园通勤｜Yi Xuan 学习期补给"
           },
           {
-            "src": "/ugc/sg-young-indian-office-man.webp",
+            "src": "/ugc/sg-young-indian-office-man.webp?v=20260423d",
             "caption": "Office desk | Rahul daily energy support"
           },
           {
-            "src": "/ugc/sg-young-indian-home-woman.webp",
+            "src": "/ugc/sg-young-indian-home-woman.webp?v=20260423d",
             "caption": "Home kitchen | Riya gentle daily support"
           },
           {
-            "src": "/ugc/sg-young-malay-man-park.webp",
+            "src": "/ugc/sg-young-malay-man-park.webp?v=20260423d",
             "caption": "Taman rekreasi | Hakim pemulihan selepas bersenam"
           },
           {
-            "src": "/ugc/sg-young-fitness-woman.webp",
+            "src": "/ugc/sg-young-fitness-woman.webp?v=20260423d",
             "caption": "健身打卡｜Mei Qi 训练后补养"
           },
           {
-            "src": "/ugc/sg-elderly-chinese-woman.webp",
+            "src": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d",
             "caption": "居家长辈｜林阿姨 银发调理"
           },
           {
-            "src": "/ugc/sg-older-malay-man.webp",
+            "src": "/ugc/sg-older-malay-man.webp?v=20260423d",
             "caption": "Pusat penjaja | Pak Rahman rutin tenaga harian"
           }
         ]
@@ -276,112 +276,105 @@
             "persona": "居家照护妈妈",
             "source": "Facebook",
             "content": "晚上照顾完孩子后喝一包，口感像清汤，不会有厚重负担。隔天早上起床比较有精神，做家务也更顺。",
-            "image": "/ugc/cozy-sofa.jpg"
+            "image": "/ugc/cozy-sofa.jpg?v=20260423d"
           },
           {
             "name": "Jia En",
             "persona": "考试期学生",
             "source": "Instagram",
             "content": "复习到很晚时最怕隔天脑袋发胀，这款温热喝下去很顺。连续喝几天后，早课时精神比较稳。",
-            "image": "/ugc/home-study.jpg"
+            "image": "/ugc/home-study.jpg?v=20260423d"
           },
           {
             "name": "Alicia",
             "persona": "双职家庭上班族",
             "source": "WhatsApp",
             "content": "早上在厨房准备早餐时顺便加热一包，节奏很容易坚持。不会腥、不会油，喝完去公司也很轻松。",
-            "image": "/ugc/morning-kitchen.jpg"
+            "image": "/ugc/morning-kitchen.jpg?v=20260423d"
           },
           {
             "name": "敏仪",
             "persona": "科技公司项目经理",
             "source": "LinkedIn",
             "content": "这两个月项目同时上线，我几乎每天都在会议和文档之间来回冲。以前下午三四点就会发虚，只能硬靠咖啡。后来改成午后热一包 Aqina，入口像清鸡汤，不油不腻，胃里不会顶着难受。连续喝了一周后，晚间开会时脑子更清楚，回到家还有体力陪孩子。",
-            "image": "/ugc/office-corner.jpg"
+            "image": "/ugc/office-corner.jpg?v=20260423d"
           },
           {
             "name": "李同学",
             "persona": "A-Level 备考生",
             "source": "小红书",
             "content": "备考那段时间每天都要上课、补习、刷题到很晚，最怕早上醒来整个人发沉。我把它当成晨读前的固定热饮，喝完胃是舒服的，不会腥也不会腻。连续一周后，下午自习不再一直打哈欠，专注度明显比之前稳。对我这种要长期撑节奏的人，最重要是它真的喝得下、坚持得住。",
-            "image": "/ugc/sg-teenage-chinese-student.webp"
+            "image": "/ugc/sg-teenage-chinese-student.webp?v=20260423d"
           },
           {
             "name": "Emma",
             "persona": "瑜伽教练",
             "source": "Instagram",
             "content": "我一天要带好几节课，以前中午后段最怕体力掉得太快。后来在课间固定热一包，入口温和，没有厚重感，马上要上下一节也不会觉得负担。连续喝了几天后，晚课结束的疲惫感明显少很多，第二天起床身体也更轻。对教练来说，这种稳定续航比短暂提神更有价值。",
-            "image": "/ugc/yoga-studio.jpg"
+            "image": "/ugc/yoga-studio.jpg?v=20260423d"
           },
           {
             "name": "陈先生",
             "persona": "长期加班的销售主管",
             "source": "Facebook",
             "content": "连续出差和应酬后容易整个人发虚，这款我能每天坚持。下午不再那么容易掉电，讲话也比较有力。",
-            "image": "/ugc/sg-middle-aged-chinese-man.webp"
+            "image": "/ugc/sg-middle-aged-chinese-man.webp?v=20260423d"
           },
           {
             "name": "Aishah",
             "persona": "Ibu yang urus keluarga",
             "source": "WhatsApp",
             "content": "Rasa dia ringan dan senang minum setiap pagi. Lepas seminggu, badan rasa lebih bertenaga untuk urus anak dan kerja rumah.",
-            "image": "/ugc/sg-middle-aged-malay-woman.webp"
-          },
-          {
-            "name": "Sofia",
-            "persona": "IB 备考生",
-            "source": "Instagram",
-            "content": "IB 冲刺期那几周，连上课加补习到傍晚常常脑袋当机。我现在出门前会先热一包，口感清爽、没有油腻感，比硬塞早餐更容易坚持。连续喝下来，晚间自习时精神掉速没那么快。最关键是它不会增加肠胃负担，考试周也能每天保持同样节奏。",
-            "image": "/ugc/student-exam.webp"
+            "image": "/ugc/sg-middle-aged-malay-woman.webp?v=20260423d"
           },
           {
             "name": "Yi Xuan",
             "persona": "大学生",
             "source": "Instagram",
             "content": "赶报告时最怕吃太油会昏沉，这个味道很干净。放在宿舍加热就能喝，复习期比较容易维持状态。",
-            "image": "/ugc/sg-young-chinese-woman-campus.webp"
+            "image": "/ugc/sg-young-chinese-woman-campus.webp?v=20260423d"
           },
           {
             "name": "Rahul",
             "persona": "金融行业分析师",
             "source": "LinkedIn",
             "content": "Morning markets start early, so I need something fast and light. This fits well into my routine and keeps energy steadier through noon.",
-            "image": "/ugc/sg-young-indian-office-man.webp"
+            "image": "/ugc/sg-young-indian-office-man.webp?v=20260423d"
           },
           {
             "name": "Riya",
             "persona": "在家办公妈妈",
             "source": "WhatsApp",
             "content": "I warm one pouch between meetings and school runs. It is gentle on my stomach, and I do not feel that heavy food slump afterward.",
-            "image": "/ugc/sg-young-indian-home-woman.webp"
+            "image": "/ugc/sg-young-indian-home-woman.webp?v=20260423d"
           },
           {
             "name": "Hakim",
             "persona": "跑步爱好者",
             "source": "Instagram",
             "content": "Lepas larian petang, saya minum panas-panas. Badan rasa cepat lega dan esok pagi bangun pun lebih ringan.",
-            "image": "/ugc/sg-young-malay-man-park.webp"
+            "image": "/ugc/sg-young-malay-man-park.webp?v=20260423d"
           },
           {
             "name": "Mei Qi",
             "persona": "健身教练",
             "source": "Facebook",
             "content": "训练课之间时间很碎，这个一包就够方便。味道清爽、没有油感，课排满时也比较扛得住。",
-            "image": "/ugc/sg-young-fitness-woman.webp"
+            "image": "/ugc/sg-young-fitness-woman.webp?v=20260423d"
           },
           {
             "name": "林阿姨",
             "persona": "银发族日常保养",
             "source": "WhatsApp",
             "content": "我肠胃比较敏感，这款喝起来像清汤，比较不会胀。每天固定一包，精神和食欲都比以前稳定。",
-            "image": "/ugc/sg-elderly-chinese-woman.webp"
+            "image": "/ugc/sg-elderly-chinese-woman.webp?v=20260423d"
           },
           {
             "name": "Pak Rahman",
             "persona": "早市摊主",
             "source": "Facebook",
             "content": "Saya mula kerja sangat awal setiap hari. Minuman ini senang disediakan dan bantu saya kekal bertenaga sampai tengah hari.",
-            "image": "/ugc/sg-older-malay-man.webp"
+            "image": "/ugc/sg-older-malay-man.webp?v=20260423d"
           }
         ]
       },
@@ -396,7 +389,7 @@
           {
             "type": "purchase",
             "name": "Chloe T.",
-            "minutesAgo": 3,
+            "minutesAgo": 2,
             "platform": "Facebook",
             "boxes": 2,
             "verified": true
@@ -404,7 +397,7 @@
           {
             "type": "review",
             "name": "Amir H.",
-            "minutesAgo": 5,
+            "minutesAgo": 3,
             "platform": "Instagram",
             "rating": 5,
             "verified": true
@@ -412,7 +405,7 @@
           {
             "type": "purchase",
             "name": "Mei Lin",
-            "minutesAgo": 8,
+            "minutesAgo": 4,
             "platform": "WhatsApp",
             "boxes": 1,
             "verified": true
@@ -420,7 +413,7 @@
           {
             "type": "review",
             "name": "Farah N.",
-            "minutesAgo": 11,
+            "minutesAgo": 6,
             "platform": "Facebook",
             "rating": 4.9,
             "verified": true
@@ -428,7 +421,7 @@
           {
             "type": "purchase",
             "name": "Daniel K.",
-            "minutesAgo": 14,
+            "minutesAgo": 7,
             "platform": "Instagram",
             "boxes": 6,
             "verified": true
@@ -436,7 +429,7 @@
           {
             "type": "review",
             "name": "Nur A.",
-            "minutesAgo": 17,
+            "minutesAgo": 9,
             "platform": "WhatsApp",
             "rating": 5,
             "verified": true
@@ -444,15 +437,175 @@
           {
             "type": "purchase",
             "name": "Sharon L.",
-            "minutesAgo": 21,
+            "minutesAgo": 10,
             "platform": "Facebook",
             "boxes": 4,
             "verified": true
           },
           {
             "type": "review",
-            "name": "Amir H.",
+            "name": "Raymond T.",
+            "minutesAgo": 12,
+            "platform": "Instagram",
+            "rating": 4.8,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Alicia G.",
+            "minutesAgo": 13,
+            "platform": "WhatsApp",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Hakim R.",
+            "minutesAgo": 15,
+            "platform": "Facebook",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Sofia C.",
+            "minutesAgo": 16,
+            "platform": "Instagram",
+            "boxes": 3,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Min Yi",
+            "minutesAgo": 18,
+            "platform": "LinkedIn",
+            "rating": 4.9,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Auntie Lim",
+            "minutesAgo": 19,
+            "platform": "WhatsApp",
+            "boxes": 1,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Pak Rahman",
+            "minutesAgo": 21,
+            "platform": "Facebook",
+            "rating": 4.8,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Jia En",
+            "minutesAgo": 22,
+            "platform": "Instagram",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Emma W.",
             "minutesAgo": 24,
+            "platform": "Instagram",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Riya S.",
+            "minutesAgo": 27,
+            "platform": "WhatsApp",
+            "boxes": 4,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Mr. Tan",
+            "minutesAgo": 29,
+            "platform": "Facebook",
+            "rating": 4.9,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Yi Xuan",
+            "minutesAgo": 31,
+            "platform": "Instagram",
+            "boxes": 1,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Aishah",
+            "minutesAgo": 33,
+            "platform": "WhatsApp",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Rahul N.",
+            "minutesAgo": 36,
+            "platform": "LinkedIn",
+            "boxes": 3,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Sze Ying",
+            "minutesAgo": 39,
+            "platform": "Instagram",
+            "rating": 4.8,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Kevin L.",
+            "minutesAgo": 42,
+            "platform": "Facebook",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Maya T.",
+            "minutesAgo": 45,
+            "platform": "WhatsApp",
+            "rating": 4.9,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Joanna P.",
+            "minutesAgo": 48,
+            "platform": "Instagram",
+            "boxes": 5,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Ariff H.",
+            "minutesAgo": 51,
+            "platform": "Facebook",
+            "rating": 5,
+            "verified": true
+          },
+          {
+            "type": "purchase",
+            "name": "Celine K.",
+            "minutesAgo": 54,
+            "platform": "WhatsApp",
+            "boxes": 2,
+            "verified": true
+          },
+          {
+            "type": "review",
+            "name": "Nadia R.",
+            "minutesAgo": 57,
             "platform": "Instagram",
             "rating": 4.8,
             "verified": true

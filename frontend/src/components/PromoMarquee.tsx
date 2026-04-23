@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { BadgeCheck, Sparkles } from 'lucide-react';
+import { withImageVersion } from '@/lib/image-utils';
 
 const LOOP_SEGMENTS = 4;
 
@@ -32,7 +33,7 @@ export default function PromoMarquee() {
           {Array.from({ length: LOOP_SEGMENTS }).map((_, loopIndex) => (
             <div key={loopIndex} className="promo-marquee-segment">
               <div className="promo-chip relative hidden h-8 w-8 overflow-hidden rounded-full border border-[#ffd36a]/40 bg-white/95 lg:block">
-                <Image src="/images/pack-1.webp" alt="Aqina Product" fill sizes="32px" className="object-cover" />
+                <Image src={withImageVersion('/images/pack-1.webp')} alt="Aqina Product" fill sizes="32px" className="object-cover" />
               </div>
               {items.map((item, index) => (
                 <div
