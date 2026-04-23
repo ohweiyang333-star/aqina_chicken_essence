@@ -18,7 +18,7 @@ export function withImageVersion(path: string) {
 }
 
 export const IMAGES = {
-  hero: getFirebaseV2Url('premium-product-storytelling-photo--pineapple-enzy.webp'),
+  hero: 'https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/V2%2Fdesign-a-professional-website-hero-banner--use-the%20(1).webp?alt=media&token=19a027d8-a5ce-4fbe-a1d0-be287026e346',
   logo: getFirebaseV2Url('Aqina Farm-Logo (Gold).webp'),
   story: getFirebaseUrl('7天双重蒸煮.jpg'),
   trust: {
