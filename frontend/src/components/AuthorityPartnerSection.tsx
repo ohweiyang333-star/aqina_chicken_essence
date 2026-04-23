@@ -3,6 +3,7 @@
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { BadgeCheck, ShieldCheck } from 'lucide-react';
+import { IMAGES } from '@/lib/image-utils';
 
 const retailers = [
   {
@@ -41,7 +42,25 @@ export default function AuthorityPartnerSection() {
   return (
     <section className="py-10" id="authority-partners">
       <div className="section-shell space-y-6">
-        <div className="surface-panel rounded-[1.6rem] p-6 md:p-8">
+        <div className="surface-panel relative rounded-[1.6rem] p-6 md:p-8">
+          <aside
+            id="authority-certification-badge"
+            className="mb-4 inline-flex flex-col rounded-xl border border-emerald-300/45 bg-white/96 px-3 py-2 shadow-[0_12px_30px_rgba(0,0,0,0.2)] backdrop-blur-sm md:absolute md:right-6 md:top-6 md:z-20 md:mb-0"
+          >
+            <div className="relative h-6 w-[7.4rem] md:h-8 md:w-[9.2rem]">
+              <Image
+                src={IMAGES.trust.complianceBadge}
+                alt={t('complianceAlt')}
+                fill
+                sizes="(max-width: 768px) 120px, 150px"
+                className="object-contain"
+              />
+            </div>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700 md:text-[11px]">
+              {t('complianceLabel')}
+            </p>
+          </aside>
+
           <div className="grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
             <article className="rounded-2xl border border-primary/20 bg-background-dark/55 p-5 md:p-6">
               <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/50 bg-emerald-500/20 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-emerald-200">

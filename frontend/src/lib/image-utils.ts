@@ -2,6 +2,10 @@ export function getFirebaseUrl(filename: string) {
   return `https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/${encodeURIComponent(filename)}?alt=media`;
 }
 
+export function getFirebaseV2Url(filename: string) {
+  return getFirebaseUrl(`V2/${filename}`);
+}
+
 export const IMAGE_VERSION = '20260423d';
 
 export function withImageVersion(path: string) {
@@ -19,8 +23,11 @@ export function withImageVersion(path: string) {
 
 export const IMAGES = {
   hero: withImageVersion('/images/hero-farm-banner.jpg'),
-  logo: getFirebaseUrl('Aqina Farm-Logo (Gold).png'),
+  logo: getFirebaseV2Url('Aqina Farm-Logo (Gold).webp'),
   story: getFirebaseUrl('7天双重蒸煮.jpg'),
+  trust: {
+    complianceBadge: getFirebaseV2Url('HACCP GMP ISO 认证 Logo.png'),
+  },
   products: {
     box1: withImageVersion('/images/pack-1.webp'),
     box2: withImageVersion('/images/pack-2.webp'),
