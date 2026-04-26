@@ -1,7 +1,7 @@
 {
   "Index": {
     "title": "Aqina Premium Chicken Essence",
-    "subtitle": "Pure extraction, crafted for modern recovery and daily resilience",
+    "subtitle": "Pure extraction, crafted for modern families and daily nourishment",
     "hero": {
       "badge": "Aqina Pineapple Enzyme Chicken Essence",
       "title": "Pure energy for your body,",
@@ -62,8 +62,8 @@
     },
     "products": {
       "eyebrow": "Pure Care Plans",
-      "title": "Choose Your Daily / Intensive Pure Care Plan",
-      "subtitle": "From light daily support to intensive periods, pick a routine that stays easy to follow every day.",
+      "title": "Choose Your Daily Light Nourishment Plan",
+      "subtitle": "From a first box to household reserve, choose a warm routine that stays easy to follow.",
       "recommended": "Recommended",
       "buyNow": "Choose Plan",
       "addToCart": "Add Plan",
@@ -74,7 +74,7 @@
       "items": {
         "pack1": "Daily Nourishment",
         "pack2": "Signature Upgrade",
-        "pack4": "Recovery Program",
+        "pack4": "Monthly Routine",
         "pack6": "Family Reserve"
       },
       "packSizes": {
@@ -85,8 +85,8 @@
       },
       "badges": {
         "pack1": "Starter Ritual",
-        "pack2": "Best Conversion",
-        "pack4": "Postpartum / Recovery",
+        "pack2": "Core Routine",
+        "pack4": "Monthly Care",
         "pack6": "Family Stock"
       },
       "details": {
@@ -101,9 +101,9 @@
           "Best fit for repeat office and home use"
         ],
         "pack4": [
-          "Structured pack for focused recovery windows",
-          "Supports maternity and post-surgery replenishment",
-          "Built for households planning a full recovery month"
+          "Structured pack for a 28-day nourishment rhythm",
+          "Useful for households planning a full month ahead",
+          "A steadier option for longer daily routines"
         ],
         "pack6": [
           "Highest reserve for long-cycle household use",
@@ -153,7 +153,7 @@
       "whatsappLabel": "Chat with Specialist"
     },
     "footer": {
-      "tagline": "Premium chicken essence designed for modern families, disciplined recovery, and daily resilience.",
+      "tagline": "Premium chicken essence designed for modern families and daily nourishment routines.",
       "nav": {
         "story": "Absorption Story",
         "reviews": "Real Reviews",
@@ -643,6 +643,217 @@
         "title": "Every drop is worth feeling with intention.",
         "body": "Non-compromised purity, built to provide steady support at critical moments.",
         "button": "Choose Your Daily / Intensive Pure Care Plan"
+      }
+    },
+    "v2": {
+      "hero": {
+        "eyebrow": "Pineapple Enzyme Chicken Essence",
+        "title": "Warm pineapple-enzyme chicken essence, made lighter for everyday routines.",
+        "subtitle": "A bright rice-gold experience built around clean soup-like taste, easy warming, and a daily nourishment ritual that feels simple to keep.",
+        "primaryCta": "Choose a Plan",
+        "secondaryCta": "See Real Scenes",
+        "imageAlt": "Aqina pineapple enzyme chicken essence pack",
+        "badges": [
+          "Pineapple enzyme concept",
+          "Clean soup-like taste",
+          "Singapore delivery"
+        ],
+        "notes": [
+          "Warm and ready",
+          "Single-serve pouches",
+          "For self-care or gifting"
+        ]
+      },
+      "comparison": {
+        "eyebrow": "Ordinary Chicken Essence vs Aqina",
+        "title": "Nourishment does not need to feel heavy to become a routine.",
+        "body": "Compare taste, preparation, consistency, and trust signals to see how Aqina makes traditional nourishment feel lighter for daily life.",
+        "criteriaLabel": "Criteria",
+        "ordinaryTitle": "Ordinary impression",
+        "aqinaTitle": "Aqina direction",
+        "items": [
+          {
+            "label": "Drinking feel",
+            "ordinary": "Traditional chicken soup or essence can feel rich, oily, or hard to repeat daily.",
+            "aqina": "A cleaner soup-like taste and single pouch format make the routine easier to keep."
+          },
+          {
+            "label": "Preparation",
+            "ordinary": "Boiling, filtering, and cleaning can make the habit easy to drop on busy days.",
+            "aqina": "Warm and drink at breakfast, in the office, or while caring for family at night."
+          },
+          {
+            "label": "Consistency",
+            "ordinary": "Heavy taste and preparation time often become the real barrier.",
+            "aqina": "The product is framed as a small warm ritual with lower daily friction."
+          },
+          {
+            "label": "Trust signals",
+            "ordinary": "Common promotions can stack outcome language without making the basis clear.",
+            "aqina": "Aqina puts more weight on packaging, certifications, channels, and real-life scenes."
+          }
+        ]
+      },
+      "pineapple": {
+        "eyebrow": "Pineapple Chicken Story",
+        "title": "Starting from the pineapple enzyme concept, Aqina is presented as a cleaner chicken essence.",
+        "body": "Pineapple enzyme is part of Aqina's product story. The focus stays on a cleaner taste, warm drinking experience, and a routine that is easier to keep.",
+        "imageAlt": "Aqina pineapple enzyme chicken essence craft scene",
+        "caption": "The story is about making traditional nourishment easier to fit into modern routines.",
+        "points": [
+          "The product direction emphasizes clean taste, warmth, and approachability.",
+          "Fresh savoriness and lighter drinking feel are presented together, without heavy layering.",
+          "Every pouch supports daily use instead of a complicated ritual."
+        ]
+      },
+      "craft": {
+        "eyebrow": "Craft / Lightness",
+        "title": "Keep the craft detailed, and keep the drinking routine simple.",
+        "body": "Aqina is not positioned as stronger medicine, but as warm nourishment that is easier to execute and repeat.",
+        "note": "Daily nourishment works best when it suits your routine. Please consult a qualified professional for specific health concerns.",
+        "steps": [
+          {
+            "title": "Ingredient Direction",
+            "body": "The product is presented around steady flavor and a clear soup-like feel as the first impression."
+          },
+          {
+            "title": "Slow Dripping",
+            "body": "The extraction story centers on concentrated chicken broth flavor that works well warm."
+          },
+          {
+            "title": "Lighter Intake",
+            "body": "A cleaner, less oily drinking feel helps make consistency easier."
+          },
+          {
+            "title": "Single Pouches",
+            "body": "The format is easier to carry, warm, and stock for both personal and household use."
+          }
+        ],
+        "ritualEyebrow": "Daily Warm Ritual",
+        "ritualTitle": "One pouch, one cup, a few minutes, and nourishment fits back into life.",
+        "ritualBody": "No complicated preparation and no long soup session. Aqina turns nourishment into a small action that busy routines can actually absorb.",
+        "ritualImageAlt": "Warm chicken essence daily drinking scene"
+      },
+      "audience": {
+        "eyebrow": "Who It Fits",
+        "title": "One warm care ritual for different stages of everyday life.",
+        "body": "These use cases are grouped by daily drinking needs. They do not replace professional medical advice or promise specific outcomes.",
+        "badge": "Choose by scene",
+        "items": [
+          {
+            "title": "Busy Professionals",
+            "body": "For people who want a warm morning or afternoon routine without interrupting work with heavy food.",
+            "image": "/ugc/sg-young-indian-office-man.webp",
+            "alt": "Office worker drinking chicken essence"
+          },
+          {
+            "title": "Family Caregivers",
+            "body": "For preparing something simple, gentle, and easy to drink for family while reducing cooking cleanup.",
+            "image": "/ugc/sg-middle-aged-malay-woman.webp",
+            "alt": "Family caregiver preparing a warm drink"
+          },
+          {
+            "title": "Study and Training Periods",
+            "body": "For people who want to place a warm drink inside study, post-workout, or evening routines.",
+            "image": "/ugc/sg-teenage-chinese-student.webp",
+            "alt": "Student daily nourishment scene"
+          },
+          {
+            "title": "Gifting and Visits",
+            "body": "For showing care with a present that feels polished, light, and easy for the recipient to use.",
+            "image": "/story/family-care.webp",
+            "alt": "Family visit and gifting scene"
+          }
+        ]
+      },
+      "trust": {
+        "eyebrow": "Trust and Certification",
+        "title": "Visible trust signals for a steadier purchase decision.",
+        "body": "Certifications, channel cues, and packaging information are shown clearly. Scope and applicability should follow product packaging and official materials.",
+        "certifications": {
+          "haccp": {
+            "alt": "HACCP GMP ISO certification marks",
+            "label": "HACCP / GMP / ISO9001"
+          },
+          "halal": {
+            "alt": "JAKIM Halal certification mark",
+            "label": "JAKIM Halal"
+          },
+          "veterinary": {
+            "alt": "Malaysia veterinary mark",
+            "label": "JPH Veterinary Mark"
+          }
+        },
+        "assuranceEyebrow": "Measured claims",
+        "bullets": [
+          "Prioritize certification visuals and channel cues that users can cross-check.",
+          "Use measured product language to support everyday nourishment decisions.",
+          "Build a fuller picture through packaging, taste, usage scenes, and support replies."
+        ],
+        "retailTitle": "Channel cues",
+        "retailNote": "Existing retail logos are retained as trust cues. Actual selling points and stock should follow stores, platforms, or official support replies."
+      },
+      "ugc": {
+        "eyebrow": "UGC Evidence Wall",
+        "title": "See the product inside real daily contexts.",
+        "body": "Daily drinking habits in real contexts are often more useful than exaggerated descriptions.",
+        "items": [
+          {
+            "name": "Alicia",
+            "context": "Morning kitchen",
+            "quote": "I warm one pouch while preparing breakfast. It tastes like light soup, so it is easy to fit into my day.",
+            "image": "/ugc/morning-kitchen.jpg",
+            "alt": "Aqina morning kitchen drinking scene"
+          },
+          {
+            "name": "Jia En",
+            "context": "Study desk",
+            "quote": "During revision weeks, simple matters. I just warm it and drink without preparing much.",
+            "image": "/ugc/home-study.jpg",
+            "alt": "Student study desk drinking scene"
+          },
+          {
+            "name": "Emma",
+            "context": "After class",
+            "quote": "Breaks are short, so the single pouch is convenient. The taste is not too heavy for me.",
+            "image": "/ugc/yoga-studio.jpg",
+            "alt": "Warm nourishment after movement"
+          },
+          {
+            "name": "Mr. Tan",
+            "context": "Living room routine",
+            "quote": "We keep a few boxes at home. When someone wants a warm drink, there is no need to boil soup again.",
+            "image": "/ugc/sg-middle-aged-chinese-man.webp",
+            "alt": "Living room daily chicken essence scene"
+          },
+          {
+            "name": "Riya",
+            "context": "Work from home",
+            "quote": "I can warm one between calls. It fits better into a busy schedule.",
+            "image": "/ugc/sg-young-indian-home-woman.webp",
+            "alt": "Work from home Aqina drinking scene"
+          },
+          {
+            "name": "Aishah",
+            "context": "Family table",
+            "quote": "The taste is gentle, and preparing it for the family in the morning does not take much time.",
+            "image": "/ugc/sg-middle-aged-malay-woman.webp",
+            "alt": "Family table warm drink scene"
+          }
+        ],
+        "disclaimer": "UGC content reflects personal daily scenes only. It is not medical advice or a promise of results. Please consult a qualified professional for specific health concerns."
+      },
+      "pricingBand": {
+        "ariaLabel": "Aqina product plan selection"
+      },
+      "finalCta": {
+        "eyebrow": "Final Step",
+        "title": "Choose a warm routine that is realistic to drink and easy to keep.",
+        "body": "From a 7-day trial to household reserve, start with a rhythm you can realistically keep. You can also ask WhatsApp support which plan fits your daily routine.",
+        "productsCta": "View Plans",
+        "whatsappCta": "Ask on WhatsApp",
+        "whatsappMessage": "Hi Aqina SG, I would like to know which chicken essence plan fits daily drinking.",
+        "imageAlt": "Aqina chicken essence final call to action product scene"
       }
     }
   }

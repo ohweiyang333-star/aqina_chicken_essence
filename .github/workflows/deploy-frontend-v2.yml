@@ -1,0 +1,138 @@
+name: Deploy Frontend V2 to Cloud Run and Firebase Hosting
+
+on:
+  push:
+    branches: [ codex/aqina-detail-v2-hosting ]
+    paths:
+      - 'frontend/**'
+      - 'firebase.json'
+      - '.firebaserc'
+      - '.github/workflows/deploy-frontend-v2.yml'
+      - 'deployment-targets.json'
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: aqina-chicken-essence
+  REGION: asia-southeast1
+  SERVICE_NAME: aqina-frontend-v2
+  IMAGE_NAME: asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/frontend-v2
+  HOSTING_TARGET: aqina-v2
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve V2 Deployment Target
+        id: resolve
+        run: |
+          PLATFORM=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontendV2?.platform || 'cloud_run')")
+          PROJECT=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontendV2?.projectId || '${{ env.PROJECT_ID }}')")
+          REGION=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontendV2?.region || '${{ env.REGION }}')")
+          SERVICE=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontendV2?.service || '${{ env.SERVICE_NAME }}')")
+          IMAGE=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.frontendV2?.image || '${{ env.IMAGE_NAME }}')")
+          HOSTING_PROJECT=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.firebaseHostingV2?.projectId || cfg.frontendV2?.projectId || '${{ env.PROJECT_ID }}')")
+          HOSTING_TARGET=$(node -e "const cfg=require('./deployment-targets.json');console.log(cfg.firebaseHostingV2?.target || '${{ env.HOSTING_TARGET }}')")
+          echo "platform=$PLATFORM" >> "$GITHUB_OUTPUT"
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "region=$REGION" >> "$GITHUB_OUTPUT"
+          echo "service=$SERVICE" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "hosting_project=$HOSTING_PROJECT" >> "$GITHUB_OUTPUT"
+          echo "hosting_target=$HOSTING_TARGET" >> "$GITHUB_OUTPUT"
+
+      - name: Validate V2 Safety Boundaries
+        env:
+          PLATFORM: ${{ steps.resolve.outputs.platform }}
+          REGION: ${{ steps.resolve.outputs.region }}
+          SERVICE: ${{ steps.resolve.outputs.service }}
+          HOSTING_TARGET: ${{ steps.resolve.outputs.hosting_target }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+
+          const platform = process.env.PLATFORM;
+          const region = process.env.REGION;
+          const service = process.env.SERVICE;
+          const hostingTarget = process.env.HOSTING_TARGET;
+
+          if (platform !== 'cloud_run') {
+            throw new Error(`frontendV2.platform must be cloud_run, received ${platform}`);
+          }
+          if (service === 'aqina-frontend') {
+            throw new Error('Refusing to deploy production service aqina-frontend from V2 workflow.');
+          }
+          if (service !== 'aqina-frontend-v2') {
+            throw new Error(`V2 workflow must deploy aqina-frontend-v2, received ${service}`);
+          }
+          if (hostingTarget !== 'aqina-v2') {
+            throw new Error(`V2 workflow must deploy Firebase Hosting target aqina-v2, received ${hostingTarget}`);
+          }
+
+          const firebaseConfig = JSON.parse(fs.readFileSync('firebase.json', 'utf8'));
+          const hosting = Array.isArray(firebaseConfig.hosting)
+            ? firebaseConfig.hosting
+            : [firebaseConfig.hosting].filter(Boolean);
+          const entry = hosting.find((item) => item.target === hostingTarget);
+          if (!entry) {
+            throw new Error(`Missing firebase.json hosting target ${hostingTarget}`);
+          }
+
+          const rewrite = (entry.rewrites || []).find((item) => item.source === '**' && item.run);
+          if (!rewrite) {
+            throw new Error(`Missing Cloud Run rewrite for hosting target ${hostingTarget}`);
+          }
+          if (rewrite.run.serviceId !== service || rewrite.run.region !== region) {
+            throw new Error(
+              `Hosting rewrite must point to ${service} in ${region}; received ${rewrite.run.serviceId} in ${rewrite.run.region}`
+            );
+          }
+          NODE
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Select GCP Project
+        run: gcloud config set project ${{ steps.resolve.outputs.project }}
+
+      - name: Authorize Docker
+        run: gcloud auth configure-docker ${{ steps.resolve.outputs.region }}-docker.pkg.dev
+
+      - name: Build and Push V2 Container
+        run: |-
+          docker build \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_PROJECT_ID }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=${{ secrets.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }} \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }} \
+            -t ${{ steps.resolve.outputs.image }}:${{ github.sha }} ./frontend
+          docker push ${{ steps.resolve.outputs.image }}:${{ github.sha }}
+
+      - name: Deploy V2 to Cloud Run
+        run: |-
+          gcloud run deploy ${{ steps.resolve.outputs.service }} \
+            --image ${{ steps.resolve.outputs.image }}:${{ github.sha }} \
+            --region ${{ steps.resolve.outputs.region }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars "NEXT_PUBLIC_GA_MEASUREMENT_ID=${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID }}"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy V2 Firebase Hosting Target
+        run: firebase deploy --only hosting:aqina-v2 --project "${{ steps.resolve.outputs.hosting_project }}" --non-interactive

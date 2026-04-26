@@ -13,12 +13,15 @@ import {
 import ProductPricingSection from '@/components/ProductPricingSection';
 import MobileFloatingCTA from '@/components/MobileFloatingCTA';
 import Footer from '@/components/Footer';
-import PromoMarquee from '@/components/PromoMarquee';
-import HeroFlashSection from '@/components/HeroFlashSection';
-import AuthorityPartnerSection from '@/components/AuthorityPartnerSection';
-import UGCReviewGrid from '@/components/UGCReviewGrid';
-import StoryExperienceSection from '@/components/StoryExperienceSection';
-import SocialProofToast from '@/components/SocialProofToast';
+import V2AudienceSection from '@/components/v2/V2AudienceSection';
+import V2ComparisonSection from '@/components/v2/V2ComparisonSection';
+import V2CraftLightnessSection from '@/components/v2/V2CraftLightnessSection';
+import V2FinalCtaSection from '@/components/v2/V2FinalCtaSection';
+import V2HeroSection from '@/components/v2/V2HeroSection';
+import V2PineappleStorySection from '@/components/v2/V2PineappleStorySection';
+import V2ProductPricingBand from '@/components/v2/V2ProductPricingBand';
+import V2TrustSection from '@/components/v2/V2TrustSection';
+import V2UgcEvidenceWall from '@/components/v2/V2UgcEvidenceWall';
 
 export default function HomePage() {
   const t = useTranslations('Index');
@@ -98,20 +101,24 @@ export default function HomePage() {
   };
 
   return (
-    <main className="page-grid flex min-h-screen flex-col pb-24">
-      <PromoMarquee />
-      <HeroFlashSection />
-      <StoryExperienceSection />
-      <UGCReviewGrid />
-      <AuthorityPartnerSection />
-      <ProductPricingSection
-        products={products}
-        isLoading={isLoading}
-        onAddToCart={handleAddToCart}
-        onBuyNow={handleBuyNow}
-      />
+    <main className="flex min-h-screen flex-col bg-[#fff7e8] pb-24 text-[#23170d]">
+      <V2HeroSection />
+      <V2ComparisonSection />
+      <V2PineappleStorySection />
+      <V2CraftLightnessSection />
+      <V2AudienceSection />
+      <V2TrustSection />
+      <V2UgcEvidenceWall />
+      <V2ProductPricingBand>
+        <ProductPricingSection
+          products={products}
+          isLoading={isLoading}
+          onAddToCart={handleAddToCart}
+          onBuyNow={handleBuyNow}
+        />
+      </V2ProductPricingBand>
+      <V2FinalCtaSection />
       <Footer />
-      <SocialProofToast />
       <MobileFloatingCTA />
       <CheckoutModal
         isOpen={isModalOpen}

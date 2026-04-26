@@ -12,5 +12,25 @@
         "supportEmail": "ohweiyang333@gmail.com"
       }
     }
-  }
+  },
+  "hosting": [
+    {
+      "target": "aqina-v2",
+      "public": "frontend/public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "run": {
+            "serviceId": "aqina-frontend-v2",
+            "region": "asia-southeast1"
+          }
+        }
+      ]
+    }
+  ]
 }
