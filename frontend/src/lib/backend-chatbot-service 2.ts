@@ -13,7 +13,7 @@ export interface ChatbotSettings {
     answer: string;
     order?: number;
   }>;
-  cart_abandonment_message?: string;
+  payment_followup_message?: string;
   restock_reminder_enabled?: boolean;
   restock_reminder_message?: string;
   updated_at: string;

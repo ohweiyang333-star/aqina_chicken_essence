@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getPayments, updatePaymentStatus, type Payment, type PaymentFilters, type PaymentStatus } from '@/lib/backend-payment-service';
 import { format } from 'date-fns';
+
+const PAYMENT_PAGE_SIZE = 20;
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -11,18 +13,13 @@ export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
-  const [pageSize] = useState(20);
 
-  useEffect(() => {
-    loadPayments();
-  }, [statusFilter, page]);
-
-  const loadPayments = async () => {
+  const loadPayments = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const filters: PaymentFilters = { page, page_size: pageSize };
+      const filters: PaymentFilters = { page, page_size: PAYMENT_PAGE_SIZE };
       if (statusFilter !== 'all') {
         filters.status = statusFilter;
       }
@@ -35,7 +32,11 @@ export default function PaymentsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [page, statusFilter]);
+
+  useEffect(() => {
+    loadPayments();
+  }, [loadPayments]);
 
   const handleStatusChange = async (paymentId: string, newStatus: PaymentStatus) => {
     try {
@@ -209,10 +210,10 @@ export default function PaymentsPage() {
         )}
 
         {/* Pagination */}
-        {!isLoading && !error && total > pageSize && (
+        {!isLoading && !error && total > PAYMENT_PAGE_SIZE && (
           <div className="bg-white rounded-lg shadow-sm px-6 py-4 mt-6 flex items-center justify-between">
             <div className="text-sm text-gray-700">
-              Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, total)} of {total} payments
+              Showing {((page - 1) * PAYMENT_PAGE_SIZE) + 1} to {Math.min(page * PAYMENT_PAGE_SIZE, total)} of {total} payments
             </div>
             <div className="flex gap-2">
               <button
@@ -224,7 +225,7 @@ export default function PaymentsPage() {
               </button>
               <button
                 onClick={() => setPage((p) => p + 1)}
-                disabled={page * pageSize >= total}
+                disabled={page * PAYMENT_PAGE_SIZE >= total}
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Next

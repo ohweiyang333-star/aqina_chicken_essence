@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { ShoppingCart } from "lucide-react";
+import { QrCode } from "lucide-react";
 import type { DisplayProduct } from "@/lib/product-service";
 
 interface ProductCardProps {
@@ -53,7 +53,7 @@ export function ProductCard({
           onClick={() => onBuyNow(product)}
           className="w-full py-3 rounded-xl bg-charcoal text-ivory font-semibold hover:bg-primary transition-colors flex items-center justify-center space-x-2 group-active:scale-95 shadow-lg shadow-charcoal/10"
         >
-          <ShoppingCart size={18} />
+          <QrCode size={18} />
           <span>{t("products.buyNow")}</span>
         </button>
       </div>

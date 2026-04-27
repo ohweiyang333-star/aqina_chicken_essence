@@ -13,8 +13,7 @@
       "title": "选择您的滋养套餐",
       "subtitle": "精选100%纯天然滴鸡精，为全家提供全方位健康守护",
       "recommended": "超值推荐",
-      "buyNow": "立即购买",
-      "addToCart": "加入购物车",
+      "buyNow": "PayNow 下单",
       "featuresLabel": "套餐亮点",
       "currency": "SGD",
       "items": {
@@ -25,8 +24,8 @@
       }
     },
     "Cart": {
-      "title": "购物车",
-      "empty": "您的购物车是空的",
+      "title": "已选配套",
+      "empty": "尚未选择配套",
       "continueShopping": "继续购物",
       "subtotal": "小计",
       "freeShipping": "已享免运费优惠！",
@@ -42,22 +41,21 @@
         "delivery": "运费",
         "free": "免运费",
         "submit": "确认订单",
-        "terms": "点击确认即提交订单。支付将通过 Shopee 或 PayNow/PayLah! 完成。质量问题支持 7 天内退换。"
+        "terms": "提交前请先完成 PayNow 并上传付款截图。付款会由团队人工核对后安排发货。"
       },
       "success": {
         "title": "订单已收到！",
-        "subtitle": "感谢您的订单。请使用以下方式完成支付。",
+        "subtitle": "感谢您，订单与 PayNow 收据已提交。",
         "close": "返回首页"
       },
       "payment": {
         "title": "支付说明",
-        "cn": "下单后，请点击下方按钮跳转至 Shopee 完成支付。若选择 PayLah! / PayNow，请扫描下方 QR Code 并备注您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
-        "en": "After placing your order, please click the button below to complete payment on Shopee. For PayLah! / PayNow, please scan the QR Code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
-        "shopee": "在 Shopee 支付",
-        "paynow": "PayNow / PayLah!",
-        "qrPlaceholder": "QR Code 占位符",
-        "qrNote": "备注：您的订单号",
-        "whatsapp": "发送支付截图至 WhatsApp 以加快处理"
+        "cn": "提交前，请直接扫描 PayNow QR Code 完成付款，并上传付款成功截图。团队会人工核对后安排发货。",
+        "en": "Before submitting, please scan the PayNow QR code, complete payment, and upload the successful payment screenshot. The team will verify payment manually before delivery.",
+        "paynow": "PayNow",
+        "qrPlaceholder": "PayNow QR Code",
+        "qrNote": "备注：您的 WhatsApp 号码",
+        "whatsapp": "付款截图会随订单提交给后台核对"
       }
     },
     "Science": {

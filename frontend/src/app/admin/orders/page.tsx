@@ -54,7 +54,7 @@ export default function AdminOrdersPage() {
     try {
       const data = await getOrders();
       setOrders(data);
-    } catch (error) {
+    } catch {
       console.error("Failed to fetch orders");
     } finally {
       setIsLoading(false);
@@ -70,7 +70,7 @@ export default function AdminOrdersPage() {
       setOrders(
         orders.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)),
       );
-    } catch (error) {
+    } catch {
       alert("Failed to update status");
     }
   };
@@ -86,7 +86,7 @@ export default function AdminOrdersPage() {
           o.id === orderId ? { ...o, paymentStatus: newStatus } : o,
         ),
       );
-    } catch (error) {
+    } catch {
       alert("Failed to update payment status");
     }
   };

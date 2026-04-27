@@ -13,8 +13,7 @@
       "title": "Select Your Nourishment",
       "subtitle": "Choose from our curated 100% natural chicken essence collections",
       "recommended": "Best Value",
-      "buyNow": "Buy Now",
-      "addToCart": "Add to Cart",
+      "buyNow": "Order with PayNow",
       "featuresLabel": "Key Features",
       "currency": "SGD",
       "items": {
@@ -25,8 +24,8 @@
       }
     },
     "Cart": {
-      "title": "Shopping Cart",
-      "empty": "Your cart is empty",
+      "title": "Selected Plan",
+      "empty": "No plan selected",
       "continueShopping": "Continue Shopping",
       "subtotal": "Subtotal",
       "freeShipping": "Free shipping applied!",
@@ -42,22 +41,21 @@
         "delivery": "Delivery Fee",
         "free": "FREE",
         "submit": "Confirm Order",
-        "terms": "By clicking confirm, your order is submitted. Payment will be handled via Shopee or PayNow/PayLah!. Returns accepted within 7 days for quality issues."
+        "terms": "Please complete PayNow and upload your payment screenshot before submitting. Payment will be verified manually before delivery."
       },
       "success": {
         "title": "Order Received!",
-        "subtitle": "Thank you for your order. Please complete payment using one of the methods below.",
+        "subtitle": "Thank you. Your order and PayNow receipt have been submitted.",
         "close": "Back to Home"
       },
       "payment": {
         "title": "Payment Instructions",
-        "cn": "下单后，请点击下方按钮跳转至 Shopee 完成支付。若选择 PayLah! / PayNow，请扫描下方 QR Code 并备注您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
-        "en": "After placing your order, please click the button below to complete payment on Shopee. For PayLah! / PayNow, please scan the QR Code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
-        "shopee": "Pay on Shopee",
-        "paynow": "PayNow / PayLah!",
-        "qrPlaceholder": "QR Code Placeholder",
-        "qrNote": "Reference: Your Order ID",
-        "whatsapp": "Send payment screenshot to WhatsApp for faster processing"
+        "cn": "提交前，请直接扫描 PayNow QR Code 完成付款，并上传付款成功截图。团队会人工核对后安排发货。",
+        "en": "Before submitting, please scan the PayNow QR code, complete payment, and upload the successful payment screenshot. The team will verify payment manually before delivery.",
+        "paynow": "PayNow",
+        "qrPlaceholder": "PayNow QR Code",
+        "qrNote": "Reference: your WhatsApp number",
+        "whatsapp": "The payment screenshot will be submitted with your order for verification"
       }
     },
     "Science": {

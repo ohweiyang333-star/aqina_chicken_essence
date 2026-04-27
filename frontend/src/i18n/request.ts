@@ -1,5 +1,4 @@
 import { getRequestConfig } from 'next-intl/server';
-import { cookies, headers } from 'next/headers';
 
 export default getRequestConfig(async ({ requestLocale }) => {
   let locale = await requestLocale;

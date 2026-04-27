@@ -60,7 +60,7 @@ export default function AdminCustomersPage() {
         const data = await response.json();
         setCustomers(data.customers || []);
       }
-    } catch (error) {
+    } catch {
       console.error('Failed to fetch customers');
     } finally {
       setIsLoading(false);

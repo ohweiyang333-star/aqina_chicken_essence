@@ -5,11 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 
-interface HeroSectionProps {
-  onScrollToProducts?: () => void;
-}
-
-export default function HeroSection({ onScrollToProducts }: HeroSectionProps) {
+export default function HeroSection() {
   const t = useTranslations('Index');
 
   return (

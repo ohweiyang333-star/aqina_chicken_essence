@@ -1,9 +1,6 @@
-import { useTranslations } from 'next-intl';
-import Image from 'next/image';
 import { MessageCircle } from 'lucide-react';
 
 export default function WhatsAppButton() {
-  const t = useTranslations('Index');
   const phoneNumber = "6590000000"; // Placeholder SG number
   const message = encodeURIComponent("Hi Aqina SG, I'm interested in your Ancient Chicken Essence!");
 

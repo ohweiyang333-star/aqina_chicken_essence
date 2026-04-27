@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { CheckCircle2, ShoppingCart } from "lucide-react";
+import { CheckCircle2, QrCode } from "lucide-react";
 import type { DisplayProduct } from "@/lib/product-service";
 import { resolveFixedProductImageByMeta } from "@/lib/product-service";
 import { IMAGES } from "@/lib/image-utils";
@@ -109,7 +109,7 @@ export function ProductCard({
         onClick={() => onBuyNow(product)}
         className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
       >
-        <ShoppingCart size={16} />
+        <QrCode size={16} />
         <span>{t("products.buyNow")}</span>
       </button>
     </article>
