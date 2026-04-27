@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useTranslations } from "next-intl";
-import { ArrowRight, CheckCircle2, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, ShieldCheck, Sparkles } from "lucide-react";
 
 export default function V2HeroSection() {
   const t = useTranslations("Index.v2.hero");
@@ -67,32 +67,37 @@ export default function V2HeroSection() {
             </a>
           </div>
 
-          <ul className="grid gap-3 text-sm text-[#594530] sm:grid-cols-3">
-            {badges.map((badge) => (
+          <ul className="grid max-w-2xl gap-4 border-y border-[#d9b46b]/45 py-5 text-sm text-[#594530] sm:grid-cols-3">
+            {badges.map((badge, index) => (
               <li
                 key={badge}
-                className="flex items-start gap-2 rounded-lg border border-[#ead3a7] bg-white/58 px-3 py-3"
+                className="relative flex items-center gap-3 sm:pr-5"
               >
-                <CheckCircle2
-                  size={17}
-                  className="mt-0.5 shrink-0 text-[#9b6b1f]"
-                />
-                <span>{badge}</span>
+                <span className="font-heading text-xl leading-none text-[#b98220]">
+                  0{index + 1}
+                </span>
+                <span className="h-7 w-px bg-[#d9b46b]/55" />
+                <span className="font-semibold leading-6">{badge}</span>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="relative flex min-h-[28rem] items-end lg:min-h-[34rem]">
-          <div className="grid w-full gap-3 sm:grid-cols-3 lg:absolute lg:bottom-0 lg:right-0 lg:max-w-xl">
-            {notes.map((note) => (
-              <div
-                key={note}
-                className="rounded-lg border border-[#ead3a7] bg-white/82 px-4 py-3 text-sm font-semibold leading-6 text-[#4d3826] shadow-sm backdrop-blur"
-              >
-                {note}
-              </div>
-            ))}
+          <div className="w-full border-t border-[#d9b46b]/65 pt-4 lg:absolute lg:bottom-0 lg:right-0 lg:max-w-xl">
+            <p className="text-[0.72rem] font-bold tracking-[0.22em] text-[#8d6221]">
+              {t("proofLabel")}
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm font-semibold leading-6 text-[#4d3826]">
+              {notes.map((note, index) => (
+                <span key={note} className="inline-flex items-center gap-3">
+                  <span>{note}</span>
+                  {index < notes.length - 1 ? (
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#b98220]/75" />
+                  ) : null}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
       </div>
