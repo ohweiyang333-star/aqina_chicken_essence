@@ -7,14 +7,12 @@ import type { DisplayProduct } from "@/lib/product-service";
 interface ProductPricingSectionProps {
   products: DisplayProduct[];
   isLoading: boolean;
-  onAddToCart: (product: DisplayProduct) => void;
   onBuyNow: (product: DisplayProduct) => void;
 }
 
 export default function ProductPricingSection({
   products,
   isLoading,
-  onAddToCart,
   onBuyNow,
 }: ProductPricingSectionProps) {
   const t = useTranslations("Index");
@@ -46,7 +44,6 @@ export default function ProductPricingSection({
                 <ProductCard
                   key={product.id}
                   product={product}
-                  onAddToCart={onAddToCart}
                   onBuyNow={onBuyNow}
                 />
               ))}

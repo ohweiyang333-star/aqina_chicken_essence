@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 from typing import Any
+import requests
 
 from app.core.config import settings
 from app.models.chatbot import SalesConversationTurn
 from app.models.marketing import NormalizedMarketingEvent
+from app.services.meta_media_assets import MetaMediaAssetService
 from app.services.chatbot_settings import ChatbotSettingsService
 from app.services.follow_up import FollowUpEngine
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, excerpt, payload_hash, stable_id, utcnow
+from app.services.storage_uploads import upload_public_file_to_firebase
 
 
 class MarketingAutomationOrchestrator:
@@ -38,11 +41,18 @@ class MarketingAutomationOrchestrator:
         for entry in payload.get("entry", []):
             for message_event in entry.get("messaging", []):
                 message = message_event.get("message", {})
-                if "text" not in message:
+                attachments = message.get("attachments", [])
+                image_attachment = next(
+                    (item for item in attachments if item.get("type") == "image"),
+                    None,
+                )
+                if "text" not in message and not image_attachment:
                     continue
 
                 occurred_at = ensure_datetime(message_event.get("timestamp")) or utcnow()
                 identifiers = {"psid": str(message_event.get("sender", {}).get("id", ""))}
+                message_type = "image" if image_attachment else "text"
+                message_text = message.get("text", "") if message_type == "text" else "[image]"
                 contact_id, conversation_id = self.contact_service.upsert_contact_from_event(
                     channel="messenger",
                     identifiers=identifiers,
@@ -55,9 +65,10 @@ class MarketingAutomationOrchestrator:
                     channel="messenger",
                     direction="inbound",
                     role="user",
-                    text=message.get("text", ""),
+                    text=message_text,
                     source="messenger_webhook",
                     provider_message_id=message.get("mid"),
+                    message_type=message_type,
                     created_at=occurred_at,
                 )
                 normalized = NormalizedMarketingEvent(
@@ -71,7 +82,9 @@ class MarketingAutomationOrchestrator:
                     identifiers=identifiers,
                     payload={
                         "channel": "messenger",
-                        "text": message.get("text", ""),
+                        "text": message_text,
+                        "message_type": message_type,
+                        "attachment_url": (image_attachment or {}).get("payload", {}).get("url"),
                         "provider_message_id": message.get("mid"),
                         "sender_psid": identifiers["psid"],
                     },
@@ -121,12 +134,18 @@ class MarketingAutomationOrchestrator:
             for change in entry.get("changes", []):
                 value = change.get("value", {})
                 for message in value.get("messages", []):
-                    if message.get("type") != "text":
+                    message_type = message.get("type")
+                    if message_type not in {"text", "image"}:
                         continue
 
                     occurred_at = ensure_datetime(message.get("timestamp")) or utcnow()
                     wa_id = str(message.get("from", ""))
                     identifiers = {"wa_id": wa_id, "phone_e164": wa_id}
+                    message_text = (
+                        message.get("text", {}).get("body", "")
+                        if message_type == "text"
+                        else message.get("image", {}).get("caption") or "[image]"
+                    )
                     contact_id, conversation_id = self.contact_service.upsert_contact_from_event(
                         channel="whatsapp",
                         identifiers=identifiers,
@@ -139,9 +158,10 @@ class MarketingAutomationOrchestrator:
                         channel="whatsapp",
                         direction="inbound",
                         role="user",
-                        text=message.get("text", {}).get("body", ""),
+                        text=message_text,
                         source="whatsapp_webhook",
                         provider_message_id=message.get("id"),
+                        message_type=message_type,
                         created_at=occurred_at,
                     )
                     normalized = NormalizedMarketingEvent(
@@ -155,7 +175,11 @@ class MarketingAutomationOrchestrator:
                         identifiers=identifiers,
                         payload={
                             "channel": "whatsapp",
-                            "text": message.get("text", {}).get("body", ""),
+                            "text": message_text,
+                            "message_type": message_type,
+                            "media_id": message.get("image", {}).get("id"),
+                            "mime_type": message.get("image", {}).get("mime_type"),
+                            "sha256": message.get("image", {}).get("sha256"),
                             "provider_message_id": message.get("id"),
                             "wa_id": wa_id,
                         },
@@ -256,13 +280,16 @@ class MarketingAutomationOrchestrator:
         if not snapshot.exists:
             raise KeyError(f"Marketing event not found: {event_id}")
 
+        event = snapshot.to_dict()
+        payload = event.get("payload", {})
+        if payload.get("message_type") == "image":
+            return self._process_payment_receipt_event(ref=ref, event=event)
+
         if not self.gemini_service.is_ready():
             ref.set({"status": "blocked_configuration", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
             return {"status": "blocked_configuration"}
 
         runtime_settings = self.settings_service.get_settings()
-        event = snapshot.to_dict()
-        payload = event.get("payload", {})
         contact_id = event["contact_id"]
         conversation_id = event["conversation_id"]
         contact = self.contact_service.get_contact(contact_id)
@@ -311,7 +338,12 @@ class MarketingAutomationOrchestrator:
                 order_fields=merged_order_fields,
                 runtime_settings=runtime_settings,
             )
-            reply_text = self._append_checkout_url(reply_text, checkout_session["checkout_url"])
+            reply_text = self._append_paynow_summary(
+                reply_text,
+                order_id=checkout_session["order_id"],
+                total_amount=checkout_session["total_amount"],
+                paynow_settings=runtime_settings.get("payment", {}).get("paynow", {}),
+            )
 
         if turn.next_tag != contact.get("current_tag"):
             self.contact_service.update_contact_tag(
@@ -339,6 +371,25 @@ class MarketingAutomationOrchestrator:
             delivery_status="sent",
         )
         if checkout_session:
+            qr_result = self._send_checkout_qr_image(
+                channel=event["channel"],
+                contact=self.contact_service.get_contact(contact_id),
+                checkout_session=checkout_session,
+                paynow_settings=runtime_settings.get("payment", {}).get("paynow", {}),
+            )
+            qr_provider_message_id = self._extract_provider_message_id(event["channel"], qr_result)
+            self.contact_service.append_message(
+                contact_id=contact_id,
+                channel=event["channel"],
+                direction="outbound",
+                role="assistant",
+                text="PayNow QR image sent",
+                source="paynow_qr_media",
+                provider_message_id=qr_provider_message_id,
+                message_type="image",
+                created_at=utcnow(),
+                delivery_status="sent",
+            )
             self.contact_service.update_contact_profile(
                 contact_id,
                 {
@@ -357,7 +408,7 @@ class MarketingAutomationOrchestrator:
         selected_package_code: str,
         order_fields: dict[str, Any],
         runtime_settings: dict[str, Any],
-    ) -> dict[str, str]:
+    ) -> dict[str, Any]:
         packages = runtime_settings.get("packages", {})
         package = packages.get(selected_package_code)
         if not package:
@@ -373,6 +424,10 @@ class MarketingAutomationOrchestrator:
 
         now = utcnow()
         order_id = stable_id("order", contact_id, selected_package_code, now.isoformat())
+        subtotal_amount = self._money(float(package["price_sgd"]))
+        box_count = self._package_box_count(package)
+        shipping_fee = self._shipping_fee_for(box_count)
+        total_amount = self._money(subtotal_amount + shipping_fee)
         order_payload = {
             "customer": {
                 "name": order_fields.get("name"),
@@ -386,14 +441,18 @@ class MarketingAutomationOrchestrator:
                     "product_name": package["name_zh"],
                     "product_name_zh": package["name_zh"],
                     "quantity": 1,
-                    "unit_price": package["price_sgd"],
-                    "total_price": package["price_sgd"],
+                    "unit_price": subtotal_amount,
+                    "total_price": subtotal_amount,
                 }
             ],
-            "total_amount": package["price_sgd"],
+            "subtotal_amount": subtotal_amount,
+            "shipping_fee": shipping_fee,
+            "box_count": box_count,
+            "total_amount": total_amount,
             "payment_method": "paynow",
             "payment_status": "pending",
             "order_status": "pending",
+            "payment_receipt_url": None,
             "source": "marketing_chatbot",
             "marketing_contact_id": contact_id,
             "checkout_session_id": None,
@@ -415,6 +474,10 @@ class MarketingAutomationOrchestrator:
             "contact_id": contact_id,
             "status": "active",
             "payment_reference": f"{paynow_settings.get('payment_reference_prefix', 'AQINA')}-{order_id}",
+            "subtotal_amount": subtotal_amount,
+            "shipping_fee": shipping_fee,
+            "box_count": box_count,
+            "total_amount": total_amount,
             "created_at": now,
             "updated_at": now,
         }
@@ -486,6 +549,169 @@ class MarketingAutomationOrchestrator:
             return self.meta_client.send_whatsapp_text(to=identifiers["wa_id"], text=text)
         raise ValueError(f"Unsupported outbound channel: {channel}")
 
+    def _send_checkout_qr_image(
+        self,
+        *,
+        channel: str,
+        contact: dict[str, Any],
+        checkout_session: dict[str, Any],
+        paynow_settings: dict[str, Any],
+    ) -> dict[str, Any]:
+        reference = checkout_session.get("payment_reference") or (
+            f"{paynow_settings.get('payment_reference_prefix', 'AQINA')}-{checkout_session['order_id']}"
+        )
+        caption = (
+            f"PayNow: {paynow_settings.get('account_name', 'Boong Poultry Pte Ltd')}\n"
+            f"Amount: SGD {float(checkout_session.get('total_amount', 0)):.2f}\n"
+            f"Reference: {reference}"
+        )
+        media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
+        return media_service.send_paynow_qr(
+            channel=channel,
+            contact=contact,
+            paynow_settings=paynow_settings,
+            caption=caption,
+        )
+
+    def _process_payment_receipt_event(self, *, ref: Any, event: dict[str, Any]) -> dict[str, Any]:
+        runtime_settings = self.settings_service.get_settings()
+        contact_id = event["contact_id"]
+        conversation_id = event["conversation_id"]
+        contact = self.contact_service.get_contact(contact_id)
+        session = self._find_active_checkout_session(contact_id)
+        if not session:
+            escalation_id = self._escalate_contact(
+                contact=contact,
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                latest_customer_message="PayNow receipt image received but no active checkout session was found.",
+                reason="unmatched_payment_receipt",
+                runtime_settings=runtime_settings,
+            )
+            ref.set(
+                {
+                    "status": "escalated_unmatched_receipt",
+                    "escalation_id": escalation_id,
+                    "processed_at": utcnow(),
+                    "updated_at": utcnow(),
+                },
+                merge=True,
+            )
+            return {"status": "escalated_unmatched_receipt", "escalation_id": escalation_id}
+
+        order_id = session["order_id"]
+        receipt_url = self._store_inbound_receipt(event=event, order_id=order_id)
+        order_snapshot = self.db.collection("orders").document(order_id).get()
+        order = order_snapshot.to_dict() if order_snapshot.exists else {}
+        total_amount = float(order.get("total_amount") or session.get("total_amount") or 0)
+        payment_id = stable_id("payment", order_id)
+        now = utcnow()
+        self.db.collection("payments").document(payment_id).set(
+            {
+                "order_id": order_id,
+                "method": "paynow",
+                "payment_method": "paynow",
+                "amount": total_amount,
+                "status": "payment_submitted",
+                "transaction_id": None,
+                "screenshot_url": receipt_url,
+                "source": "marketing_chatbot",
+                "created_at": now,
+                "updated_at": now,
+            },
+            merge=True,
+        )
+        self.db.collection("orders").document(order_id).set(
+            {
+                "payment_status": "payment_submitted",
+                "payment_receipt_url": receipt_url,
+                "updated_at": now,
+            },
+            merge=True,
+        )
+        self.db.collection("marketing_checkout_sessions").document(session["session_id"]).set(
+            {"status": "receipt_submitted", "payment_receipt_url": receipt_url, "updated_at": now},
+            merge=True,
+        )
+        reply_text = "收到您的 PayNow 付款截图了，我们会人工核对后尽快安排发货。"
+        send_result = self._send_channel_reply(channel=event["channel"], contact=contact, text=reply_text)
+        provider_message_id = self._extract_provider_message_id(event["channel"], send_result)
+        self.contact_service.append_message(
+            contact_id=contact_id,
+            channel=event["channel"],
+            direction="outbound",
+            role="assistant",
+            text=reply_text,
+            source="payment_receipt_ack",
+            provider_message_id=provider_message_id,
+            created_at=now,
+            delivery_status="sent",
+        )
+        ref.set(
+            {
+                "status": "payment_receipt_processed",
+                "order_id": order_id,
+                "payment_receipt_url": receipt_url,
+                "processed_at": now,
+                "updated_at": now,
+            },
+            merge=True,
+        )
+        return {"status": "payment_receipt_processed", "order_id": order_id}
+
+    def _find_active_checkout_session(self, contact_id: str) -> dict[str, Any] | None:
+        contact = self.contact_service.get_contact(contact_id)
+        existing_id = contact.get("checkout_session_id")
+        if existing_id:
+            snapshot = self.db.collection("marketing_checkout_sessions").document(existing_id).get()
+            if snapshot.exists:
+                session = snapshot.to_dict()
+                session["session_id"] = snapshot.id
+                if session.get("status") in {"active", "receipt_submitted"}:
+                    return session
+
+        docs = (
+            self.db.collection("marketing_checkout_sessions")
+            .where("contact_id", "==", contact_id)
+            .where("status", "==", "active")
+            .limit(1)
+            .stream()
+        )
+        if docs:
+            session = docs[0].to_dict()
+            session["session_id"] = docs[0].id
+            return session
+        return None
+
+    def _store_inbound_receipt(self, *, event: dict[str, Any], order_id: str) -> str:
+        payload = event.get("payload", {})
+        channel = event["channel"]
+        if channel == "whatsapp":
+            media_id = payload.get("media_id")
+            if not media_id:
+                raise ValueError("WhatsApp receipt image is missing media_id")
+            data, content_type = self.meta_client.download_whatsapp_media(media_id)
+            receipt_seed = media_id
+        elif channel == "messenger":
+            attachment_url = payload.get("attachment_url")
+            if not attachment_url:
+                raise ValueError("Messenger receipt image is missing attachment_url")
+            response = requests.get(attachment_url, timeout=20)
+            response.raise_for_status()
+            data = response.content
+            content_type = response.headers.get("content-type", "image/jpeg").split(";")[0]
+            receipt_seed = payload.get("provider_message_id") or attachment_url
+        else:
+            raise ValueError(f"Unsupported receipt channel: {channel}")
+
+        extension = self._extension_for_content_type(content_type)
+        receipt_id = stable_id("receipt", order_id, receipt_seed)
+        return upload_public_file_to_firebase(
+            data=data,
+            destination_path=f"payment_receipts/{order_id}/{receipt_id}.{extension}",
+            content_type=content_type,
+        )
+
     @staticmethod
     def _extract_provider_message_id(channel: str, payload: dict[str, Any]) -> str | None:
         if channel == "messenger":
@@ -499,6 +725,57 @@ class MarketingAutomationOrchestrator:
             return reply_text
         spacer = "\n\n" if reply_text else ""
         return f"{reply_text}{spacer}{checkout_url}".strip()
+
+    @staticmethod
+    def _append_paynow_summary(
+        reply_text: str,
+        *,
+        order_id: str,
+        total_amount: float,
+        paynow_settings: dict[str, Any],
+    ) -> str:
+        account_name = paynow_settings.get("account_name", "Boong Poultry Pte Ltd")
+        reference = f"{paynow_settings.get('payment_reference_prefix', 'AQINA')}-{order_id}"
+        summary = (
+            f"PayNow 收款户名：{account_name}\n"
+            f"金额：SGD {float(total_amount):.2f}\n"
+            f"Reference：{reference}\n"
+            "我会直接发送 PayNow QR 图片给您。付款后请把截图发回这里，我们才会安排订单处理。"
+        )
+        spacer = "\n\n" if reply_text else ""
+        return f"{reply_text}{spacer}{summary}".strip()
+
+    @staticmethod
+    def _package_box_count(package: dict[str, Any]) -> int:
+        if package.get("box_count"):
+            return int(package["box_count"])
+        code = str(package.get("code", ""))
+        if code in {"pack1", "trial_3"}:
+            return 1
+        if code in {"pack2", "energy_14"}:
+            return 2
+        if code in {"pack4", "maternal_28"}:
+            return 4
+        if code in {"pack6", "family_42"}:
+            return 6
+        return max(1, round(float(package.get("pack_count", 7)) / 7))
+
+    @staticmethod
+    def _shipping_fee_for(box_count: int) -> float:
+        return 0.0 if box_count >= 2 else 8.0
+
+    @staticmethod
+    def _money(value: float) -> float:
+        return round(value + 1e-8, 2)
+
+    @staticmethod
+    def _extension_for_content_type(content_type: str) -> str:
+        normalized = content_type.lower()
+        if normalized == "image/png":
+            return "png"
+        if normalized == "image/webp":
+            return "webp"
+        return "jpg"
 
     @staticmethod
     def _normalize_turn(result: Any) -> SalesConversationTurn:

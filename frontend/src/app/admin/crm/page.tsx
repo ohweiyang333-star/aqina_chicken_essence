@@ -537,6 +537,22 @@ export default function AdminCRMPage() {
                       }
                     />
                     <LabeledInput
+                      label="PayNow 户名"
+                      value={settings.payment.paynow.account_name}
+                      onChange={(value) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                payment: {
+                                  paynow: { ...current.payment.paynow, account_name: value },
+                                },
+                              }
+                            : current,
+                        )
+                      }
+                    />
+                    <LabeledInput
                       label="QR 图片 URL"
                       value={settings.payment.paynow.payment_qr_image}
                       onChange={(value) =>

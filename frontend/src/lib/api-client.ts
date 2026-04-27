@@ -19,6 +19,8 @@ interface ApiErrorResponse {
 }
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type QueryValue = string | number | boolean | null | undefined;
+type QueryParams = object;
 
 export class ApiClient {
   private baseURL: string;
@@ -48,12 +50,12 @@ export class ApiClient {
   /**
    * Build full URL for API endpoint
    */
-  private buildUrl(endpoint: string, params?: Record<string, any>): string {
+  private buildUrl(endpoint: string, params?: QueryParams): string {
     const url = new URL(`${this.baseURL}${endpoint}`);
 
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
+        if (isQueryValue(value) && value !== undefined && value !== null) {
           url.searchParams.append(key, String(value));
         }
       });
@@ -69,7 +71,7 @@ export class ApiClient {
     method: HttpMethod,
     endpoint: string,
     data?: object,
-    params?: Record<string, any>
+    params?: QueryParams
   ): Promise<T> {
     const url = this.buildUrl(endpoint, params);
     const headers = await this.getAuthHeaders();
@@ -107,7 +109,7 @@ export class ApiClient {
   /**
    * GET request
    */
-  async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+  async get<T>(endpoint: string, params?: QueryParams): Promise<T> {
     return this.request<T>('GET', endpoint, undefined, params);
   }
 
@@ -133,6 +135,17 @@ export class ApiClient {
   }
 }
 
+function isQueryValue(value: unknown): value is QueryValue {
+  const valueType = typeof value;
+  return (
+    value === null ||
+    value === undefined ||
+    valueType === 'string' ||
+    valueType === 'number' ||
+    valueType === 'boolean'
+  );
+}
+
 /**
  * Create singleton API client instance
  */
@@ -145,7 +158,6 @@ export function createApiClient(): ApiClient {
       // Dynamically import firebase/auth to avoid SSR issues
       if (typeof window === 'undefined') return null;
 
-      const { getAuth } = await import('firebase/auth');
       const { auth } = await import('@/lib/firebase');
 
       const user = auth.currentUser;

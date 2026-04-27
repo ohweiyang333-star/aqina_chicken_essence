@@ -43,10 +43,14 @@ class OrderResponse(BaseModel):
     order_id: str
     customer: CustomerInfo
     items: list[OrderItem]
+    subtotal_amount: Optional[float] = None
+    shipping_fee: float = 0
+    box_count: int = 0
     total_amount: float
     payment_method: str
-    payment_status: Literal["pending", "paid", "failed", "refunded"]
+    payment_status: Literal["pending", "payment_submitted", "paid", "failed", "refunded"]
     order_status: Literal["pending", "processing", "shipped", "delivered", "cancelled"]
+    payment_receipt_url: Optional[str] = None
     notes: Optional[str] = None
     source: Optional[str] = None
     marketing_contact_id: Optional[str] = None

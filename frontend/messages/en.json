@@ -129,13 +129,18 @@
         "address": "Delivery Address / 地址",
         "subtotal": "Subtotal",
         "delivery": "Delivery Fee",
+        "total": "Total",
         "free": "FREE",
-        "submit": "Confirm Order",
-        "terms": "By clicking confirm, your order is submitted. Payment will be handled via PayNow. Returns accepted within 7 days for quality issues."
+        "receipt": "PayNow Receipt Screenshot",
+        "receiptHelp": "Upload JPG, PNG, or WebP after successful PayNow payment.",
+        "receiptRequired": "Please upload your PayNow payment receipt before submitting.",
+        "submit": "Submit Order & Receipt",
+        "terms": "Please complete PayNow and upload your payment screenshot before submitting. Payment will be verified manually before delivery."
       },
       "success": {
         "title": "Order Received!",
-        "subtitle": "Thank you for your order. Please complete payment using one of the methods below.",
+        "subtitle": "Thank you. Your order and PayNow receipt have been submitted.",
+        "receiptSubmitted": "We have received your PayNow receipt. The team will verify payment manually before arranging delivery.",
         "close": "Back to Home"
       },
       "payment": {
@@ -143,6 +148,10 @@
         "cn": "下单后，请直接扫描下方 PayNow QR Code，并在参考栏填写您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
         "en": "After placing your order, please scan the PayNow QR code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
         "paynow": "PayNow",
+        "accountName": "Account name",
+        "amount": "Amount",
+        "beforeSubmit": "Please complete PayNow payment first, then upload the successful payment screenshot below to submit your order.",
+        "referenceBeforeOrder": "Reference: your WhatsApp number",
         "qrUnavailable": "PayNow QR details will be shared after order confirmation.",
         "qrNote": "Reference: Your Order ID",
         "whatsapp": "Send payment screenshot to WhatsApp {phone} for faster processing"
@@ -652,7 +661,7 @@
         "subtitle": "A bright rice-gold experience built around clean soup-like taste, easy warming, and a daily nourishment ritual that feels simple to keep.",
         "primaryCta": "Choose a Plan",
         "secondaryCta": "See Real Scenes",
-        "imageAlt": "Aqina pineapple enzyme chicken essence pack",
+        "imageAlt": "Aqina pineapple enzyme chicken essence box, pouch, and warm serving scene",
         "badges": [
           "Pineapple enzyme concept",
           "Clean soup-like taste",

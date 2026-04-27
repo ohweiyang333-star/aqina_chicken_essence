@@ -24,13 +24,12 @@ export default function V2LandingPage() {
     selectedProduct,
     isCheckoutOpen,
     handleBuyNow,
-    handleAddToCart,
     closeCheckout,
   } = useLandingProducts();
 
   return (
     <MediaLoadGate
-      cacheKey="aqina-v2-landing-media-v2"
+      cacheKey="aqina-v2-landing-media-v3"
       sources={v2LandingMedia}
       variant="warm"
     >
@@ -46,7 +45,6 @@ export default function V2LandingPage() {
           <ProductPricingSection
             products={products}
             isLoading={isLoading}
-            onAddToCart={handleAddToCart}
             onBuyNow={handleBuyNow}
           />
         </V2ProductPricingBand>

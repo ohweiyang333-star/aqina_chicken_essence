@@ -128,6 +128,7 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
           </div>
 
           <div className="mt-6 space-y-4 rounded-[28px] border border-white/10 bg-white/5 p-5">
+            <InfoPairDark label="PayNow 户名" value={checkout.paynow.account_name} />
             <InfoPairDark label="Reference" value={`${checkout.paynow.payment_reference_prefix}-${checkout.order_id}`} />
             <InfoPairDark label="付款备注" value={checkout.paynow.payment_note} />
             <InfoPairDark label="客服 WhatsApp" value={aqinaSiteConfig.contact.whatsappDisplay} />

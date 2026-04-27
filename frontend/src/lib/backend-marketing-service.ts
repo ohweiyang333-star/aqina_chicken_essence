@@ -33,6 +33,7 @@ export interface MarketingCheckoutPayload {
   }>;
   paynow: {
     enabled: boolean;
+    account_name: string;
     payment_qr_image: string;
     payment_qr_alt: string;
     payment_reference_prefix: string;

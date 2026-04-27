@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-DEFAULT_PAYNOW_QR_IMAGE = "/paynow/aqina-paynow-qr-designed.png"
+DEFAULT_PAYNOW_QR_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa"
 LEGACY_PAYNOW_QR_IMAGE = "/paynow/bp-paynow-qr.png"
 
 
@@ -74,11 +74,11 @@ Knowledge Base (Aqina 滴鸡精专属知识库)
 
 产品定价与套餐 (新加坡区 - 币种 SGD)：
 - 一盒 (7包) = SGD 39.90
-- 【新手体验装】 3包 = SGD 18.00
-- 【活力升级装】 2盒 (14包) = SGD 75.00
-- 【孕产妇30天调理套餐】 4盒 (28包) = SGD 149.00
-- 【家庭月度订阅包】 6盒 (42包) = SGD 219.00
-- 单笔订单满 SGD 70 即可享受新加坡全岛免费配送。
+- 【14天常备装】 2盒 (14包) = SGD 75.00
+- 【28天月度装】 4盒 (28包) = SGD 149.00
+- 【42天家庭装】 6盒 (42包) = SGD 219.00
+- 1盒订单需加 SGD 8 新加坡配送费；2盒或以上才享新加坡全岛免费配送。
+- PayNow 收款户名：Boong Poultry Pte Ltd。顾客付款后必须发送付款截图，才算完成提交。
 
 常见 FAQ：
 - 新加坡区现货供应，下单后通常 1-3 个工作日即可送达。
@@ -94,7 +94,7 @@ Knowledge Base (Aqina 滴鸡精专属知识库)
 CRM Follow-Up Rules (24小时跟进机制)
 - 离线 15 分钟：极强同理心，给顾客找台阶下，使用低门槛互动。
 - 离线 3 小时：运用视觉化描述，唤醒感官欲望，不直接催单。
-- 离线 12 小时：引入新加坡发货批次截单的紧迫感，并再次提供付款链接。
+- 离线 12 小时：引入新加坡发货批次截单的紧迫感，并提醒顾客用已发送的 PayNow QR 付款后回传截图。
 - 离线 23 小时：明确窗口即将关闭，引导客户回复 YES 以保留未来优惠资格并重置窗口。
 
 输出必须为 JSON，字段固定为：
@@ -109,50 +109,54 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         "system_prompt": AQINA_SYSTEM_PROMPT,
         "handoff_message": "我先为您转接人工同事优先处理，请稍等一下 🙏",
         "packages": {
-            "trial_3": {
-                "code": "trial_3",
-                "name_zh": "新手体验装",
-                "name_en": "Trial Pack",
-                "description_zh": "适合想先体验味道与口感的顾客。",
-                "description_en": "Great for first-time tasting and low-commitment trials.",
-                "price_sgd": 18.0,
-                "pack_count": 3,
+            "pack1": {
+                "code": "pack1",
+                "name_zh": "7天启动装",
+                "name_en": "7-Day Starter Pack",
+                "description_zh": "适合初次体验，1盒需加 SGD 8 新加坡配送费。",
+                "description_en": "Best for first-time trial; one-box orders add SGD 8 delivery.",
+                "price_sgd": 39.9,
+                "pack_count": 7,
+                "box_count": 1,
                 "target_audience": ["self_care"],
                 "hero": False,
                 "free_shipping_eligible": False,
             },
-            "energy_14": {
-                "code": "energy_14",
-                "name_zh": "活力升级装",
+            "pack2": {
+                "code": "pack2",
+                "name_zh": "14天常备装",
                 "name_en": "Energy Upgrade Pack",
                 "description_zh": "主推免邮组合，适合日常保养与上班族。",
                 "description_en": "Hero pack for daily nourishment and free shipping.",
                 "price_sgd": 75.0,
                 "pack_count": 14,
+                "box_count": 2,
                 "target_audience": ["self_care"],
                 "hero": True,
                 "free_shipping_eligible": True,
             },
-            "maternal_28": {
-                "code": "maternal_28",
-                "name_zh": "孕产妇30天调理套餐",
-                "name_en": "Maternal 30-Day Pack",
+            "pack4": {
+                "code": "pack4",
+                "name_zh": "28天月度装",
+                "name_en": "28-Day Monthly Pack",
                 "description_zh": "适合孕期与坐月子调理的高转化套餐。",
                 "description_en": "Best-fit program for pregnancy and postpartum recovery.",
                 "price_sgd": 149.0,
                 "pack_count": 28,
+                "box_count": 4,
                 "target_audience": ["pregnancy", "postpartum"],
                 "hero": True,
                 "free_shipping_eligible": True,
             },
-            "family_42": {
-                "code": "family_42",
-                "name_zh": "家庭月度订阅包",
-                "name_en": "Family Monthly Pack",
+            "pack6": {
+                "code": "pack6",
+                "name_zh": "42天家庭装",
+                "name_en": "42-Day Family Pack",
                 "description_zh": "适合长期调理、送礼与家庭共享。",
                 "description_en": "Best for repeat buyers, gifting, and family sharing.",
                 "price_sgd": 219.0,
                 "pack_count": 42,
+                "box_count": 6,
                 "target_audience": ["gift_elder", "self_care"],
                 "hero": False,
                 "free_shipping_eligible": True,
@@ -172,7 +176,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 {"question": "和传统鸡精有什么不同？", "answer": "Aqina 不加一滴水，味道像浓郁鸡汤，鲜甜没有腥苦味。"},
             ],
             "medical_disclaimer": "若顾客有严重疾病或特殊医疗状况，请建议咨询医生，滴鸡精属于营养食品并非药品。",
-            "logistics": "新加坡现货供应，通常 1-3 个工作日送达；订单满 SGD 70 享免运费。",
+            "logistics": "新加坡现货供应，通常 1-3 个工作日送达；1盒订单加 SGD 8 配送费，2盒或以上免运费。",
             "consumption": "建议早晨空腹饮用，可隔水加热或热水浸泡后即饮。",
             "comparisons": "相较传统鸡精，Aqina 更像家里炖煮的浓鸡汤，鲜甜顺口，没有传统腥苦味。",
         },
@@ -193,7 +197,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 "default": {"instruction": "请用视觉化、感官化的方式描述 Aqina 滴鸡精的金黄色泽、浓郁香味和暖胃的感觉，不要直接催单。"}
             },
             "t12h": {
-                "cart_hot": {"instruction": "请带入‘明天新加坡发货批次即将截单’的紧迫感，并再次附上专属 PayNow 付款链接。"}
+                "cart_hot": {"instruction": "请带入‘明天新加坡发货批次即将截单’的紧迫感，并提醒顾客使用已发送的 PayNow QR 付款后回传截图。"}
             },
             "t23h": {
                 "default": {"instruction": "请明确告知系统对话窗口即将关闭，并引导顾客回复 YES 以保留未来优惠资格。"}
@@ -202,10 +206,11 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         "payment": {
             "paynow": {
                 "enabled": True,
+                "account_name": "Boong Poultry Pte Ltd",
                 "payment_qr_image": DEFAULT_PAYNOW_QR_IMAGE,
-                "payment_qr_alt": "Aqina BP PayNow QR",
+                "payment_qr_alt": "Boong Poultry Pte Ltd PayNow QR",
                 "payment_reference_prefix": "AQINA",
-                "payment_note": "请在 PayNow 参考栏填写订单号，并把付款截图发回公用 WhatsApp。",
+                "payment_note": "请在 PayNow 参考栏填写订单号，并把付款截图发回 Chatbot 或公用 WhatsApp。",
             }
         },
         "escalation": {
@@ -263,6 +268,8 @@ class ChatbotSettingsService:
         paynow = normalized.get("payment", {}).get("paynow", {})
         if (not paynow.get("payment_qr_image")) or paynow.get("payment_qr_image") == LEGACY_PAYNOW_QR_IMAGE:
             normalized["payment"]["paynow"]["payment_qr_image"] = defaults["payment"]["paynow"]["payment_qr_image"]
+        if not paynow.get("account_name"):
+            normalized["payment"]["paynow"]["account_name"] = defaults["payment"]["paynow"]["account_name"]
         if not paynow.get("payment_qr_alt"):
             normalized["payment"]["paynow"]["payment_qr_alt"] = defaults["payment"]["paynow"]["payment_qr_alt"]
         validated = ChatbotSettingsResponse.model_validate(normalized)

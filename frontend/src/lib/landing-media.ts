@@ -34,7 +34,7 @@ export const greenLandingMedia = [
 ];
 
 export const v2LandingMedia = [
-  '/v2/aqina-v2-hero.webp',
+  '/v2/aqina-v2-hero-product-real.webp',
   '/v2/aqina-v2-pineapple-farm.webp',
   '/v2/aqina-v2-golden-essence.webp',
   '/v2/aqina-v2-family-care.webp',

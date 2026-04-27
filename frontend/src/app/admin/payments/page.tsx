@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getPayments, updatePaymentStatus, type Payment, type PaymentStatus } from '@/lib/backend-payment-service';
+import { getPayments, updatePaymentStatus, type Payment, type PaymentFilters, type PaymentStatus } from '@/lib/backend-payment-service';
 import { format } from 'date-fns';
 
 export default function PaymentsPage() {
@@ -22,7 +22,7 @@ export default function PaymentsPage() {
       setIsLoading(true);
       setError(null);
 
-      const filters: any = { page, page_size: pageSize };
+      const filters: PaymentFilters = { page, page_size: pageSize };
       if (statusFilter !== 'all') {
         filters.status = statusFilter;
       }
@@ -48,7 +48,8 @@ export default function PaymentsPage() {
 
   const statusColors: Record<PaymentStatus, string> = {
     pending: 'bg-yellow-100 text-yellow-800',
-    completed: 'bg-green-100 text-green-800',
+    payment_submitted: 'bg-blue-100 text-blue-800',
+    paid: 'bg-green-100 text-green-800',
     failed: 'bg-red-100 text-red-800',
     refunded: 'bg-gray-100 text-gray-800',
   };
@@ -76,7 +77,8 @@ export default function PaymentsPage() {
             >
               <option value="all">All Payments</option>
               <option value="pending">Pending</option>
-              <option value="completed">Completed</option>
+              <option value="payment_submitted">Payment Submitted</option>
+              <option value="paid">Paid</option>
               <option value="failed">Failed</option>
               <option value="refunded">Refunded</option>
             </select>
@@ -168,7 +170,8 @@ export default function PaymentsPage() {
                         className="border border-gray-300 rounded px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="pending">Pending</option>
-                        <option value="completed">Completed</option>
+                        <option value="payment_submitted">Payment Submitted</option>
+                        <option value="paid">Paid</option>
                         <option value="failed">Failed</option>
                         <option value="refunded">Refunded</option>
                       </select>

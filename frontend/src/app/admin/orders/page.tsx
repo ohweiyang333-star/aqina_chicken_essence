@@ -7,10 +7,15 @@ import {
   isUserAdmin,
   logout,
 } from "@/lib/auth-service";
-import { getOrders, updateOrderStatus, Order } from "@/lib/order-service";
+import {
+  getOrders,
+  updateOrderPaymentStatus,
+  updateOrderStatus,
+  Order,
+  OrderPaymentStatus,
+} from "@/lib/order-service";
 import {
   Loader2,
-  ChevronRight,
   Clock,
   Truck,
   CheckCircle2,
@@ -22,13 +27,14 @@ import {
 } from "lucide-react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
+type AdminOrderTab = "ALL" | "PENDING" | "SHIPPED" | "COMPLETED";
+const ORDER_TABS: AdminOrderTab[] = ["ALL", "PENDING", "SHIPPED", "COMPLETED"];
+
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<
-    "ALL" | "PENDING" | "SHIPPED" | "COMPLETED"
-  >("ALL");
+  const [activeTab, setActiveTab] = useState<AdminOrderTab>("ALL");
   const router = useRouter();
 
   useEffect(() => {
@@ -66,6 +72,22 @@ export default function AdminOrdersPage() {
       );
     } catch (error) {
       alert("Failed to update status");
+    }
+  };
+
+  const handlePaymentStatusUpdate = async (
+    orderId: string,
+    newStatus: OrderPaymentStatus,
+  ) => {
+    try {
+      await updateOrderPaymentStatus(orderId, newStatus);
+      setOrders(
+        orders.map((o) =>
+          o.id === orderId ? { ...o, paymentStatus: newStatus } : o,
+        ),
+      );
+    } catch (error) {
+      alert("Failed to update payment status");
     }
   };
 
@@ -107,6 +129,21 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const getPaymentStatusColor = (status: OrderPaymentStatus) => {
+    switch (status) {
+      case "paid":
+        return "bg-green-100 text-green-700 border-green-200";
+      case "payment_submitted":
+        return "bg-blue-100 text-blue-700 border-blue-200";
+      case "failed":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "refunded":
+        return "bg-gray-100 text-gray-700 border-gray-200";
+      default:
+        return "bg-amber-100 text-amber-700 border-amber-200";
+    }
+  };
+
   if (isAuthLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F8F9FA]">
@@ -131,10 +168,10 @@ export default function AdminOrdersPage() {
             </p>
           </div>
           <div className="flex bg-white p-1 rounded-xl shadow-sm border border-charcoal/5">
-            {["ALL", "PENDING", "SHIPPED", "COMPLETED"].map((tab) => (
+            {ORDER_TABS.map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab as any)}
+                onClick={() => setActiveTab(tab)}
                 className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
                   activeTab === tab
                     ? "bg-charcoal text-ivory shadow-md"
@@ -174,6 +211,14 @@ export default function AdminOrdersPage() {
                     >
                       {getStatusIcon(order.status)}
                       {order.status}
+                    </div>
+                    <div
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold border uppercase tracking-tighter ${getPaymentStatusColor(order.paymentStatus)}`}
+                    >
+                      {order.paymentStatus.replace("_", " ")}
+                    </div>
+                    <div className="px-3 py-1 rounded-full bg-ivory text-[10px] font-bold uppercase tracking-tighter text-charcoal/50">
+                      {order.source === "marketing_chatbot" ? "Chatbot" : "Landing"}
                     </div>
                     <span className="text-xs font-mono text-charcoal/30">
                       #{order.id?.slice(-8)}
@@ -223,19 +268,43 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
                   </div>
+
+                  {order.paymentReceiptUrl && (
+                    <a
+                      href={order.paymentReceiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex w-fit items-center rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700 hover:bg-blue-100"
+                    >
+                      View PayNow receipt
+                    </a>
+                  )}
                 </div>
 
                 <div className="flex flex-col items-center md:items-end justify-center min-w-[200px] gap-4 pl-6 md:border-l border-charcoal/5">
                   <div className="text-right">
                     <p className="text-3xl font-black text-secondary tracking-tighter">
-                      ${order.total.toFixed(2)}
+                      SGD {order.total.toFixed(2)}
                     </p>
                     <p className="text-[10px] text-charcoal/40 font-bold uppercase tracking-widest mt-1">
                       {order.items[0]?.productName || "Order"}
                     </p>
+                    <p className="mt-1 text-[10px] text-charcoal/40">
+                      Shipping: SGD {order.shippingFee.toFixed(2)} · {order.boxCount} box
+                      {order.boxCount === 1 ? "" : "es"}
+                    </p>
                   </div>
 
                   <div className="flex gap-2">
+                    {order.paymentStatus !== "paid" && (
+                      <button
+                        onClick={() => handlePaymentStatusUpdate(order.id!, "paid")}
+                        className="px-4 py-2 rounded-lg bg-blue-600 text-white text-xs font-bold hover:bg-blue-700 transition-all flex items-center gap-2"
+                      >
+                        <CheckCircle2 size={14} />
+                        Mark Paid
+                      </button>
+                    )}
                     {order.status === "PENDING" && (
                       <button
                         onClick={() => handleStatusUpdate(order.id!, "SHIPPED")}

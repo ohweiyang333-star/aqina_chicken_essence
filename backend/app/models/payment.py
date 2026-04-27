@@ -21,7 +21,7 @@ class PaymentResponse(BaseModel):
     order_id: str
     method: str
     amount: float
-    status: Literal["pending", "paid", "failed", "refunded"]
+    status: Literal["pending", "payment_submitted", "paid", "failed", "refunded"]
     transaction_id: Optional[str] = None
     screenshot_url: Optional[str] = None
     notes: Optional[str] = None
@@ -32,7 +32,7 @@ class PaymentResponse(BaseModel):
 class UpdatePaymentStatusRequest(BaseModel):
     """Request model for updating payment status."""
 
-    status: Literal["pending", "paid", "failed", "refunded"]
+    status: Literal["pending", "payment_submitted", "paid", "failed", "refunded"]
     transaction_id: Optional[str] = None
     notes: Optional[str] = Field(None, max_length=1000)
 

@@ -180,8 +180,10 @@ class FollowUpEngine:
         if isinstance(result, dict):
             reply_text = str(result.get("reply_text", "")).strip()
             next_tag = result.get("next_tag")
-            if result.get("checkout_link_required") and checkout_url and checkout_url not in reply_text:
-                reply_text = f"{reply_text}\n\n{checkout_url}".strip()
+            if result.get("checkout_link_required") and checkout_url:
+                reminder = "请使用前面发送的 PayNow QR 图片付款，完成后把截图发回这里即可。"
+                if reminder not in reply_text:
+                    reply_text = f"{reply_text}\n\n{reminder}".strip()
             return reply_text, next_tag
         return str(result).strip(), None
 

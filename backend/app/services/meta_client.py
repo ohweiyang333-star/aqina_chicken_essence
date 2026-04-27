@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 from typing import Any
 
 import requests
@@ -72,6 +73,100 @@ class MetaMessagingClient:
             params={"access_token": settings.meta_whatsapp_access_token},
         )
 
+    def upload_whatsapp_media(self, *, filename: str, content_type: str, data: bytes) -> dict[str, Any]:
+        """Upload image bytes to WhatsApp Cloud API and return a media id."""
+        return self._post(
+            f"/{settings.meta_whatsapp_phone_number_id}/media",
+            data={"messaging_product": "whatsapp"},
+            files={"file": (filename, data, content_type)},
+            params={"access_token": settings.meta_whatsapp_access_token},
+        )
+
+    def send_whatsapp_image(self, *, to: str, media_id: str, caption: str | None = None) -> dict[str, Any]:
+        """Send a WhatsApp image message by an uploaded media id."""
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": to,
+            "type": "image",
+            "image": {"id": media_id},
+        }
+        if caption:
+            payload["image"]["caption"] = caption
+        return self._post(
+            f"/{settings.meta_whatsapp_phone_number_id}/messages",
+            json=payload,
+            params={"access_token": settings.meta_whatsapp_access_token},
+        )
+
+    def download_whatsapp_media(self, media_id: str) -> tuple[bytes, str]:
+        """Download WhatsApp media bytes by media id."""
+        metadata = self._get(
+            f"/{media_id}",
+            params={"access_token": settings.meta_whatsapp_access_token},
+        )
+        media_url = metadata.get("url")
+        if not media_url:
+            raise ValueError("WhatsApp media metadata did not include a download URL")
+        response = requests.get(
+            media_url,
+            timeout=20,
+            headers={"Authorization": f"Bearer {settings.meta_whatsapp_access_token}"},
+        )
+        response.raise_for_status()
+        content_type = response.headers.get("content-type", "image/jpeg").split(";")[0]
+        return response.content, content_type
+
+    def upload_messenger_attachment(self, *, filename: str, content_type: str, data: bytes) -> dict[str, Any]:
+        """Upload a reusable Messenger image attachment and return an attachment id."""
+        message = {
+            "attachment": {
+                "type": "image",
+                "payload": {"is_reusable": True},
+            }
+        }
+        return self._post(
+            "/me/message_attachments",
+            data={"message": json.dumps(message)},
+            files={"filedata": (filename, data, content_type)},
+            params={"access_token": settings.meta_page_access_token},
+        )
+
+    def send_messenger_image_attachment(self, *, recipient_psid: str, attachment_id: str) -> dict[str, Any]:
+        """Send a Messenger image message by reusable attachment id."""
+        payload = {
+            "recipient": {"id": recipient_psid},
+            "messaging_type": "RESPONSE",
+            "message": {
+                "attachment": {
+                    "type": "image",
+                    "payload": {"attachment_id": attachment_id},
+                }
+            },
+        }
+        return self._post(
+            "/me/messages",
+            json=payload,
+            params={"access_token": settings.meta_page_access_token},
+        )
+
+    def send_messenger_image_url(self, *, recipient_psid: str, image_url: str) -> dict[str, Any]:
+        """Send a Messenger image attachment by URL fallback without exposing it as text."""
+        payload = {
+            "recipient": {"id": recipient_psid},
+            "messaging_type": "RESPONSE",
+            "message": {
+                "attachment": {
+                    "type": "image",
+                    "payload": {"url": image_url, "is_reusable": True},
+                }
+            },
+        }
+        return self._post(
+            "/me/messages",
+            json=payload,
+            params={"access_token": settings.meta_page_access_token},
+        )
+
     def send_whatsapp_template(
         self,
         *,
@@ -110,6 +205,11 @@ class MetaMessagingClient:
 
     def _post(self, path: str, **kwargs: Any) -> dict[str, Any]:
         response = requests.post(f"{self._base_url}{path}", timeout=20, **kwargs)
+        response.raise_for_status()
+        return response.json()
+
+    def _get(self, path: str, **kwargs: Any) -> dict[str, Any]:
+        response = requests.get(f"{self._base_url}{path}", timeout=20, **kwargs)
         response.raise_for_status()
         return response.json()
 

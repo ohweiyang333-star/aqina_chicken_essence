@@ -29,6 +29,7 @@ class ChatbotPackage(BaseModel):
     description_en: str = ""
     price_sgd: float = Field(ge=0)
     pack_count: int = Field(ge=1)
+    box_count: int | None = Field(default=None, ge=1)
     target_audience: list[LeadGoal] = Field(default_factory=list)
     hero: bool = False
     free_shipping_eligible: bool = False
@@ -56,6 +57,7 @@ class PayNowSettings(BaseModel):
     """PayNow-only checkout instructions."""
 
     enabled: bool = True
+    account_name: str = "Boong Poultry Pte Ltd"
     payment_qr_image: str = ""
     payment_qr_alt: str = "Aqina PayNow QR"
     payment_reference_prefix: str = "AQINA"

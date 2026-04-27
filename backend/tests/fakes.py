@@ -206,6 +206,30 @@ class FakeMetaClient:
         self.calls.append(("send_whatsapp_text", kwargs))
         return {"messages": [{"id": "whatsapp-id"}]}
 
+    def upload_whatsapp_media(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("upload_whatsapp_media", kwargs))
+        return {"id": "whatsapp-media-id"}
+
+    def send_whatsapp_image(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("send_whatsapp_image", kwargs))
+        return {"messages": [{"id": "whatsapp-image-id"}]}
+
+    def download_whatsapp_media(self, media_id: str) -> tuple[bytes, str]:
+        self.calls.append(("download_whatsapp_media", {"media_id": media_id}))
+        return b"fake-receipt", "image/jpeg"
+
+    def upload_messenger_attachment(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("upload_messenger_attachment", kwargs))
+        return {"attachment_id": "messenger-attachment-id"}
+
+    def send_messenger_image_attachment(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("send_messenger_image_attachment", kwargs))
+        return {"message_id": "messenger-image-id"}
+
+    def send_messenger_image_url(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("send_messenger_image_url", kwargs))
+        return {"message_id": "messenger-image-url-id"}
+
     def send_whatsapp_template(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("send_whatsapp_template", kwargs))
         return {"messages": [{"id": "template-id"}]}

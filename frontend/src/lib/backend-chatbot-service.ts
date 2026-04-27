@@ -15,6 +15,7 @@ export interface ChatbotPackage {
   description_en: string;
   price_sgd: number;
   pack_count: number;
+  box_count?: number | null;
   target_audience: Array<
     "self_care" | "pregnancy" | "postpartum" | "gift_elder" | "unknown"
   >;
@@ -49,6 +50,7 @@ export interface ChatbotSettings {
   payment: {
     paynow: {
       enabled: boolean;
+      account_name: string;
       payment_qr_image: string;
       payment_qr_alt: string;
       payment_reference_prefix: string;

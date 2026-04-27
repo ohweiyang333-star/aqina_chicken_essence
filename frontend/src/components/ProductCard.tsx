@@ -2,14 +2,13 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { CheckCircle2, Plus, ShoppingCart } from "lucide-react";
+import { CheckCircle2, ShoppingCart } from "lucide-react";
 import type { DisplayProduct } from "@/lib/product-service";
 import { resolveFixedProductImageByMeta } from "@/lib/product-service";
 import { IMAGES } from "@/lib/image-utils";
 
 interface ProductCardProps {
   product: DisplayProduct;
-  onAddToCart: (product: DisplayProduct) => void;
   onBuyNow: (product: DisplayProduct) => void;
   priority?: boolean;
 }
@@ -23,7 +22,6 @@ const optimizedProductImages: Record<string, string> = {
 
 export function ProductCard({
   product,
-  onAddToCart,
   onBuyNow,
   priority = false,
 }: ProductCardProps) {
@@ -105,26 +103,15 @@ export function ProductCard({
         ))}
       </ul>
 
-      <div className="space-y-3">
-        <button
-          id={`product-buy-now-${product.id}`}
-          type="button"
-          onClick={() => onBuyNow(product)}
-          className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
-        >
-          <ShoppingCart size={16} />
-          <span>{t("products.buyNow")}</span>
-        </button>
-        <button
-          id={`product-add-cart-${product.id}`}
-          type="button"
-          onClick={() => onAddToCart(product)}
-          className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md border border-primary/22 bg-background-dark/55 px-4 text-sm font-semibold uppercase tracking-[0.16em] text-text-light hover:border-primary/45 hover:text-primary"
-        >
-          <Plus size={16} />
-          <span>{t("products.addToCart")}</span>
-        </button>
-      </div>
+      <button
+        id={`product-buy-now-${product.id}`}
+        type="button"
+        onClick={() => onBuyNow(product)}
+        className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
+      >
+        <ShoppingCart size={16} />
+        <span>{t("products.buyNow")}</span>
+      </button>
     </article>
   );
 }

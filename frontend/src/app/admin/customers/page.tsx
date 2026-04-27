@@ -29,12 +29,15 @@ interface Customer {
   created_at: Date;
 }
 
+type CustomerLevelFilter = 'ALL' | Customer['customer_level'];
+const CUSTOMER_LEVEL_FILTERS: CustomerLevelFilter[] = ['ALL', 'new', 'standard', 'vip'];
+
 export default function AdminCustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [levelFilter, setLevelFilter] = useState<'ALL' | 'new' | 'standard' | 'vip'>('ALL');
+  const [levelFilter, setLevelFilter] = useState<CustomerLevelFilter>('ALL');
   const router = useRouter();
 
   useEffect(() => {
@@ -187,10 +190,10 @@ export default function AdminCustomersPage() {
             </div>
 
             <div className="flex gap-2">
-              {['ALL', 'new', 'standard', 'vip'].map((level) => (
+              {CUSTOMER_LEVEL_FILTERS.map((level) => (
                 <button
                   key={level}
-                  onClick={() => setLevelFilter(level as any)}
+                  onClick={() => setLevelFilter(level)}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                     levelFilter === level
                       ? 'bg-charcoal text-white'

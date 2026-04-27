@@ -129,13 +129,18 @@
         "address": "收货地址 / Address",
         "subtotal": "小计",
         "delivery": "运费",
+        "total": "总计",
         "free": "免运费",
-        "submit": "确认订单",
-        "terms": "点击确认即提交订单。支付将通过 PayNow 完成。质量问题支持 7 天内退换。"
+        "receipt": "PayNow 收据截图",
+        "receiptHelp": "完成 PayNow 付款后，请上传 JPG、PNG 或 WebP 截图。",
+        "receiptRequired": "请先上传 PayNow 付款收据截图，才可以提交订单。",
+        "submit": "提交订单与收据",
+        "terms": "提交前请先完成 PayNow 并上传付款截图。付款会由团队人工核对后安排发货。"
       },
       "success": {
         "title": "订单已收到！",
-        "subtitle": "感谢您的订单。请使用以下方式完成支付。",
+        "subtitle": "感谢您，订单与 PayNow 收据已提交。",
+        "receiptSubmitted": "我们已经收到您的 PayNow 收据。团队会人工核对付款后尽快安排发货。",
         "close": "返回首页"
       },
       "payment": {
@@ -143,6 +148,10 @@
         "cn": "下单后，请直接扫描下方 PayNow QR Code，并在参考栏填写您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
         "en": "After placing your order, please scan the PayNow QR code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
         "paynow": "PayNow",
+        "accountName": "收款户名",
+        "amount": "付款金额",
+        "beforeSubmit": "请先完成 PayNow 付款，然后在下方上传付款成功截图，才可以提交订单。",
+        "referenceBeforeOrder": "Reference：请填写您的 WhatsApp 电话号码",
         "qrUnavailable": "如需 PayNow QR，请在下单后通过 WhatsApp 获取支付二维码。",
         "qrNote": "备注：您的订单号",
         "whatsapp": "发送支付截图至 WhatsApp {phone} 以加快处理"
@@ -652,7 +661,7 @@
         "subtitle": "以清爽汤感、即热即饮与暖米金质感，呈现适合现代生活节奏的日常补给体验。",
         "primaryCta": "选择配套",
         "secondaryCta": "看真实场景",
-        "imageAlt": "Aqina 黄梨酵素滴鸡精包装",
+        "imageAlt": "Aqina 黄梨酵素滴鸡精外盒、单包和温热饮用场景",
         "badges": [
           "黄梨酵素概念",
           "清爽汤感",

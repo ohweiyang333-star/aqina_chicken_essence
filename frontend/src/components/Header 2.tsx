@@ -1,30 +1,16 @@
 'use client';
 
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ShoppingBag, Menu, X, ChevronDown, Globe } from 'lucide-react';
+import { Menu, X, ChevronDown, Globe } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import useCartStore from '@/lib/cart-store';
-import CartDrawer from './CartDrawer';
-import { useTranslations as useCartTranslations } from 'next-intl';
 
 export default function Header() {
-  const t = useTranslations('Index');
   const locale = useLocale();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
-  // Get cart state
-  const totalItems = useCartStore((state) => state.totalItems);
-  const initializeCart = useCartStore((state) => state.initializeCart);
-
-  // Initialize cart from localStorage on mount
-  useEffect(() => {
-    initializeCart();
-  }, [initializeCart]);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -36,21 +22,6 @@ export default function Header() {
     const newLocale = locale === 'en' ? 'zh' : 'en';
     const newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
     window.location.href = newPath;
-  };
-
-  const handleCartClick = () => {
-    setIsCartOpen(true);
-  };
-
-  const handleCartClose = () => {
-    setIsCartOpen(false);
-  };
-
-  const handleCheckout = () => {
-    setIsCartOpen(false);
-    // Trigger checkout modal - this will be handled by the parent component
-    // For now, we'll scroll to products section
-    document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -91,19 +62,12 @@ export default function Header() {
               <ChevronDown size={10} className="text-charcoal/30" />
             </button>
 
-            {/* Cart Trigger */}
-            <button
-              onClick={handleCartClick}
-              className="relative p-2.5 rounded-full bg-charcoal text-ivory hover:bg-primary transition-colors shadow-lg"
-              aria-label="Open shopping cart"
+            <Link
+              href="#products"
+              className="hidden rounded-full bg-charcoal px-5 py-2.5 text-xs font-bold uppercase tracking-[0.16em] text-ivory shadow-lg transition-colors hover:bg-primary sm:inline-flex"
             >
-              <ShoppingBag size={20} />
-              {totalItems > 0 && (
-                <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-[10px] text-white rounded-full flex items-center justify-center font-bold border-2 border-ivory">
-                  {totalItems > 9 ? '9+' : totalItems}
-                </span>
-              )}
-            </button>
+              {locale === 'zh' ? '选配套' : 'Plans'}
+            </Link>
 
             {/* Mobile Menu Trigger */}
             <button className="md:hidden p-2 text-charcoal" onClick={() => setIsMobileMenuOpen(true)}>
@@ -112,13 +76,6 @@ export default function Header() {
           </div>
         </div>
       </header>
-
-      {/* Cart Drawer */}
-      <CartDrawer
-        isOpen={isCartOpen}
-        onClose={handleCartClose}
-        onCheckout={handleCheckout}
-      />
 
       {/* Mobile Drawer */}
       {isMobileMenuOpen && (

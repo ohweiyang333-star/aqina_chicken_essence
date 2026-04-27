@@ -88,9 +88,9 @@ class MarketingApiTests(unittest.TestCase):
                 "reply_text": "我已经为您准备好 PayNow 付款链接，您确认一下资料就可以付款了 🎈",
                 "next_tag": "cart_hot",
                 "lead_goal": "pregnancy",
-                "recommended_package_code": "maternal_28",
-                "upgrade_package_code": "family_42",
-                "selected_package_code": "maternal_28",
+                "recommended_package_code": "pack4",
+                "upgrade_package_code": "pack6",
+                "selected_package_code": "pack4",
                 "order_fields": {
                     "name": "Alice Tan",
                     "phone": "6591112222",
@@ -129,6 +129,10 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["payment_method"], "paynow")
         self.assertEqual(order["customer"]["name"], "Alice Tan")
         self.assertTrue(order["customer"].get("email") in (None, ""))
+        self.assertEqual(order["subtotal_amount"], 149.0)
+        self.assertEqual(order["shipping_fee"], 0.0)
+        self.assertEqual(order["total_amount"], 149.0)
+        self.assertEqual(order["box_count"], 4)
 
         sessions = self.db.collection("marketing_checkout_sessions").stream()
         self.assertEqual(len(sessions), 1)
@@ -138,12 +142,75 @@ class MarketingApiTests(unittest.TestCase):
 
         contact = self.db.collection("marketing_contacts").document("contact-1").get().to_dict()
         self.assertEqual(contact["current_tag"], "cart_hot")
-        self.assertEqual(contact["selected_package_code"], "maternal_28")
+        self.assertEqual(contact["selected_package_code"], "pack4")
         self.assertEqual(contact["order_fields"]["name"], "Alice Tan")
 
         message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
         self.assertEqual(len(message_calls), 1)
-        self.assertIn("/paynow/", message_calls[0][1]["text"])
+        self.assertNotIn("/paynow/", message_calls[0][1]["text"])
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(image_calls), 1)
+        self.assertEqual(image_calls[0][1]["media_id"], "whatsapp-media-id")
+
+    def test_landing_order_with_receipt_charges_shipping_for_one_box(self) -> None:
+        client = self._build_client()
+
+        with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Janice Lee",
+                    "customer_phone": "6598765432",
+                    "customer_address": "20 Tanjong Pagar Road, Singapore 088443",
+                    "product_id": "pack1",
+                },
+                files={"payment_receipt": ("receipt.png", b"fake-image", "image/png")},
+            )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertEqual(payload["subtotal_amount"], 39.9)
+        self.assertEqual(payload["shipping_fee"], 8.0)
+        self.assertEqual(payload["total_amount"], 47.9)
+        self.assertEqual(payload["box_count"], 1)
+        self.assertEqual(payload["payment_status"], "payment_submitted")
+        self.assertEqual(payload["payment_receipt_url"], "https://storage.example.com/receipt.png")
+
+    def test_landing_order_with_receipt_has_free_shipping_for_two_boxes(self) -> None:
+        client = self._build_client()
+
+        with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Kelvin Tan",
+                    "customer_phone": "6591234567",
+                    "customer_address": "1 Orchard Road, Singapore 238823",
+                    "product_id": "pack2",
+                },
+                files={"payment_receipt": ("receipt.webp", b"fake-image", "image/webp")},
+            )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertEqual(payload["subtotal_amount"], 75.0)
+        self.assertEqual(payload["shipping_fee"], 0.0)
+        self.assertEqual(payload["total_amount"], 75.0)
+        self.assertEqual(payload["box_count"], 2)
+
+    def test_landing_order_rejects_missing_receipt(self) -> None:
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/orders/with-receipt",
+            data={
+                "customer_name": "Janice Lee",
+                "customer_phone": "6598765432",
+                "customer_address": "20 Tanjong Pagar Road, Singapore 088443",
+                "product_id": "pack1",
+            },
+        )
+
+        self.assertEqual(response.status_code, 422)
 
     def test_process_inbound_message_escalates_and_pauses_contact(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -243,6 +310,102 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("shopee_url", payload)
         self.assertIn("payment_qr_image", payload["paynow"])
 
+    def test_whatsapp_receipt_image_updates_checkout_order(self) -> None:
+        self._seed_runtime_settings()
+        self.db.seed(
+            "marketing_contacts/contact-4",
+            {
+                "channel": "whatsapp",
+                "identifiers": {"wa_id": "6591112222"},
+                "current_tag": "cart_hot",
+                "checkout_session_id": "session-4",
+                "latest_conversation_id": "conv-4",
+                "status": "active",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-4",
+            {
+                "contact_id": "contact-4",
+                "channel": "whatsapp",
+                "status": "open",
+                "message_count": 1,
+                "opened_at": "2026-04-10T00:00:00Z",
+                "last_message_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_checkout_sessions/session-4",
+            {
+                "order_id": "order_444",
+                "token": "token-444",
+                "package_code": "pack2",
+                "checkout_url": "https://aqina.example.com/paynow/token-444",
+                "status": "active",
+                "contact_id": "contact-4",
+                "total_amount": 75.0,
+            },
+        )
+        self.db.seed(
+            "orders/order_444",
+            {
+                "customer": {
+                    "name": "Alice Tan",
+                    "email": None,
+                    "whatsapp": "6591112222",
+                    "address": "1 Orchard Road, Singapore 238823",
+                },
+                "items": [],
+                "subtotal_amount": 75.0,
+                "shipping_fee": 0.0,
+                "box_count": 2,
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "payment_status": "pending",
+                "order_status": "pending",
+                "source": "marketing_chatbot",
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_events/event-4",
+            {
+                "provider": "meta",
+                "channel": "whatsapp",
+                "event_type": "whatsapp_message_received",
+                "status": "queued",
+                "contact_id": "contact-4",
+                "conversation_id": "conv-4",
+                "payload": {
+                    "channel": "whatsapp",
+                    "text": "[image]",
+                    "message_type": "image",
+                    "media_id": "receipt-media-id",
+                    "provider_message_id": "receipt-message-id",
+                    "wa_id": "6591112222",
+                },
+                "received_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        with patch("app.services.marketing_orchestrator.upload_public_file_to_firebase", return_value="https://storage.example.com/chat-receipt.jpg"):
+            response = client.post(
+                "/api/v1/marketing/tasks/process-inbound-message",
+                json={"event_id": "event-4"},
+                headers={"X-Internal-Token": "internal-secret"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        order = self.db.collection("orders").document("order_444").get().to_dict()
+        self.assertEqual(order["payment_status"], "payment_submitted")
+        self.assertEqual(order["payment_receipt_url"], "https://storage.example.com/chat-receipt.jpg")
+        payments = self.db.collection("payments").stream()
+        self.assertEqual(len(payments), 1)
+        self.assertEqual(payments[0].to_dict()["status"], "payment_submitted")
+
     def test_follow_up_job_skips_when_contact_is_handoff_pending(self) -> None:
         self._seed_runtime_settings()
         self.db.seed(
@@ -293,6 +456,50 @@ class MarketingApiTests(unittest.TestCase):
                 "system_prompt": "Aqina health advisor prompt",
                 "handoff_message": "我先为您转接人工同事优先处理，请稍等一下 🙏",
                 "packages": {
+                    "pack1": {
+                        "code": "pack1",
+                        "name_zh": "7天启动装",
+                        "name_en": "7-Day Starter Pack",
+                        "price_sgd": 39.9,
+                        "pack_count": 7,
+                        "box_count": 1,
+                        "target_audience": ["self_care"],
+                        "hero": False,
+                        "free_shipping_eligible": False,
+                    },
+                    "pack2": {
+                        "code": "pack2",
+                        "name_zh": "14天常备装",
+                        "name_en": "14-Day Care Pack",
+                        "price_sgd": 75.0,
+                        "pack_count": 14,
+                        "box_count": 2,
+                        "target_audience": ["self_care"],
+                        "hero": True,
+                        "free_shipping_eligible": True,
+                    },
+                    "pack4": {
+                        "code": "pack4",
+                        "name_zh": "28天月度装",
+                        "name_en": "28-Day Monthly Pack",
+                        "price_sgd": 149.0,
+                        "pack_count": 28,
+                        "box_count": 4,
+                        "target_audience": ["pregnancy", "postpartum"],
+                        "hero": True,
+                        "free_shipping_eligible": True,
+                    },
+                    "pack6": {
+                        "code": "pack6",
+                        "name_zh": "42天家庭装",
+                        "name_en": "42-Day Family Pack",
+                        "price_sgd": 219.0,
+                        "pack_count": 42,
+                        "box_count": 6,
+                        "target_audience": ["gift_elder", "self_care"],
+                        "hero": False,
+                        "free_shipping_eligible": True,
+                    },
                     "trial_3": {
                         "code": "trial_3",
                         "name_zh": "新手体验装",
@@ -347,6 +554,7 @@ class MarketingApiTests(unittest.TestCase):
                 "payment": {
                     "paynow": {
                         "enabled": True,
+                        "account_name": "Boong Poultry Pte Ltd",
                         "payment_qr_image": "https://cdn.example.com/paynow.png",
                         "payment_qr_alt": "Aqina PayNow QR",
                         "payment_reference_prefix": "AQINA",
@@ -446,6 +654,7 @@ class MarketingApiTests(unittest.TestCase):
             patch("app.services.follow_up.get_task_queue_service", return_value=self.task_queue),
             patch("app.services.follow_up.get_meta_client", return_value=self.meta_client),
             patch("app.services.follow_up.get_gemini_service", return_value=self.gemini_service),
+            patch("app.services.meta_media_assets.requests.get", return_value=FakeHttpResponse()),
         ]
 
         for item in patches:
@@ -480,3 +689,11 @@ class AsyncAppClient:
         transport = httpx.ASGITransport(app=self._app)
         async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
             return await client.request(method, url, **kwargs)
+
+
+class FakeHttpResponse:
+    content = b"fake-paynow-qr"
+    headers = {"content-type": "image/png"}
+
+    def raise_for_status(self) -> None:
+        return None

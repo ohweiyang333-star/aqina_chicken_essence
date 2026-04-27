@@ -145,7 +145,7 @@ class GeminiConversationService:
             f"Follow-up stage: {stage}\n"
             f"Current tag: {contact.get('current_tag', 'lead_cold')}\n"
             f"Selected package: {contact.get('selected_package_code')}\n"
-            f"Checkout URL: {checkout_url or ''}\n"
+            f"Checkout URL (internal only, do not send as text): {checkout_url or ''}\n"
             f"Stage instruction: {instruction}\n"
             f"Conversation history:\n{history}\n\n"
             "输出 JSON，字段固定为：reply_text, next_tag, checkout_link_required, escalate, escalation_reason, opt_in_request。"

@@ -7,13 +7,12 @@
 import { apiClient } from './api-client';
 
 // Types
-export type PaymentStatus = 'pending' | 'completed' | 'failed' | 'refunded';
+export type PaymentStatus = 'pending' | 'payment_submitted' | 'paid' | 'failed' | 'refunded';
 
 export interface CreatePaymentDTO {
   order_id: string;
   amount: number;
-  currency: string;
-  payment_method: string;
+  method: 'paynow';
   transaction_id?: string;
   screenshot_url?: string;
   notes?: string;
@@ -23,7 +22,8 @@ export interface Payment {
   payment_id: string;
   order_id: string;
   amount: number;
-  currency: string;
+  currency?: string;
+  method?: string;
   payment_method: string;
   status: PaymentStatus;
   transaction_id?: string;
@@ -53,8 +53,23 @@ export interface PaginatedResponse<T> {
  */
 export async function getPayments(filters?: PaymentFilters): Promise<PaginatedResponse<Payment>> {
   try {
-    const response = await apiClient.get<PaginatedResponse<Payment>>('/api/v1/payments', filters);
-    return response;
+    const response = await apiClient.get<{
+      payments?: Payment[];
+      total_count?: number;
+      page: number;
+      page_size: number;
+      items?: Payment[];
+      total?: number;
+    }>('/api/v1/payments', filters);
+    const items = (response.items || response.payments || []).map(normalizePayment);
+    const total = response.total ?? response.total_count ?? items.length;
+    return {
+      items,
+      total,
+      page: response.page,
+      page_size: response.page_size,
+      total_pages: Math.max(1, Math.ceil(total / response.page_size)),
+    };
   } catch (error) {
     console.error('Error fetching payments:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch payments');
@@ -67,7 +82,7 @@ export async function getPayments(filters?: PaymentFilters): Promise<PaginatedRe
 export async function getPaymentById(paymentId: string): Promise<Payment> {
   try {
     const payment = await apiClient.get<Payment>(`/api/v1/payments/${paymentId}`);
-    return payment;
+    return normalizePayment(payment);
   } catch (error) {
     console.error('Error fetching payment:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch payment');
@@ -83,7 +98,7 @@ export async function updatePaymentStatus(
 ): Promise<Payment> {
   try {
     const payment = await apiClient.put<Payment>(`/api/v1/payments/${paymentId}`, { status });
-    return payment;
+    return normalizePayment(payment);
   } catch (error) {
     console.error('Error updating payment status:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to update payment status');
@@ -96,9 +111,16 @@ export async function updatePaymentStatus(
 export async function createPayment(paymentData: CreatePaymentDTO): Promise<Payment> {
   try {
     const payment = await apiClient.post<Payment>('/api/v1/payments', paymentData);
-    return payment;
+    return normalizePayment(payment);
   } catch (error) {
     console.error('Error creating payment:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to create payment');
   }
+}
+
+function normalizePayment(payment: Payment): Payment {
+  return {
+    ...payment,
+    payment_method: payment.payment_method || payment.method || 'paynow',
+  };
 }

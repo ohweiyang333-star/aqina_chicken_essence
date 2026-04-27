@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState, useEffect, useRef } from "react";
+import { useMemo, useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { prepare, layout, type PreparedText } from "@chenglou/pretext";
+import { prepare, layout } from "@chenglou/pretext";
 
 interface FAQ {
   question: string;
@@ -14,14 +14,10 @@ export default function FAQSection() {
   const t = useTranslations("FAQ");
 
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const [faqData, setFaqData] = useState<FAQ[]>([]);
-  const [preparedAnswers, setPreparedAnswers] = useState<PreparedText[]>([]);
-  const [answerHeights, setAnswerHeights] = useState<number[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // 初始化 FAQ 数据
-  useEffect(() => {
-    const faqs: FAQ[] = [
+  const faqData = useMemo<FAQ[]>(
+    () => [
       {
         question: t("q1.question") || "How to consume for best results?",
         answer:
@@ -40,17 +36,14 @@ export default function FAQSection() {
           t("q3.answer") ||
           "We support returns within 7 days after signing (limited to quality issues such as off-flavor, leakage, shipping errors, unused condition).",
       },
-    ];
-    setFaqData(faqs);
-  }, [t]);
+    ],
+    [t],
+  );
 
   // 使用 Pretext 预计算所有答案的高度（一次性，较慢）
-  useEffect(() => {
-    if (faqData.length === 0) return;
-
+  const answerHeights = useMemo(() => {
     // 获取容器宽度和字体设置
-    const containerWidth = containerRef.current?.offsetWidth || 800;
-    const maxWidth = containerWidth - 64; // 减去 padding (px-8 = 32px * 2)
+    const maxWidth = 736; // 800px 容器减去左右 padding
     const font = "16px Inter";
     const lineHeight = 28;
 
@@ -58,11 +51,9 @@ export default function FAQSection() {
     const prepared = faqData.map((faq) =>
       prepare(faq.answer, font, { whiteSpace: "normal" }),
     );
-    setPreparedAnswers(prepared);
 
     // 计算所有答案的高度
-    const heights = prepared.map((p) => layout(p, maxWidth, lineHeight).height);
-    setAnswerHeights(heights);
+    return prepared.map((p) => layout(p, maxWidth, lineHeight).height);
   }, [faqData]);
 
   const toggleFAQ = (index: number) => {
@@ -87,7 +78,7 @@ export default function FAQSection() {
         </div>
 
         {/* FAQ Accordion */}
-        <div ref={containerRef} className="space-y-4">
+        <div className="space-y-4">
           {faqData.map((faq, index) => {
             const isOpen = openIndex === index;
             const answerHeight = answerHeights[index] || 0;

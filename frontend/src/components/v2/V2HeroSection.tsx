@@ -8,6 +8,7 @@ export default function V2HeroSection() {
   const t = useTranslations("Index.v2.hero");
   const badges = t.raw("badges") as string[];
   const notes = t.raw("notes") as string[];
+  const heroImageSrc = "/v2/aqina-v2-hero-product-real.webp";
 
   return (
     <section
@@ -15,15 +16,24 @@ export default function V2HeroSection() {
       className="relative isolate overflow-hidden bg-[#fff7e8] pt-24 text-[#23170d] md:pt-28"
     >
       <Image
-        src="/v2/aqina-v2-hero.webp"
+        src={heroImageSrc}
         alt={t("imageAlt")}
         fill
-        priority
         sizes="100vw"
-        className="absolute inset-0 -z-20 object-cover object-[68%_center]"
+        className="absolute inset-0 -z-20 object-cover object-[58%_center] lg:hidden"
       />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#fff7e8_0%,rgba(255,247,232,0.95)_32%,rgba(255,247,232,0.48)_62%,rgba(255,247,232,0.08)_100%)]" />
-      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(255,247,232,0.15)_0%,rgba(255,247,232,0.08)_62%,#fff7e8_100%)]" />
+      <div className="absolute inset-y-0 right-0 -z-20 hidden w-[52%] lg:block">
+        <Image
+          src={heroImageSrc}
+          alt={t("imageAlt")}
+          fill
+          priority
+          sizes="52vw"
+          className="object-cover object-center"
+        />
+      </div>
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,#fff7e8_0%,rgba(255,247,232,0.96)_38%,rgba(255,247,232,0.52)_68%,rgba(255,247,232,0.08)_100%)] lg:bg-[linear-gradient(90deg,#fff7e8_0%,#fff7e8_46%,rgba(255,247,232,0.76)_53%,rgba(255,247,232,0.18)_70%,rgba(255,247,232,0.02)_100%)]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(180deg,rgba(255,247,232,0.1)_0%,rgba(255,247,232,0.05)_62%,#fff7e8_100%)]" />
       <div
         className="absolute inset-0 -z-10 opacity-[0.18]"
         style={{

@@ -21,13 +21,12 @@ export default function GreenLandingPage() {
     selectedProduct,
     isCheckoutOpen,
     handleBuyNow,
-    handleAddToCart,
     closeCheckout,
   } = useLandingProducts();
 
   return (
     <MediaLoadGate
-      cacheKey="aqina-green-landing-media-v2"
+      cacheKey="aqina-green-landing-media-v3"
       sources={greenLandingMedia}
       variant="dark"
     >
@@ -40,7 +39,6 @@ export default function GreenLandingPage() {
         <ProductPricingSection
           products={products}
           isLoading={isLoading}
-          onAddToCart={handleAddToCart}
           onBuyNow={handleBuyNow}
         />
         <Footer />

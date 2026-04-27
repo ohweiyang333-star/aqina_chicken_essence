@@ -2,18 +2,16 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { ShoppingCart, Plus } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import type { DisplayProduct } from "@/lib/product-service";
 
 interface ProductCardProps {
   product: DisplayProduct;
-  onAddToCart: (product: DisplayProduct) => void;
   onBuyNow: (product: DisplayProduct) => void;
 }
 
 export function ProductCard({
   product,
-  onAddToCart,
   onBuyNow,
 }: ProductCardProps) {
   const t = useTranslations("Index");
@@ -51,22 +49,13 @@ export function ProductCard({
           </span>
         </div>
 
-        <div className="space-y-2">
-          <button
-            onClick={() => onAddToCart(product)}
-            className="w-full py-3 rounded-xl border-2 border-primary text-primary font-semibold hover:bg-primary hover:text-white transition-colors flex items-center justify-center space-x-2 group-active:scale-95"
-          >
-            <Plus size={18} />
-            <span>{t("products.addToCart")}</span>
-          </button>
-          <button
-            onClick={() => onBuyNow(product)}
-            className="w-full py-3 rounded-xl bg-charcoal text-ivory font-semibold hover:bg-primary transition-colors flex items-center justify-center space-x-2 group-active:scale-95 shadow-lg shadow-charcoal/10"
-          >
-            <ShoppingCart size={18} />
-            <span>{t("products.buyNow")}</span>
-          </button>
-        </div>
+        <button
+          onClick={() => onBuyNow(product)}
+          className="w-full py-3 rounded-xl bg-charcoal text-ivory font-semibold hover:bg-primary transition-colors flex items-center justify-center space-x-2 group-active:scale-95 shadow-lg shadow-charcoal/10"
+        >
+          <ShoppingCart size={18} />
+          <span>{t("products.buyNow")}</span>
+        </button>
       </div>
     </div>
   );

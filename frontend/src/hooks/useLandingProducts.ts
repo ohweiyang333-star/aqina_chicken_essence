@@ -2,7 +2,6 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import useCartStore from '@/lib/cart-store';
 import { IMAGES } from '@/lib/image-utils';
 import {
   getProducts,
@@ -19,7 +18,6 @@ export default function useLandingProducts() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [products, setProducts] = useState<DisplayProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
     async function loadProducts() {
@@ -84,10 +82,6 @@ export default function useLandingProducts() {
     setIsCheckoutOpen(true);
   };
 
-  const handleAddToCart = (product: DisplayProduct) => {
-    addItem(product, 1);
-  };
-
   const closeCheckout = () => {
     setIsCheckoutOpen(false);
   };
@@ -98,7 +92,6 @@ export default function useLandingProducts() {
     selectedProduct,
     isCheckoutOpen,
     handleBuyNow,
-    handleAddToCart,
     closeCheckout,
   };
 }
