@@ -671,6 +671,33 @@
         "criteriaLabel": "对比维度",
         "ordinaryTitle": "普通鸡精印象",
         "aqinaTitle": "Aqina 方向",
+        "visualTitle": "这不是普通鸡精",
+        "ordinaryImageAlt": "普通鸡精灰色饮用印象",
+        "aqinaImageAlt": "Aqina 清爽金汤饮用印象",
+        "dailyTitle": "这是可以每天喝的鸡精",
+        "dailyBody": "简单、纯净、好入口。重点不是把滋补讲得更重，而是让家人愿意每天把这一包喝下去。",
+        "ordinaryBullets": [
+          {
+            "text": "加味精"
+          },
+          {
+            "text": "有腥味"
+          },
+          {
+            "text": "喝了容易腻"
+          }
+        ],
+        "aqinaBullets": [
+          {
+            "text": "单一来源鸡"
+          },
+          {
+            "text": "无添加"
+          },
+          {
+            "text": "清甜好入口"
+          }
+        ],
         "items": [
           {
             "label": "饮用感",

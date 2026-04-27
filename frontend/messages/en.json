@@ -671,6 +671,33 @@
         "criteriaLabel": "Criteria",
         "ordinaryTitle": "Ordinary impression",
         "aqinaTitle": "Aqina direction",
+        "visualTitle": "This is not ordinary chicken essence",
+        "ordinaryImageAlt": "Grayscale ordinary chicken essence impression",
+        "aqinaImageAlt": "Aqina clean golden essence impression",
+        "dailyTitle": "This is chicken essence you can drink every day",
+        "dailyBody": "Simple, clean, and easy to drink. The point is not to make nourishment feel heavier, but to make the routine realistic for the family.",
+        "ordinaryBullets": [
+          {
+            "text": "Added seasoning"
+          },
+          {
+            "text": "Gamey taste"
+          },
+          {
+            "text": "Easy to feel heavy"
+          }
+        ],
+        "aqinaBullets": [
+          {
+            "text": "Single-source chicken"
+          },
+          {
+            "text": "No added extras"
+          },
+          {
+            "text": "Clean, easy taste"
+          }
+        ],
         "items": [
           {
             "label": "Drinking feel",
