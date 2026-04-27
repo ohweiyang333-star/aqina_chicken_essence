@@ -27,7 +27,7 @@
   "firebaseHostingV2": {
     "projectId": "aqina-chicken-essence",
     "target": "aqina-v2",
-    "site": "aqina-detail-v2",
+    "site": "aqina-sg",
     "channel": "live",
     "cloudRunService": "aqina-frontend-v2",
     "region": "asia-southeast1"

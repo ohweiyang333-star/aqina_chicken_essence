@@ -6,7 +6,7 @@
     "aqina-chicken-essence": {
       "hosting": {
         "aqina-v2": [
-          "aqina-detail-v2"
+          "aqina-sg"
         ]
       }
     }
