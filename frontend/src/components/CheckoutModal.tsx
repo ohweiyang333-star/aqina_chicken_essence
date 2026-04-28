@@ -76,7 +76,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
       setOrderId(result || '');
       setIsSuccess(true);
     } catch {
-      alert('Order submission failed. Please try again or contact via WhatsApp.');
+      alert(ct('form.submitError') || 'Order submission failed. Please try again or contact via WhatsApp.');
     } finally {
       setIsSubmitting(false);
     }
@@ -101,7 +101,9 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
           {/* Order ID */}
           {orderId && (
             <div className="p-4 bg-ivory rounded-xl border border-charcoal/10">
-              <p className="text-xs text-charcoal/40 uppercase tracking-widest mb-1">Order ID</p>
+              <p className="text-xs text-charcoal/40 uppercase tracking-widest mb-1">
+                {ct('success.orderIdLabel') || 'Order ID'}
+              </p>
               <p className="font-mono font-bold text-charcoal">{orderId}</p>
             </div>
           )}
@@ -145,12 +147,12 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto">
           <div className="space-y-2">
             <label className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
-              {ct('form.name') || 'Name / 姓名'}
+              {ct('form.name') || 'Full Name'}
             </label>
             <input
               required
               type="text"
-              placeholder="Your full name"
+              placeholder={ct('form.namePlaceholder') || 'Your full name'}
               className="w-full px-5 py-4 rounded-xl border border-charcoal/10 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
               value={formData.customerName}
               onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
@@ -159,7 +161,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
-              {ct('form.phone') || 'WhatsApp Phone / 电话'}
+              {ct('form.phone') || 'WhatsApp Phone'}
             </label>
             <input
               required
@@ -173,12 +175,12 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
 
           <div className="space-y-2">
             <label className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
-              {ct('form.address') || 'Delivery Address / 地址'}
+              {ct('form.address') || 'Delivery Address'}
             </label>
             <textarea
               required
               rows={3}
-              placeholder="Singapore Delivery Address"
+              placeholder={ct('form.addressPlaceholder') || 'Singapore delivery address'}
               className="w-full px-5 py-4 rounded-xl border border-charcoal/10 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all resize-none"
               value={formData.address}
               onChange={(e) => setFormData({ ...formData, address: e.target.value })}

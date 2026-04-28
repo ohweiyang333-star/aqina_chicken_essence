@@ -19,16 +19,21 @@ type PayNowLocale = "en" | "zh";
 
 type PayNowCopy = {
   languageSwitch: string;
+  pageTitle: string;
   intro: string;
+  orderIdLabel: string;
   orderSummaryTitle: string;
   orderSummaryDescription: string;
   customerName: string;
   paymentMethod: string;
   orderStatus: string;
   deliveryAddress: string;
+  total: string;
   scanTitle: string;
   scanDescription: string;
   qrMissing: string;
+  accountName: string;
+  referenceLabel: string;
   paymentNote: string;
   supportWhatsApp: string;
   sendProof: string;
@@ -39,17 +44,22 @@ type PayNowCopy = {
 const payNowCopy: Record<PayNowLocale, PayNowCopy> = {
   en: {
     languageSwitch: "中文",
+    pageTitle: "PayNow Checkout",
     intro:
       "Your chat order has been created. Please complete payment with PayNow and send the payment screenshot to our WhatsApp support so we can arrange delivery quickly.",
+    orderIdLabel: "Order ID",
     orderSummaryTitle: "Order Summary",
     orderSummaryDescription: "Aqina will arrange Singapore delivery using the details below.",
     customerName: "Recipient",
     paymentMethod: "Payment Method",
     orderStatus: "Order Status",
     deliveryAddress: "Delivery Address",
+    total: "Total",
     scanTitle: "Scan PayNow",
     scanDescription: "Please use Singapore PayNow to complete your payment.",
     qrMissing: "PayNow QR has not been configured yet. Please contact Aqina support for payment details.",
+    accountName: "PayNow Account",
+    referenceLabel: "Reference",
     paymentNote: "Payment Note",
     supportWhatsApp: "Support WhatsApp",
     sendProof: "I have paid. Send screenshot to WhatsApp",
@@ -59,17 +69,22 @@ const payNowCopy: Record<PayNowLocale, PayNowCopy> = {
   },
   zh: {
     languageSwitch: "EN",
+    pageTitle: "PayNow 付款",
     intro:
       "您的聊天订单已经生成。请使用 PayNow 完成付款，并把付款截图发回公用 WhatsApp，我们会尽快为您安排发货。",
+    orderIdLabel: "订单号",
     orderSummaryTitle: "订单摘要",
     orderSummaryDescription: "Aqina 会按照以下资料安排新加坡配送。",
     customerName: "收件人",
     paymentMethod: "付款方式",
     orderStatus: "订单状态",
     deliveryAddress: "收货地址",
+    total: "总计",
     scanTitle: "扫描 PayNow",
     scanDescription: "请使用新加坡 PayNow 完成付款。",
     qrMissing: "尚未配置 PayNow QR 图片，请联系 Aqina 客服获取付款资料。",
+    accountName: "PayNow 户名",
+    referenceLabel: "付款备注",
     paymentNote: "付款备注",
     supportWhatsApp: "客服 WhatsApp",
     sendProof: "已付款，发送截图到公用 WhatsApp",
@@ -114,14 +129,14 @@ export default async function PayNowCheckoutPage({ params, searchParams }: PageP
                   {copy.languageSwitch}
                 </a>
               </div>
-              <h1 className="mt-4 text-4xl font-black tracking-tight">PayNow Checkout</h1>
+              <h1 className="mt-4 text-4xl font-black tracking-tight">{copy.pageTitle}</h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#6c5849]">
                 {copy.intro}
               </p>
             </div>
 
             <div className="rounded-[24px] bg-[#2b2018] px-5 py-4 text-right text-[#f7f2ea] shadow-lg">
-              <p className="text-xs uppercase tracking-[0.24em] text-[#ceb89f]">Order ID</p>
+              <p className="text-xs uppercase tracking-[0.24em] text-[#ceb89f]">{copy.orderIdLabel}</p>
               <p id="paynow-order-id" className="mt-2 font-mono text-sm font-bold">
                 {checkout.order_id}
               </p>
@@ -171,7 +186,7 @@ export default async function PayNowCheckoutPage({ params, searchParams }: PageP
             </div>
 
             <div className="mt-5 flex items-center justify-between rounded-2xl bg-[#2b2018] px-5 py-4 text-[#f7f2ea]">
-              <span className="text-sm uppercase tracking-[0.22em] text-[#ceb89f]">Total</span>
+              <span className="text-sm uppercase tracking-[0.22em] text-[#ceb89f]">{copy.total}</span>
               <span className="text-2xl font-black tracking-tight">SGD {checkout.total_amount.toFixed(2)}</span>
             </div>
           </div>
@@ -210,8 +225,8 @@ export default async function PayNowCheckoutPage({ params, searchParams }: PageP
           </div>
 
           <div className="mt-6 space-y-4 rounded-[28px] border border-white/10 bg-white/5 p-5">
-            <InfoPairDark label="PayNow 户名" value={checkout.paynow.account_name} />
-            <InfoPairDark label="Reference" value={`${checkout.paynow.payment_reference_prefix}-${checkout.order_id}`} />
+            <InfoPairDark label={copy.accountName} value={checkout.paynow.account_name} />
+            <InfoPairDark label={copy.referenceLabel} value={`${checkout.paynow.payment_reference_prefix}-${checkout.order_id}`} />
             <InfoPairDark label={copy.paymentNote} value={checkout.paynow.payment_note} />
             <InfoPairDark label={copy.supportWhatsApp} value={aqinaSiteConfig.contact.whatsappDisplay} />
           </div>

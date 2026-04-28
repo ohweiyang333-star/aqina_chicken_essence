@@ -7,6 +7,7 @@ interface MediaLoadGateProps {
   sources: string[];
   cacheKey: string;
   variant?: 'dark' | 'warm';
+  loadingLabel?: string;
   minVisibleMs?: number;
   maxWaitMs?: number;
 }
@@ -72,6 +73,7 @@ export default function MediaLoadGate({
   sources,
   cacheKey,
   variant = 'dark',
+  loadingLabel = 'Preparing the full experience',
   minVisibleMs = 900,
   maxWaitMs = 7600,
 }: MediaLoadGateProps) {
@@ -215,7 +217,7 @@ export default function MediaLoadGate({
               isWarm ? 'text-[#6f5a43]' : 'text-[#f9df9d]/82',
             ].join(' ')}
           >
-            正在准备完整画面
+            {loadingLabel}
           </p>
           <div
             className={[

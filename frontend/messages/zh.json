@@ -2,6 +2,9 @@
   "Index": {
     "title": "Aqina 阿其纳滴鸡精",
     "subtitle": "纯萃取、轻负担、为现代家庭与日常补养而生",
+    "loading": {
+      "mediaPreparing": "正在准备完整画面"
+    },
     "hero": {
       "badge": "Aqina 黄梨酵素滴鸡精",
       "title": "给身体最纯粹的能量，",
@@ -66,7 +69,6 @@
       "subtitle": "从轻量体验到家庭常备，按你的节奏安排每一天都容易坚持的温热补给。",
       "recommended": "推荐选择",
       "buyNow": "立即选择",
-      "addToCart": "加入配套",
       "featuresLabel": "方案重点",
       "currency": "SGD",
       "detailFallbackOne": "纯萃滴鸡精，不额外加水",
@@ -113,20 +115,14 @@
       },
       "freeShippingBadge": "满 SGD 70 免运费"
     },
-    "Cart": {
-      "title": "购物车",
-      "empty": "您的购物车是空的",
-      "continueShopping": "继续购物",
-      "subtotal": "小计",
-      "freeShipping": "已享免运费优惠！",
-      "checkout": "去结算"
-    },
     "Checkout": {
       "form": {
         "title": "完成订单",
-        "name": "姓名 / Name",
-        "phone": "WhatsApp 电话 / Phone",
-        "address": "收货地址 / Address",
+        "name": "姓名",
+        "namePlaceholder": "请输入姓名",
+        "phone": "WhatsApp 电话",
+        "address": "收货地址",
+        "addressPlaceholder": "新加坡收货地址",
         "subtotal": "小计",
         "delivery": "运费",
         "total": "总计",
@@ -134,27 +130,24 @@
         "receipt": "PayNow 收据截图",
         "receiptHelp": "完成 PayNow 付款后，请上传 JPG、PNG 或 WebP 截图。",
         "receiptRequired": "请先上传 PayNow 付款收据截图，才可以提交订单。",
+        "submitError": "订单提交失败，请重试或通过 WhatsApp 联系客服。",
         "submit": "提交订单与收据",
         "terms": "提交前请先完成 PayNow 并上传付款截图。付款会由团队人工核对后安排发货。"
       },
       "success": {
         "title": "订单已收到！",
         "subtitle": "感谢您，订单与 PayNow 收据已提交。",
+        "orderIdLabel": "订单号",
         "receiptSubmitted": "我们已经收到您的 PayNow 收据。团队会人工核对付款后尽快安排发货。",
         "close": "返回首页"
       },
       "payment": {
-        "title": "支付说明",
-        "cn": "下单后，请直接扫描下方 PayNow QR Code，并在参考栏填写您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
-        "en": "After placing your order, please scan the PayNow QR code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
         "paynow": "PayNow",
         "accountName": "收款户名",
         "amount": "付款金额",
         "beforeSubmit": "请先完成 PayNow 付款，然后在下方上传付款成功截图，才可以提交订单。",
-        "referenceBeforeOrder": "Reference：请填写您的 WhatsApp 电话号码",
-        "qrUnavailable": "如需 PayNow QR，请在下单后通过 WhatsApp 获取支付二维码。",
-        "qrNote": "备注：您的订单号",
-        "whatsapp": "发送支付截图至 WhatsApp {phone} 以加快处理"
+        "referenceBeforeOrder": "付款备注：请填写您的 WhatsApp 电话号码",
+        "qrUnavailable": "如需 PayNow QR，请在下单后通过 WhatsApp 获取支付二维码。"
       }
     },
     "mobileCta": {
@@ -891,6 +884,172 @@
         "whatsappCta": "WhatsApp 咨询",
         "whatsappMessage": "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合日常饮用。",
         "imageAlt": "Aqina 滴鸡精最终行动区产品场景"
+      }
+    },
+    "v3": {
+      "hero": {
+        "eyebrow": "MD2 黄梨酵素滴鸡精",
+        "kicker": "致每一位正在孕育奇迹的你：",
+        "title": "孕育新生命，不该是一场强忍厚重鸡汤的修行。",
+        "subtitle": "喝不下油腻的鸡汤？受不了传统鸡精的重味？Aqina MD2 黄梨滴鸡精，用果香回甘的清透原汤，给你更轻盈、更容易入口的每日温热滋养。",
+        "primaryCta": "领取我的孕期滋养方案",
+        "secondaryCta": "看看妈妈故事",
+        "imageAlt": "孕妈妈在清晨餐桌享用温热清透金汤",
+        "notes": [
+          "清爽、轻盈、容易入口",
+          "零油清汤口感",
+          "给妈妈的温热日常照顾"
+        ]
+      },
+      "empathy": {
+        "eyebrow": "身体都替你记着",
+        "title": "那些别人不懂的辛苦，其实每天都在发生。",
+        "body": "有些日子不是靠忍耐就能过去。气味、厚重感、疲惫和对身材的担心，都需要一种更温柔的照顾方式。",
+        "items": [
+          {
+            "title": "孕期敏感",
+            "body": "厨房里一点荤腥味，都可能让身体立刻抗拒。你明明想补养，却不想再面对厚重汤味和难入口的余味。",
+            "image": "/v3/empathy-nausea.jpg",
+            "alt": "孕妈妈在明亮厨房旁拿着温热杯子"
+          },
+          {
+            "title": "沉重疲惫",
+            "body": "肚子越来越大，翻身、工作、维持日常节奏都更费力。你需要的不是复杂仪式，而是一杯伸手可得的温热照顾。",
+            "image": "/v3/empathy-fatigue.jpg",
+            "alt": "孕晚期妈妈在家中柔和光线里休息"
+          },
+          {
+            "title": "轻盈隐忧",
+            "body": "传统老火汤常常看起来浓厚又油。你想给自己好好照顾，也希望每一次滋养都清爽、干净、不沉重。",
+            "image": "/v3/light-ritual.jpg",
+            "alt": "清透金汤、黄梨与柔软桌布"
+          }
+        ]
+      },
+      "solution": {
+        "eyebrow": "更轻盈的入口",
+        "title": "这一次，把营养变成一种享受。",
+        "body": "Aqina 保留温热汤水的安慰感，同时把口感做得更清澈、更轻、更容易变成每天的小仪式。",
+        "imageAlt": "温热清透金汤、黄梨与燕麦色餐桌",
+        "items": [
+          {
+            "icon": "pineapple",
+            "title": "MD2 黄梨喂养鸡",
+            "body": "黄梨酵素故事带来 Aqina 标志性的清爽回甘。它有鸡汤的温热感，也有更轻、更干净的入口体验。"
+          },
+          {
+            "icon": "droplet",
+            "title": "不加一滴水的双重萃取",
+            "body": "保留清透原汤质感，并过滤油脂。适合想要每日温热照顾，却不想被厚重老火汤负担的妈妈。"
+          },
+          {
+            "icon": "shield",
+            "title": "自家农场，认证生产",
+            "body": "从源头管理到 Halal 与品质认证，每一包都为了让家里的日常补养更稳定、更干净、更安心。"
+          }
+        ]
+      },
+      "certifications": {
+        "eyebrow": "Sales Compliance Certifications",
+        "title": "看得见的认证，让选择更安心。",
+        "body": "Aqina 清楚展示关键合规与生产认证标识，让家庭在日常补养前，更容易识别每一包背后的标准。",
+        "items": [
+          {
+            "id": "haccp",
+            "alt": "HACCP GMP ISO 认证标识",
+            "label": "HACCP / GMP / ISO9001"
+          },
+          {
+            "id": "halal",
+            "alt": "JAKIM Halal 认证标识",
+            "label": "JAKIM Halal"
+          },
+          {
+            "id": "veterinary",
+            "alt": "马来西亚兽医局认证标识",
+            "label": "JPH Veterinary Mark"
+          }
+        ]
+      },
+      "stories": {
+        "eyebrow": "妈妈真实反馈故事",
+        "title": "听听和你一样的妈妈怎么说。",
+        "body": "很多时候，让孕期和月子更好过的，不是复杂的大动作，而是每天能坚持的一小杯温热照顾。",
+        "items": [
+          {
+            "name": "Elaine",
+            "role": "新手妈妈",
+            "quote": "前三个月我很怕厚重汤味。Aqina 比我想象中清爽，尾段有一点回甘，后来就变成我的早晨温热饮品。",
+            "image": "/v3/ugc-new-mum.jpg",
+            "alt": "新手妈妈在家享用温热饮品"
+          },
+          {
+            "name": "Aishah",
+            "role": "孕期日常",
+            "quote": "我喜欢它不油。早餐前热一包，简单、温暖，也不会把补养变成很大的压力。",
+            "image": "/v3/ugc-morning-mum.jpg",
+            "alt": "孕妈妈在家中餐桌拿着温热饮品"
+          },
+          {
+            "name": "Jia Wen",
+            "role": "职场妈妈",
+            "quote": "会议之间我需要的是快速又温和的东西。一杯热热的 Aqina，像给自己留了一个很安静的暂停。",
+            "image": "/v3/ugc-working-mum.jpg",
+            "alt": "职场孕妈妈在电脑旁放着温热饮品"
+          },
+          {
+            "name": "Mei Ling",
+            "role": "月子照顾",
+            "quote": "早上先生帮我热一包，喝起来像清汤，简单、舒服，也不需要重新熬一大锅。",
+            "image": "/v3/ugc-partner-care.jpg",
+            "alt": "伴侣在明亮厨房准备温热饮品"
+          }
+        ]
+      },
+      "offer": {
+        "eyebrow": "孕产专属套餐",
+        "title": "每天一杯黄金滋养，是对自己最长情的告白。",
+        "body": "先用 7 天体验第一口回甘，或选择 30 天调理包，覆盖孕晚期或月子期的日常温热节奏。",
+        "freeShipping": "免运费",
+        "items": [
+          {
+            "packKey": "pack1",
+            "eyebrow": "1 盒 · 7 包",
+            "title": "孕期安神体验装",
+            "subtitle": "尝试第一口清爽回甘，先确认身体喜欢的口感。",
+            "cta": "尝试第一杯回甘",
+            "features": [
+              "7 包独立包装，适合先体验一周",
+              "清爽清汤口感，适合敏感日常",
+              "先试后定，减少一次性选择压力"
+            ]
+          },
+          {
+            "packKey": "pack4",
+            "eyebrow": "4 盒 · 28 包",
+            "title": "孕产 30 天黄金调理包",
+            "subtitle": "覆盖孕晚期或月子期的整月温热照顾节奏。",
+            "originalPrice": "SGD 159.60",
+            "badge": "Most Popular",
+            "cta": "开启我的轻盈孕期",
+            "features": [
+              "每天一包，建立稳定温热仪式",
+              "接近覆盖整个月子期",
+              "清透零油口感，并享免运费"
+            ]
+          }
+        ]
+      },
+      "finalCta": {
+        "eyebrow": "更温柔的每日仪式",
+        "title": "从今天开始，让滋养变得更容易。",
+        "body": "选择适合你阶段的套餐，让 Aqina 把一杯清透黄金汤，放进你的孕期或月子日常里。",
+        "productsCta": "选择我的套餐",
+        "whatsappCta": "WhatsApp 咨询",
+        "whatsappMessage": "Hi Aqina SG，我想了解哪一个孕产滴鸡精套餐比较适合我。",
+        "imageAlt": "伴侣为孕产照顾准备温热清透饮品",
+        "productAlt": "Aqina 孕产 30 天黄金调理包",
+        "productNote": "30 天调理包让你的温热节奏更简单，需要时随手一包，轻盈又方便。"
       }
     }
   }

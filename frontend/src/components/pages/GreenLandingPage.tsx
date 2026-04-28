@@ -13,8 +13,11 @@ import StoryExperienceSection from '@/components/StoryExperienceSection';
 import UGCReviewGrid from '@/components/UGCReviewGrid';
 import useLandingProducts from '@/hooks/useLandingProducts';
 import { greenLandingMedia } from '@/lib/landing-media';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function GreenLandingPage() {
+  const t = useTranslations('Index');
+  const locale = useLocale();
   const {
     products,
     isLoading,
@@ -26,9 +29,10 @@ export default function GreenLandingPage() {
 
   return (
     <MediaLoadGate
-      cacheKey="aqina-green-landing-media-v3"
+      cacheKey={`aqina-green-landing-media-v3-${locale}`}
       sources={greenLandingMedia}
       variant="dark"
+      loadingLabel={t('loading.mediaPreparing')}
     >
       <main className="page-grid flex min-h-screen flex-col pb-24">
         <PromoMarquee />

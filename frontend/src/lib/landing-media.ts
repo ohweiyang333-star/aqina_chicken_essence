@@ -51,3 +51,16 @@ export const v2LandingMedia = [
   ...brandImages,
   ...productImages,
 ];
+
+export const v3MaternityLandingMedia = [
+  '/v3/maternity-hero.jpg',
+  '/v3/empathy-nausea.jpg',
+  '/v3/empathy-fatigue.jpg',
+  '/v3/light-ritual.jpg',
+  '/v3/ugc-new-mum.jpg',
+  '/v3/ugc-morning-mum.jpg',
+  '/v3/ugc-working-mum.jpg',
+  '/v3/ugc-partner-care.jpg',
+  ...trustImages,
+  ...productImages,
+];

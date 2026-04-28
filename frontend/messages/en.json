@@ -2,6 +2,9 @@
   "Index": {
     "title": "Aqina Premium Chicken Essence",
     "subtitle": "Pure extraction, crafted for modern families and daily nourishment",
+    "loading": {
+      "mediaPreparing": "Preparing the full experience"
+    },
     "hero": {
       "badge": "Aqina Pineapple Enzyme Chicken Essence",
       "title": "Pure energy for your body,",
@@ -66,7 +69,6 @@
       "subtitle": "From a first box to household reserve, choose a warm routine that stays easy to follow.",
       "recommended": "Recommended",
       "buyNow": "Choose Plan",
-      "addToCart": "Add Plan",
       "featuresLabel": "Key Features",
       "currency": "SGD",
       "detailFallbackOne": "Premium extraction with no added water",
@@ -113,20 +115,14 @@
       },
       "freeShippingBadge": "Free Shipping SGD 70+"
     },
-    "Cart": {
-      "title": "Shopping Cart",
-      "empty": "Your cart is empty",
-      "continueShopping": "Continue Shopping",
-      "subtotal": "Subtotal",
-      "freeShipping": "Free shipping applied!",
-      "checkout": "Proceed to Checkout"
-    },
     "Checkout": {
       "form": {
         "title": "Complete Your Order",
-        "name": "Name / 姓名",
-        "phone": "WhatsApp Phone / 电话",
-        "address": "Delivery Address / 地址",
+        "name": "Full Name",
+        "namePlaceholder": "Your full name",
+        "phone": "WhatsApp Phone",
+        "address": "Delivery Address",
+        "addressPlaceholder": "Singapore delivery address",
         "subtotal": "Subtotal",
         "delivery": "Delivery Fee",
         "total": "Total",
@@ -134,27 +130,24 @@
         "receipt": "PayNow Receipt Screenshot",
         "receiptHelp": "Upload JPG, PNG, or WebP after successful PayNow payment.",
         "receiptRequired": "Please upload your PayNow payment receipt before submitting.",
+        "submitError": "Order submission failed. Please try again or contact via WhatsApp.",
         "submit": "Submit Order & Receipt",
         "terms": "Please complete PayNow and upload your payment screenshot before submitting. Payment will be verified manually before delivery."
       },
       "success": {
         "title": "Order Received!",
         "subtitle": "Thank you. Your order and PayNow receipt have been submitted.",
+        "orderIdLabel": "Order ID",
         "receiptSubmitted": "We have received your PayNow receipt. The team will verify payment manually before arranging delivery.",
         "close": "Back to Home"
       },
       "payment": {
-        "title": "Payment Instructions",
-        "cn": "下单后，请直接扫描下方 PayNow QR Code，并在参考栏填写您的订单号。支付成功后请截图发送至 WhatsApp 客服，我们将立即为您安排发货。",
-        "en": "After placing your order, please scan the PayNow QR code below and include your Order ID in the reference. Please send a screenshot of your successful payment to our WhatsApp support for immediate delivery arrangement.",
         "paynow": "PayNow",
         "accountName": "Account name",
         "amount": "Amount",
         "beforeSubmit": "Please complete PayNow payment first, then upload the successful payment screenshot below to submit your order.",
         "referenceBeforeOrder": "Reference: your WhatsApp number",
-        "qrUnavailable": "PayNow QR details will be shared after order confirmation.",
-        "qrNote": "Reference: Your Order ID",
-        "whatsapp": "Send payment screenshot to WhatsApp {phone} for faster processing"
+        "qrUnavailable": "PayNow QR details will be shared after order confirmation."
       }
     },
     "mobileCta": {
@@ -891,6 +884,172 @@
         "whatsappCta": "Ask on WhatsApp",
         "whatsappMessage": "Hi Aqina SG, I would like to know which chicken essence plan fits daily drinking.",
         "imageAlt": "Aqina chicken essence final call to action product scene"
+      }
+    },
+    "v3": {
+      "hero": {
+        "eyebrow": "MD2 Pineapple Enzyme Chicken Essence",
+        "kicker": "For every mum growing a little miracle:",
+        "title": "Pregnancy should not feel like forcing down heavy broth.",
+        "subtitle": "When oily soup feels too much and the usual chicken essence smells too strong, Aqina MD2 Pineapple Chicken Essence brings a clean, fruit-sweet finish in a clear golden broth made for light daily nourishment.",
+        "primaryCta": "Get My Maternity Care Plan",
+        "secondaryCta": "Read Mum Stories",
+        "imageAlt": "Pregnant mum enjoying a warm clear golden drink at a calm morning table",
+        "notes": [
+          "Clean, light, easy to sip",
+          "Zero-oil clear broth texture",
+          "Warm daily care for mum"
+        ]
+      },
+      "empathy": {
+        "eyebrow": "What Your Body Remembers",
+        "title": "The hard parts people do not always see.",
+        "body": "Some days are not about willpower. They are about smell, heaviness, tired bones, and wanting something warm that does not ask too much from you.",
+        "items": [
+          {
+            "title": "Nausea sensitivity",
+            "body": "A little savoury smell from the kitchen can feel overwhelming. Even when you want nourishment, thick broth and sharp aftertaste may be the last thing your body wants.",
+            "image": "/v3/empathy-nausea.jpg",
+            "alt": "Pregnant mum near a bright home kitchen with a warm cup"
+          },
+          {
+            "title": "Heavy fatigue",
+            "body": "As the bump grows, simple things take more energy. Turning in bed, working through the day, and keeping a steady routine can feel heavier than expected.",
+            "image": "/v3/empathy-fatigue.jpg",
+            "alt": "Late pregnancy mum resting at home in soft afternoon light"
+          },
+          {
+            "title": "Weight concern",
+            "body": "Traditional soups can look rich and oily. You want care that feels clean, warm, and gentle, without turning every nourishment moment into a heavy meal.",
+            "image": "/v3/light-ritual.jpg",
+            "alt": "Clear golden warm drink with pineapple slices and soft linen"
+          }
+        ]
+      },
+      "solution": {
+        "eyebrow": "The Lighter Way In",
+        "title": "This time, nourishment can feel like comfort.",
+        "body": "Aqina keeps the ritual warm while making the taste clearer, lighter, and easier to welcome into your day.",
+        "imageAlt": "Warm clear golden drink with pineapple and oatmeal table setting",
+        "items": [
+          {
+            "icon": "pineapple",
+            "title": "MD2 pineapple-fed chicken",
+            "body": "The pineapple enzyme story gives Aqina its signature cleaner finish: savoury, gentle, and lightly sweet at the end, closer to a clear soup your body can welcome."
+          },
+          {
+            "icon": "droplet",
+            "title": "Double-extracted without added water",
+            "body": "A concentrated clear broth texture with oil filtered away. It is made for mums who want warm daily care without the heavy feeling of old-style soup."
+          },
+          {
+            "icon": "shield",
+            "title": "Own farm, certified production",
+            "body": "From farm control to Halal and quality certification, every pack is designed to feel steady, clean, and easy to trust at home."
+          }
+        ]
+      },
+      "certifications": {
+        "eyebrow": "Sales Compliance Certifications",
+        "title": "Visible trust marks for a calmer choice.",
+        "body": "Aqina shows key compliance and production marks clearly, so families can recognise the standards behind each daily care pack.",
+        "items": [
+          {
+            "id": "haccp",
+            "alt": "HACCP GMP ISO certification marks",
+            "label": "HACCP / GMP / ISO9001"
+          },
+          {
+            "id": "halal",
+            "alt": "JAKIM Halal certification mark",
+            "label": "JAKIM Halal"
+          },
+          {
+            "id": "veterinary",
+            "alt": "Malaysia veterinary mark",
+            "label": "JPH Veterinary Mark"
+          }
+        ]
+      },
+      "stories": {
+        "eyebrow": "Real Mum Stories",
+        "title": "What mums like you are saying.",
+        "body": "Small daily routines can become the quiet support that makes pregnancy and confinement feel more manageable.",
+        "items": [
+          {
+            "name": "Elaine",
+            "role": "First-time mum",
+            "quote": "In the first trimester, I could not handle heavy soup. Aqina tasted clearer than I expected, with a light sweetness at the end, so it became my morning warm drink.",
+            "image": "/v3/ugc-new-mum.jpg",
+            "alt": "New mum enjoying a warm drink at home"
+          },
+          {
+            "name": "Aishah",
+            "role": "Pregnancy routine",
+            "quote": "I like that it does not feel oily. I warm one pack before breakfast and it feels like a simple care moment I can actually keep.",
+            "image": "/v3/ugc-morning-mum.jpg",
+            "alt": "Pregnant mum with warm drink at a home dining table"
+          },
+          {
+            "name": "Jia Wen",
+            "role": "Working mum",
+            "quote": "Between calls, I need something quick and gentle. One warm cup gives me that quiet pause without cooking a full pot of soup.",
+            "image": "/v3/ugc-working-mum.jpg",
+            "alt": "Working pregnant mum with warm drink beside a laptop"
+          },
+          {
+            "name": "Mei Ling",
+            "role": "Confinement care",
+            "quote": "My husband warms it for me in the morning. It feels like a small bowl of clear soup, simple and comforting.",
+            "image": "/v3/ugc-partner-care.jpg",
+            "alt": "Partner preparing a warm drink in a bright home kitchen"
+          }
+        ]
+      },
+      "offer": {
+        "eyebrow": "Maternity Care Plans",
+        "title": "A warm golden cup for the season when your body deserves gentleness.",
+        "body": "Start with a 7-day taste trial, or choose the 30-day care pack for late pregnancy and confinement routines.",
+        "freeShipping": "Free shipping",
+        "items": [
+          {
+            "packKey": "pack1",
+            "eyebrow": "1 box · 7 packs",
+            "title": "Pregnancy Gentle Trial Pack",
+            "subtitle": "For the first taste of Aqina's clean, fruit-sweet finish.",
+            "cta": "Try the first cup",
+            "features": [
+              "7 individual packs for an easy first week",
+              "Light clear-broth taste for sensitive days",
+              "Best for trying before a longer routine"
+            ]
+          },
+          {
+            "packKey": "pack4",
+            "eyebrow": "4 boxes · 28 packs",
+            "title": "Maternity 30-Day Golden Care Pack",
+            "subtitle": "A full month of warm daily care for late pregnancy or confinement rhythm.",
+            "originalPrice": "SGD 159.60",
+            "badge": "Most Popular",
+            "cta": "Start my lighter maternity routine",
+            "features": [
+              "One warm pack a day for a steady routine",
+              "Covers almost a full confinement month",
+              "Clean, light, zero-oil texture with free shipping"
+            ]
+          }
+        ]
+      },
+      "finalCta": {
+        "eyebrow": "A softer daily ritual",
+        "title": "Let warm nourishment feel easier from today.",
+        "body": "Choose the plan that fits your season, and let Aqina bring a clean golden cup into your pregnancy or confinement routine.",
+        "productsCta": "Choose My Plan",
+        "whatsappCta": "Ask on WhatsApp",
+        "whatsappMessage": "Hi Aqina SG, I would like to know which maternity chicken essence plan is suitable for me.",
+        "imageAlt": "Partner preparing a warm clear drink for maternity care",
+        "productAlt": "Aqina 30-day maternity care pack",
+        "productNote": "The 30-day pack keeps your warm routine close, simple, and ready when your body wants something light."
       }
     }
   }

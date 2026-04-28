@@ -16,8 +16,11 @@ import V2TrustSection from '@/components/v2/V2TrustSection';
 import V2UgcEvidenceWall from '@/components/v2/V2UgcEvidenceWall';
 import useLandingProducts from '@/hooks/useLandingProducts';
 import { v2LandingMedia } from '@/lib/landing-media';
+import { useLocale, useTranslations } from 'next-intl';
 
 export default function V2LandingPage() {
+  const t = useTranslations('Index');
+  const locale = useLocale();
   const {
     products,
     isLoading,
@@ -29,9 +32,10 @@ export default function V2LandingPage() {
 
   return (
     <MediaLoadGate
-      cacheKey="aqina-v2-landing-media-v3"
+      cacheKey={`aqina-v2-landing-media-v3-${locale}`}
       sources={v2LandingMedia}
       variant="warm"
+      loadingLabel={t('loading.mediaPreparing')}
     >
       <main className="flex min-h-screen flex-col bg-[#fff7e8] pb-24 text-[#23170d]">
         <V2HeroSection />

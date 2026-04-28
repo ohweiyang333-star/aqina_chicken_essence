@@ -8,14 +8,32 @@ import { Globe2 } from 'lucide-react';
 import Image from 'next/image';
 import { IMAGES } from '@/lib/image-utils';
 
+function getLanguageHref(pathname: string | null, nextLocale: string) {
+  if (!pathname) {
+    return `/${nextLocale}`;
+  }
+
+  if (/^\/v2\/(en|zh)(?=\/|$)/.test(pathname)) {
+    return pathname.replace(/^\/v2\/(en|zh)(?=\/|$)/, `/v2/${nextLocale}`);
+  }
+
+  if (/^\/v3\/(en|zh)(?=\/|$)/.test(pathname)) {
+    return pathname.replace(/^\/v3\/(en|zh)(?=\/|$)/, `/v3/${nextLocale}`);
+  }
+
+  if (/^\/(en|zh)(?=\/|$)/.test(pathname)) {
+    return pathname.replace(/^\/(en|zh)(?=\/|$)/, `/${nextLocale}`);
+  }
+
+  return `/${nextLocale}`;
+}
+
 export default function Header() {
   const locale = useLocale();
   const pathname = usePathname();
   const homeHref = `/${locale}`;
   const nextLocale = locale === 'en' ? 'zh' : 'en';
-  const languageHref = pathname
-    ? pathname.replace(new RegExp(`^/${locale}(?=/|$)`), `/${nextLocale}`)
-    : `/${nextLocale}`;
+  const languageHref = getLanguageHref(pathname, nextLocale);
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
