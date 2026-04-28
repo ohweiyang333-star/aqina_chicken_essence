@@ -3,9 +3,9 @@ import { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Aqina 滴鸡精｜零负担吸收的纯粹能量｜黄梨酵素滴鸡精",
+  title: "Aqina Premium Chicken Essence Singapore | Pineapple Enzyme Chicken Essence",
   description:
-    "给身体最纯粹的能量，从零负担吸收开始。Aqina 黄梨酵素滴鸡精，聚焦好吸收、轻负担与每日可持续的温热补养。",
+    "Aqina pineapple enzyme chicken essence is made for clean absorption, gentle daily recovery, and easy warm nourishment for Singapore families.",
   icons: {
     icon: [
       { url: "/icon.png", type: "image/png", sizes: "512x512" },
@@ -16,12 +16,14 @@ export const metadata: Metadata = {
   },
   keywords: [
     "Aqina Singapore",
-    "鸡精",
-    "滴鸡精",
+    "premium chicken essence",
+    "pineapple enzyme chicken essence",
     "Halal Certified",
     "Free Shipping Singapore",
     "2-3 days delivery",
     "Customer Reviews",
+    "鸡精",
+    "滴鸡精",
   ],
 };
 
