@@ -8,7 +8,7 @@ interface ChatbotSettings {
     response_zh: string;
     recommendProductId?: string;
   }>;
-  abandoned_cart_message: {
+  payment_followup_message: {
     template: string;
     discountCode: string;
     delayMinutes: number;
@@ -40,8 +40,8 @@ const defaultSettings: ChatbotSettings = {
       response_zh: '是的，我们所有产品都获得马来西亚 JAKIM 清真认证。',
     },
   ],
-  abandoned_cart_message: {
-    template: 'Hi [Name]! Your Aqina chicken essence order is almost ready. Use code [DISCOUNT_CODE] to enjoy your offer.',
+  payment_followup_message: {
+    template: 'Hi [Name]! 您的 Aqina 滴鸡精订单还没完成付款。请使用 PayNow QR 付款后回传截图，我们会尽快安排处理。',
     discountCode: 'HEALTHY10',
     delayMinutes: 15,
   },

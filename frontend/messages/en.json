@@ -68,7 +68,7 @@
       "title": "Choose Your Daily Light Nourishment Plan",
       "subtitle": "From a first box to household reserve, choose a warm routine that stays easy to follow.",
       "recommended": "Recommended",
-      "buyNow": "Choose Plan",
+      "buyNow": "Order with PayNow",
       "featuresLabel": "Key Features",
       "currency": "SGD",
       "detailFallbackOne": "Premium extraction with no added water",
@@ -115,6 +115,14 @@
       },
       "freeShippingBadge": "Free Shipping SGD 70+"
     },
+    "Cart": {
+      "title": "Selected Plan",
+      "empty": "No plan selected",
+      "continueShopping": "Continue Shopping",
+      "subtotal": "Subtotal",
+      "freeShipping": "Free shipping applied!",
+      "checkout": "Proceed to Checkout"
+    },
     "Checkout": {
       "form": {
         "title": "Complete Your Order",
@@ -151,7 +159,7 @@
       }
     },
     "mobileCta": {
-      "label": "Choose Care Plan",
+      "label": "Choose Plan Now",
       "whatsappLabel": "Chat with Specialist"
     },
     "footer": {
@@ -652,7 +660,7 @@
         "eyebrow": "Pineapple Enzyme Chicken Essence",
         "title": "Warm pineapple-enzyme chicken essence, made lighter for everyday routines.",
         "subtitle": "A bright rice-gold experience built around clean soup-like taste, easy warming, and a daily nourishment ritual that feels simple to keep.",
-        "primaryCta": "Choose a Plan",
+        "primaryCta": "Choose Plan Now",
         "secondaryCta": "See Real Scenes",
         "imageAlt": "Aqina pineapple enzyme chicken essence box, pouch, and warm serving scene",
         "badges": [
@@ -880,7 +888,7 @@
         "eyebrow": "Final Step",
         "title": "Choose a warm routine that is realistic to drink and easy to keep.",
         "body": "From a 7-day trial to household reserve, start with a rhythm you can realistically keep. You can also ask WhatsApp support which plan fits your daily routine.",
-        "productsCta": "View Plans",
+        "productsCta": "Choose Plan Now",
         "whatsappCta": "Ask on WhatsApp",
         "whatsappMessage": "Hi Aqina SG, I would like to know which chicken essence plan fits daily drinking.",
         "imageAlt": "Aqina chicken essence final call to action product scene"

@@ -68,7 +68,7 @@
       "title": "选择你的日常轻补养配套",
       "subtitle": "从轻量体验到家庭常备，按你的节奏安排每一天都容易坚持的温热补给。",
       "recommended": "推荐选择",
-      "buyNow": "立即选择",
+      "buyNow": "PayNow 下单",
       "featuresLabel": "方案重点",
       "currency": "SGD",
       "detailFallbackOne": "纯萃滴鸡精，不额外加水",
@@ -115,6 +115,14 @@
       },
       "freeShippingBadge": "满 SGD 70 免运费"
     },
+    "Cart": {
+      "title": "已选配套",
+      "empty": "尚未选择配套",
+      "continueShopping": "继续购物",
+      "subtotal": "小计",
+      "freeShipping": "已享免运费优惠！",
+      "checkout": "去结算"
+    },
     "Checkout": {
       "form": {
         "title": "完成订单",
@@ -151,7 +159,7 @@
       }
     },
     "mobileCta": {
-      "label": "选择保养配套",
+      "label": "立即选择配套",
       "whatsappLabel": "咨询专员"
     },
     "footer": {
@@ -652,7 +660,7 @@
         "eyebrow": "黄梨酵素滴鸡精",
         "title": "一袋温热的黄梨酵素滴鸡精，把补养变得更轻、更日常。",
         "subtitle": "以清爽汤感、即热即饮与暖米金质感，呈现适合现代生活节奏的日常补给体验。",
-        "primaryCta": "选择配套",
+        "primaryCta": "立即选择配套",
         "secondaryCta": "看真实场景",
         "imageAlt": "Aqina 黄梨酵素滴鸡精外盒、单包和温热饮用场景",
         "badges": [
@@ -880,7 +888,7 @@
         "eyebrow": "最后一步",
         "title": "选择一组真正喝得下去、坚持得住的温热补给。",
         "body": "从 7 天体验到家庭常备，先选一个你真正愿意每天执行的节奏。你也可以通过 WhatsApp 询问适合的配套。",
-        "productsCta": "查看配套",
+        "productsCta": "立即选择配套",
         "whatsappCta": "WhatsApp 咨询",
         "whatsappMessage": "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合日常饮用。",
         "imageAlt": "Aqina 滴鸡精最终行动区产品场景"

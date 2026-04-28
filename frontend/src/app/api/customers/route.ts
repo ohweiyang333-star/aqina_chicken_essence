@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { db, collection, getDocs } from "@/lib/firebase";
 
 interface Customer {
@@ -15,7 +15,7 @@ interface Customer {
 }
 
 // GET - Fetch all customers
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const snapshot = await getDocs(collection(db, "customers"));
 
