@@ -12,10 +12,79 @@ export const metadata: Metadata = {
 
 type PageProps = {
   params: Promise<{ token: string }>;
+  searchParams?: Promise<{ lang?: string }>;
 };
 
-export default async function PayNowCheckoutPage({ params }: PageProps) {
+type PayNowLocale = "en" | "zh";
+
+type PayNowCopy = {
+  languageSwitch: string;
+  intro: string;
+  orderSummaryTitle: string;
+  orderSummaryDescription: string;
+  customerName: string;
+  paymentMethod: string;
+  orderStatus: string;
+  deliveryAddress: string;
+  scanTitle: string;
+  scanDescription: string;
+  qrMissing: string;
+  paymentNote: string;
+  supportWhatsApp: string;
+  sendProof: string;
+  manualNote: string;
+  whatsappMessage: (orderId: string) => string;
+};
+
+const payNowCopy: Record<PayNowLocale, PayNowCopy> = {
+  en: {
+    languageSwitch: "中文",
+    intro:
+      "Your chat order has been created. Please complete payment with PayNow and send the payment screenshot to our WhatsApp support so we can arrange delivery quickly.",
+    orderSummaryTitle: "Order Summary",
+    orderSummaryDescription: "Aqina will arrange Singapore delivery using the details below.",
+    customerName: "Recipient",
+    paymentMethod: "Payment Method",
+    orderStatus: "Order Status",
+    deliveryAddress: "Delivery Address",
+    scanTitle: "Scan PayNow",
+    scanDescription: "Please use Singapore PayNow to complete your payment.",
+    qrMissing: "PayNow QR has not been configured yet. Please contact Aqina support for payment details.",
+    paymentNote: "Payment Note",
+    supportWhatsApp: "Support WhatsApp",
+    sendProof: "I have paid. Send screenshot to WhatsApp",
+    manualNote:
+      "Payment verification is handled manually. After scanning PayNow, send your payment screenshot to our WhatsApp support and we will follow up as soon as possible.",
+    whatsappMessage: (orderId: string) => `Hi Aqina SG, I have completed PayNow payment for ${orderId}.`,
+  },
+  zh: {
+    languageSwitch: "EN",
+    intro:
+      "您的聊天订单已经生成。请使用 PayNow 完成付款，并把付款截图发回公用 WhatsApp，我们会尽快为您安排发货。",
+    orderSummaryTitle: "订单摘要",
+    orderSummaryDescription: "Aqina 会按照以下资料安排新加坡配送。",
+    customerName: "收件人",
+    paymentMethod: "付款方式",
+    orderStatus: "订单状态",
+    deliveryAddress: "收货地址",
+    scanTitle: "扫描 PayNow",
+    scanDescription: "请使用新加坡 PayNow 完成付款。",
+    qrMissing: "尚未配置 PayNow QR 图片，请联系 Aqina 客服获取付款资料。",
+    paymentNote: "付款备注",
+    supportWhatsApp: "客服 WhatsApp",
+    sendProof: "已付款，发送截图到公用 WhatsApp",
+    manualNote:
+      "当前支付完成后的核销仍由人工确认。你只需要扫码付款，再把截图发回公用 WhatsApp，我们就会尽快跟进。",
+    whatsappMessage: (orderId: string) => `Hi Aqina SG，我已经完成订单 ${orderId} 的 PayNow 付款。`,
+  },
+};
+
+export default async function PayNowCheckoutPage({ params, searchParams }: PageProps) {
   const { token } = await params;
+  const resolvedSearchParams = await searchParams;
+  const locale: PayNowLocale = resolvedSearchParams?.lang === "zh" ? "zh" : "en";
+  const copy = payNowCopy[locale];
+  const nextLocale: PayNowLocale = locale === "en" ? "zh" : "en";
 
   let checkout;
   try {
@@ -24,7 +93,7 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
     notFound();
   }
 
-  const whatsappMessage = `Hi Aqina SG, I have completed PayNow payment for ${checkout.order_id}.`;
+  const whatsappMessage = copy.whatsappMessage(checkout.order_id);
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(189,139,78,0.2),_transparent_30%),linear-gradient(180deg,_#f8f4ee_0%,_#efe7d8_100%)] px-6 py-10 text-[#2b2018]">
@@ -32,13 +101,22 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
         <div className="rounded-[32px] border border-white/70 bg-white/75 p-8 shadow-[0_26px_70px_rgba(75,48,24,0.1)] backdrop-blur">
           <div className="mb-8 flex items-start justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#ddc2a2] bg-[#fff8ee] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#8e5d34]">
-                <Sparkles size={14} />
-                Aqina Singapore
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#ddc2a2] bg-[#fff8ee] px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-[#8e5d34]">
+                  <Sparkles size={14} />
+                  Aqina Singapore
+                </div>
+                <a
+                  id="paynow-language-switch"
+                  href={`/paynow/${token}?lang=${nextLocale}`}
+                  className="inline-flex min-h-9 items-center rounded-full border border-[#ddc2a2] bg-white/70 px-4 text-xs font-bold uppercase tracking-[0.16em] text-[#6c4325] transition hover:bg-[#fff8ee]"
+                >
+                  {copy.languageSwitch}
+                </a>
               </div>
               <h1 className="mt-4 text-4xl font-black tracking-tight">PayNow Checkout</h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-[#6c5849]">
-                您的聊天订单已经生成。请使用 PayNow 完成付款，并把付款截图发回公用 WhatsApp，我们会尽快为您安排发货。
+                {copy.intro}
               </p>
             </div>
 
@@ -56,20 +134,20 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
                 <ReceiptText size={18} />
               </div>
               <div>
-                <h2 className="text-xl font-bold">订单摘要</h2>
-                <p className="text-sm text-[#6c5849]">Aqina 会按照以下资料安排新加坡配送。</p>
+                <h2 className="text-xl font-bold">{copy.orderSummaryTitle}</h2>
+                <p className="text-sm text-[#6c5849]">{copy.orderSummaryDescription}</p>
               </div>
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              <InfoPair label="收件人" value={checkout.customer_name} />
+              <InfoPair label={copy.customerName} value={checkout.customer_name} />
               <InfoPair label="WhatsApp" value={checkout.customer_whatsapp} />
-              <InfoPair label="付款方式" value="PayNow" />
-              <InfoPair label="订单状态" value={checkout.order_status} />
+              <InfoPair label={copy.paymentMethod} value="PayNow" />
+              <InfoPair label={copy.orderStatus} value={checkout.order_status} />
             </div>
 
             <div className="mt-5 rounded-2xl bg-white p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9b7954]">收货地址</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9b7954]">{copy.deliveryAddress}</p>
               <p className="mt-2 text-sm leading-6 text-[#3b2c21]">{checkout.delivery_address}</p>
             </div>
 
@@ -80,7 +158,11 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
                   className="flex items-center justify-between rounded-2xl border border-[#e7d8c7] bg-white px-4 py-4"
                 >
                   <div>
-                    <p className="font-semibold">{item.product_name_zh || item.product_name}</p>
+                    <p className="font-semibold">
+                      {locale === "zh"
+                        ? item.product_name_zh || item.product_name
+                        : item.product_name || item.product_name_zh}
+                    </p>
                     <p className="text-sm text-[#6c5849]">x{item.quantity}</p>
                   </div>
                   <p className="text-lg font-black tracking-tight">SGD {item.total_price.toFixed(2)}</p>
@@ -101,8 +183,8 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
               <QrCode size={18} />
             </div>
             <div>
-              <h2 className="text-2xl font-black tracking-tight">扫描 PayNow</h2>
-              <p className="text-sm text-[#d8c8b3]">请使用新加坡 PayNow 完成付款。</p>
+              <h2 className="text-2xl font-black tracking-tight">{copy.scanTitle}</h2>
+              <p className="text-sm text-[#d8c8b3]">{copy.scanDescription}</p>
             </div>
           </div>
 
@@ -121,7 +203,7 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
               <div className="mx-auto flex h-72 w-72 flex-col items-center justify-center rounded-[28px] border border-dashed border-white/20 bg-white/5 px-8">
                 <QrCode size={54} className="text-white/45" />
                 <p className="mt-4 text-sm leading-6 text-[#d8c8b3]">
-                  尚未配置 PayNow QR 图片，请回到 CRM 后台上传付款二维码。
+                  {copy.qrMissing}
                 </p>
               </div>
             )}
@@ -130,8 +212,8 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
           <div className="mt-6 space-y-4 rounded-[28px] border border-white/10 bg-white/5 p-5">
             <InfoPairDark label="PayNow 户名" value={checkout.paynow.account_name} />
             <InfoPairDark label="Reference" value={`${checkout.paynow.payment_reference_prefix}-${checkout.order_id}`} />
-            <InfoPairDark label="付款备注" value={checkout.paynow.payment_note} />
-            <InfoPairDark label="客服 WhatsApp" value={aqinaSiteConfig.contact.whatsappDisplay} />
+            <InfoPairDark label={copy.paymentNote} value={checkout.paynow.payment_note} />
+            <InfoPairDark label={copy.supportWhatsApp} value={aqinaSiteConfig.contact.whatsappDisplay} />
           </div>
 
           <a
@@ -141,14 +223,14 @@ export default async function PayNowCheckoutPage({ params }: PageProps) {
             rel="noopener noreferrer"
             className="mt-6 flex w-full items-center justify-center rounded-full bg-[#f7f2ea] px-5 py-4 text-sm font-bold text-[#2b2018] transition hover:bg-[#fff8ee]"
           >
-            已付款，发送截图到公用 WhatsApp
+            {copy.sendProof}
           </a>
 
           <div className="mt-6 rounded-[24px] border border-[#735640] bg-[#3a2b21] p-5">
             <div className="flex items-start gap-3">
               <ShieldCheck size={18} className="mt-0.5 text-[#f1d5af]" />
               <p className="text-sm leading-6 text-[#e8d8c4]">
-                [假设] 当前支付完成后的核销仍由人工确认，因此页面不会自动跳转到“已支付”。你只需要扫码付款，再把截图发回公用 WhatsApp，我们就会尽快跟进。
+                {copy.manualNote}
               </p>
             </div>
           </div>

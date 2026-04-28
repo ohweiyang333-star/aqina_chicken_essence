@@ -28,8 +28,8 @@ export function TextTruncate({
   font = '16px Inter',
   lineHeight = 24,
   maxLines = 3,
-  showMoreLabel = '显示更多',
-  showLessLabel = '收起',
+  showMoreLabel = 'Show more',
+  showLessLabel = 'Show less',
   className = '',
 }: TextTruncateProps) {
   const [isExpanded, setIsExpanded] = useState(false)

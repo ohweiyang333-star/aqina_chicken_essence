@@ -56,7 +56,7 @@ const FIXED_PRODUCT_IMAGES = {
   pack6: IMAGES.products.box6,
 } as const;
 
-type FixedPackKey = keyof typeof FIXED_PRODUCT_IMAGES;
+export type FixedPackKey = keyof typeof FIXED_PRODUCT_IMAGES;
 
 function resolvePackKeyFromHints(hints: string[], price: number): FixedPackKey {
   const text = hints.join(" ").toLowerCase();
@@ -108,14 +108,14 @@ function resolvePackKeyFromHints(hints: string[], price: number): FixedPackKey {
   return "pack1";
 }
 
-export function resolveFixedProductImageByMeta(options: {
+export function resolveFixedPackKeyByMeta(options: {
   id?: string;
   packSize?: string;
   nameEn?: string;
   nameZh?: string;
   price?: number;
-}): string {
-  const packKey = resolvePackKeyFromHints(
+}): FixedPackKey {
+  return resolvePackKeyFromHints(
     [
       options.id ?? "",
       options.packSize ?? "",
@@ -124,6 +124,16 @@ export function resolveFixedProductImageByMeta(options: {
     ],
     Number(options.price ?? 0),
   );
+}
+
+export function resolveFixedProductImageByMeta(options: {
+  id?: string;
+  packSize?: string;
+  nameEn?: string;
+  nameZh?: string;
+  price?: number;
+}): string {
+  const packKey = resolveFixedPackKeyByMeta(options);
 
   return FIXED_PRODUCT_IMAGES[packKey];
 }

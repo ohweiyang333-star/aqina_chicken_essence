@@ -2,9 +2,9 @@
 
 import { useTranslations } from "next-intl";
 import Image from "next/image";
-import { CheckCircle2, ShoppingCart } from "lucide-react";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import type { DisplayProduct } from "@/lib/product-service";
-import { resolveFixedProductImageByMeta } from "@/lib/product-service";
+import { resolveFixedPackKeyByMeta, resolveFixedProductImageByMeta } from "@/lib/product-service";
 import { IMAGES } from "@/lib/image-utils";
 
 interface ProductCardProps {
@@ -26,13 +26,20 @@ export function ProductCard({
   priority = false,
 }: ProductCardProps) {
   const t = useTranslations("Index");
-  const rawFeatures = t.raw(`products.details.${product.id}`);
+  const packKey = resolveFixedPackKeyByMeta({
+    id: product.id,
+    packSize: product.label,
+    nameEn: product.name,
+    nameZh: product.name,
+    price: product.price,
+  });
+  const rawFeatures = t.raw(`products.details.${packKey}`);
   const features = Array.isArray(rawFeatures)
     ? rawFeatures
     : [product.label, t("products.detailFallbackOne"), t("products.detailFallbackTwo")];
   const freeShippingEligible = Number(product.price) >= 70;
   const cardImage =
-    optimizedProductImages[product.id] ??
+    optimizedProductImages[packKey] ??
     resolveFixedProductImageByMeta({
       id: product.id,
       packSize: product.label,
@@ -103,15 +110,17 @@ export function ProductCard({
         ))}
       </ul>
 
-      <button
-        id={`product-buy-now-${product.id}`}
-        type="button"
-        onClick={() => onBuyNow(product)}
-        className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
-      >
-        <ShoppingCart size={16} />
-        <span>{t("products.buyNow")}</span>
-      </button>
+      <div className="space-y-3">
+        <button
+          id={`product-buy-now-${product.id}`}
+          type="button"
+          onClick={() => onBuyNow(product)}
+          className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
+        >
+          <ArrowRight size={16} />
+          <span>{t("products.buyNow")}</span>
+        </button>
+      </div>
     </article>
   );
 }

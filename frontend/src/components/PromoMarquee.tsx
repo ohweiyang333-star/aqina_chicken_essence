@@ -24,7 +24,7 @@ export default function PromoMarquee() {
       <div className="section-shell pointer-events-none absolute inset-y-0 left-0 right-0 z-[5] hidden items-center lg:flex">
         <div className="inline-flex items-center gap-2 rounded-full border border-[#ffd36a]/40 bg-[#30240c]/85 px-3 py-1 text-[10px] font-bold tracking-[0.08em] text-[#ffe9a6]">
           <Sparkles size={12} />
-          <span>Top Pick</span>
+          <span>{t('badge')}</span>
         </div>
       </div>
 

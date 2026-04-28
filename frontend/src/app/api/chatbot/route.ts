@@ -41,7 +41,7 @@ const defaultSettings: ChatbotSettings = {
     },
   ],
   abandoned_cart_message: {
-    template: 'Hi [Name]! 您的 Aqina 滴鸡精还在购物车中。使用优惠码 [DISCOUNT_CODE] 立享折扣！',
+    template: 'Hi [Name]! Your Aqina chicken essence order is almost ready. Use code [DISCOUNT_CODE] to enjoy your offer.',
     discountCode: 'HEALTHY10',
     delayMinutes: 15,
   },
@@ -54,7 +54,7 @@ const defaultSettings: ChatbotSettings = {
 };
 
 // GET - Fetch chatbot settings
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // In a real app, fetch from Firestore 'chatbotSettings' collection
     // For now, return default settings
