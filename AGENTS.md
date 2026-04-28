@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## Branch Policy (Mandatory)
+
+Work directly on `main` for this project by default.
+
+Do not create or switch to feature branches such as `codex/*` unless the user explicitly asks for a separate branch. Implement, verify, commit, and push from `main`.
+
 ## Unified GitHub CI/CD Policy (Mandatory)
 
 This repository uses **GitHub Actions as the only production deployment path**.
