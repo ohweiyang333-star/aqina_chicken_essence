@@ -21,6 +21,10 @@ function getLanguageHref(pathname: string | null, nextLocale: string) {
     return pathname.replace(/^\/v3\/(en|zh)(?=\/|$)/, `/v3/${nextLocale}`);
   }
 
+  if (/^\/v4\/(en|zh)(?=\/|$)/.test(pathname)) {
+    return pathname.replace(/^\/v4\/(en|zh)(?=\/|$)/, `/v4/${nextLocale}`);
+  }
+
   if (/^\/(en|zh)(?=\/|$)/.test(pathname)) {
     return pathname.replace(/^\/(en|zh)(?=\/|$)/, `/${nextLocale}`);
   }

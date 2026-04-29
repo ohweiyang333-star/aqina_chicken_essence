@@ -64,3 +64,14 @@ export const v3MaternityLandingMedia = [
   ...trustImages,
   ...productImages,
 ];
+
+export const v4CulinaryLandingMedia = [
+  '/v4/hero-golden-noodle-product.png',
+  '/v4/frustration-cold-dinner.png',
+  '/v4/fantasy-golden-dish-product.png',
+  '/v4/recipe-noodle-soup-product.png',
+  '/v4/recipe-steamed-egg-product.png',
+  '/v4/recipe-frog-legs-product.png',
+  '/v4/final-family-table-product.png',
+  ...productImages,
+];

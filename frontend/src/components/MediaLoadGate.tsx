@@ -77,10 +77,8 @@ export default function MediaLoadGate({
   minVisibleMs = 900,
   maxWaitMs = 7600,
 }: MediaLoadGateProps) {
-  const [isReady, setIsReady] = useState(() => hasCompletedMediaGate(cacheKey));
-  const [progress, setProgress] = useState(() =>
-    hasCompletedMediaGate(cacheKey) ? 100 : 8,
-  );
+  const [isReady, setIsReady] = useState(false);
+  const [progress, setProgress] = useState(8);
   const uniqueSources = useMemo(
     () => Array.from(new Set(sources.filter(Boolean))),
     [sources],
@@ -92,7 +90,14 @@ export default function MediaLoadGate({
     }
 
     if (hasCompletedMediaGate(cacheKey)) {
-      return;
+      const cachedRevealTimer = window.setTimeout(() => {
+        setProgress(100);
+        setIsReady(true);
+      }, 0);
+
+      return () => {
+        window.clearTimeout(cachedRevealTimer);
+      };
     }
 
     let isCancelled = false;
