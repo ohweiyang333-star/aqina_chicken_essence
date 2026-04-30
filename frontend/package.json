@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "./node_modules/.bin/next dev",
+    "check:images": "node ./scripts/check-image-assets.mjs",
+    "prebuild": "npm run check:images",
     "build": "node ./scripts/run-next-build-with-timeout.mjs",
     "start": "./node_modules/.bin/next start",
     "lint": "./node_modules/.bin/eslint"
