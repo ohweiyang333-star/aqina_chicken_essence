@@ -10,6 +10,9 @@ export const v4Media = {
   noodleSoup: "/v4/recipe-noodle-soup-product.png",
   steamedEgg: "/v4/recipe-steamed-egg-product.png",
   frogLegs: "/v4/recipe-frog-legs-product.png",
+  fitnessAudience: "/v4/audience-fitness-post-workout-meal-product.png",
+  homeCookAudience: "/v4/audience-home-cook-family-dinner-product.png",
+  maternityAudience: "/v4/audience-expecting-mother-warm-meal-product.png",
   finalTable: "/v4/final-family-table-product.png",
 } as const;
 
@@ -18,6 +21,9 @@ export const v4GeneratedImageBrief = [
   "The packaging reference is the official Aqina box and sachet appearance: white-gold carton, amber 7, AQINA farm mark, Chinese 纯鸡精, pineapple motif, and illustrated chicken.",
   "No web images are used. Ecommerce product cards still use the existing Firebase-backed IMAGES.products box1/box2/box4/box6 assets for exact pack display.",
   "Generated food scenes must avoid glass bottles, transparent bottles, generic supplement packaging, and pasted-on composition.",
+  "Audience lifestyle scenes must not fabricate certifications, seals, endorsements, medical claims, or athletic performance claims.",
+  "Fitness scenes may show light meals and everyday protein routines but must not imply fat loss, muscle gain, recovery, treatment, or improved sports performance.",
+  "Maternity scenes may show warm daily meals and gentle home routines but must not imply pregnancy protection, fetal development benefits, treatment, or medical outcomes.",
 ];
 
 export const v4CulinaryContent = {
@@ -92,6 +98,55 @@ export const v4CulinaryContent = {
           image: v4Media.frogLegs,
           imageAlt: "鸡精蒸田鸡",
           productNote: "出炉趁热淋上，金黄鸡汁直接渗进滑嫩肉质。",
+        },
+      ],
+    },
+    proteinLifestyle: {
+      eyebrow: "High-Protein Lifestyle",
+      title: "清爽高蛋白补给，从早上第一包开始。",
+      subtitle:
+        "Aqina 不只适合入菜，也可以作为日常液体蛋白选择。早上睡醒先喝一包，清爽、方便、没有油腻负担；健身轻食、控油饮食、家庭餐桌，也能顺手多一份高蛋白补给。",
+      morningTitle: "晨起先喝一包，把补给做得更简单",
+      morningBody:
+        "不用开火、不用准备复杂早餐。撕开一包即可饮用，也可以倒进热粥、蒸蛋或汤里，让忙碌生活更容易维持一份清爽、方便、好入口的蛋白质补给。",
+      highlights: [
+        "高蛋白液体补给",
+        "0 脂肪、0 胆固醇",
+        "直饮、轻食、家常料理都适合",
+      ],
+      audiences: [
+        {
+          id: "fitness",
+          label: "健身轻食",
+          title: "训练日之外，也需要清爽的一餐",
+          why:
+            "搭配鸡胸、沙拉、杂粮饭或简单热汤，为控油饮食多准备一份不厚重的蛋白质选择。",
+          after:
+            "日常补给更方便、更好入口，也更容易放进固定饮食节奏。",
+          image: v4Media.fitnessAudience,
+          imageAlt: "健身后轻食餐桌上的 Aqina 滴鸡精",
+        },
+        {
+          id: "homeCook",
+          label: "家庭日常",
+          title: "把高蛋白补给放进一家人的晚餐节奏",
+          why:
+            "蒸蛋、面线、青菜汤、家常热菜都能加入一包，让补给自然出现在每天会吃的食物里。",
+          after:
+            "不需要特别仪式，餐桌上多一道温暖、清爽、容易坚持的选择。",
+          image: v4Media.homeCookAudience,
+          imageAlt: "家庭晚餐餐桌上的 Aqina 滴鸡精料理",
+        },
+        {
+          id: "maternity",
+          label: "期待妈妈",
+          title: "想吃得温和一点，也可以有清爽补给",
+          why:
+            "适合搭配热粥、蒸蛋或清汤，作为日常饮食里的蛋白质选择之一。特殊饮食需求请先咨询专业人士。",
+          after:
+            "回到每天这一餐的温和、舒适与方便，吃得轻一点也有补给感。",
+          image: v4Media.maternityAudience,
+          imageAlt: "期待妈妈在暖色厨房享用 Aqina 滴鸡精热食",
         },
       ],
     },
@@ -249,6 +304,55 @@ export const v4CulinaryContent = {
           image: v4Media.frogLegs,
           imageAlt: "Steamed frog legs with golden chicken essence sauce",
           productNote: "Pour while hot so the golden stock sinks straight into the tender meat.",
+        },
+      ],
+    },
+    proteinLifestyle: {
+      eyebrow: "High-Protein Lifestyle",
+      title: "A clean high-protein routine, starting with one pack in the morning.",
+      subtitle:
+        "Aqina works beyond cooking. It can be a convenient liquid protein choice for everyday routines: one pack after waking, light and easy without greasy heaviness, then just as useful for fitness meals, lower-oil eating, and family nourishment.",
+      morningTitle: "Start the morning with one pack and keep it simple",
+      morningBody:
+        "No stove, no complicated breakfast prep. Drink one pack as it is, or add it to warm porridge, steamed egg, or soup so a clean protein routine feels convenient, light, and easy to keep.",
+      highlights: [
+        "High-protein liquid nourishment",
+        "0 fat, 0 cholesterol",
+        "For drinking, light meals, and home cooking",
+      ],
+      audiences: [
+        {
+          id: "fitness",
+          label: "Fitness Meals",
+          title: "A lighter meal rhythm beyond training time",
+          why:
+            "Pair it with chicken breast, salad, grains, or a simple hot soup to add a clean protein choice to lower-oil eating.",
+          after:
+            "Everyday nourishment becomes easier to prepare, easier to enjoy, and easier to fit into a steady food rhythm.",
+          image: v4Media.fitnessAudience,
+          imageAlt: "Aqina chicken essence on a post-workout light meal table",
+        },
+        {
+          id: "homeCook",
+          label: "Family Daily Meals",
+          title: "Bring high-protein nourishment into the family dinner rhythm",
+          why:
+            "Add one pack to steamed egg, mian xian, vegetable soup, or familiar warm dishes so nourishment arrives through food people already eat.",
+          after:
+            "No special ritual needed, only a warm and easy option that fits the table.",
+          image: v4Media.homeCookAudience,
+          imageAlt: "Aqina chicken essence served with a family dinner at home",
+        },
+        {
+          id: "maternity",
+          label: "Expecting Mothers",
+          title: "When you want something gentle, keep the routine simple",
+          why:
+            "Use it with warm porridge, steamed egg, or clear soup as one protein option in everyday meals. For specific dietary needs, speak with a professional first.",
+          after:
+            "A warm, simple meal can feel gentle and convenient while still carrying a clear sense of nourishment.",
+          image: v4Media.maternityAudience,
+          imageAlt: "Expecting mother enjoying a warm Aqina chicken essence meal in a home kitchen",
         },
       ],
     },

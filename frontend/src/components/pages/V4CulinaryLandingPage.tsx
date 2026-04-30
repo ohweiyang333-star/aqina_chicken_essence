@@ -9,6 +9,7 @@ import {
   V4FrustrationSection,
   V4HeroSection,
   V4OfferSection,
+  V4ProteinLifestyleSection,
   V4ShowcaseSection,
   V4SuperioritySection,
 } from "@/components/v4/V4CulinarySections";
@@ -38,7 +39,7 @@ export default function V4CulinaryLandingPage({
 
   return (
     <MediaLoadGate
-      cacheKey={`aqina-v4-culinary-media-v4-${locale}`}
+      cacheKey={`aqina-v4-culinary-media-v5-${locale}`}
       sources={v4CulinaryLandingMedia}
       variant="dark"
       loadingLabel={content.loadingLabel}
@@ -47,6 +48,7 @@ export default function V4CulinaryLandingPage({
         <V4HeroSection content={content} />
         <V4FrustrationSection content={content} />
         <V4ShowcaseSection content={content} />
+        <V4ProteinLifestyleSection content={content} />
         <V4SuperioritySection content={content} />
         <V4OfferSection
           content={content}

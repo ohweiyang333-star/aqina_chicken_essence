@@ -60,6 +60,12 @@ const superiorityIcons: Record<V4SuperiorityIcon, typeof ChefHat> = {
   light: ShieldCheck,
 };
 
+const lifestyleAudienceIcons: Record<string, typeof Sparkles> = {
+  fitness: HeartPulse,
+  homeCook: ChefHat,
+  maternity: Sparkles,
+};
+
 const productImagesByPack: Record<V4PackKey, string> = {
   pack1: IMAGES.products.box1,
   pack2: IMAGES.products.box2,
@@ -354,6 +360,106 @@ export function V4ShowcaseSection({ content }: V4SectionProps) {
                         <span>{recipe.productNote}</span>
                       </p>
                     </div>
+                  </div>
+                </article>
+              </Reveal>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export function V4ProteinLifestyleSection({ content }: V4SectionProps) {
+  const lifestyle = content.proteinLifestyle;
+
+  return (
+    <section
+      id="v4-protein-lifestyle"
+      className="relative overflow-hidden bg-[#0b0805] py-16 text-[#fff8e8] md:py-24"
+    >
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,#120d08_0%,#0b0805_44%,#080706_100%)]" />
+      <div className="absolute inset-x-0 top-0 h-px bg-[#d8a943]/28" />
+
+      <div className="section-shell relative space-y-10">
+        <div className="grid gap-8 lg:grid-cols-[0.96fr_1.04fr] lg:items-end">
+          <Reveal className="max-w-3xl space-y-5">
+            <SectionLabel>{lifestyle.eyebrow}</SectionLabel>
+            <h2 className="font-heading text-4xl font-semibold leading-tight md:text-6xl">
+              {lifestyle.title}
+            </h2>
+            <p className="text-base leading-8 text-[#f0d7ab]/78 md:text-lg">
+              {lifestyle.subtitle}
+            </p>
+          </Reveal>
+
+          <Reveal delay={0.08}>
+            <div className="rounded-lg border border-[#d8a943]/28 bg-[#1a1008] p-5 shadow-[0_24px_70px_rgba(0,0,0,0.26)] md:p-6">
+              <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-[#f2b53d] text-[#160d05]">
+                <Soup size={22} />
+              </div>
+              <h3 className="font-heading text-3xl font-semibold leading-tight text-[#fff8e8] md:text-4xl">
+                {lifestyle.morningTitle}
+              </h3>
+              <p className="mt-4 text-sm leading-7 text-[#f0d7ab]/80 md:text-base">
+                {lifestyle.morningBody}
+              </p>
+            </div>
+          </Reveal>
+        </div>
+
+        <Reveal delay={0.1}>
+          <div className="grid gap-3 rounded-lg border border-[#d8a943]/26 bg-[#f2b53d]/10 p-3 md:grid-cols-3">
+            {lifestyle.highlights.map((highlight) => (
+              <div
+                key={highlight}
+                className="flex min-h-16 items-center gap-3 rounded-lg border border-[#d8a943]/18 bg-[#100a05] px-4 py-3"
+              >
+                <CheckCircle2
+                  size={19}
+                  className="shrink-0 text-[#f2b53d]"
+                />
+                <span className="min-w-0 text-sm font-bold leading-6 text-[#ffe1a1] md:text-base">
+                  {highlight}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Reveal>
+
+        <div className="grid gap-5 lg:grid-cols-3">
+          {lifestyle.audiences.map((audience, index) => {
+            const Icon = lifestyleAudienceIcons[audience.id] ?? Sparkles;
+
+            return (
+              <Reveal key={audience.id} delay={index * 0.08}>
+                <article className="flex h-full min-w-0 flex-col overflow-hidden rounded-lg border border-[#d8a943]/24 bg-[#17100a] shadow-[0_26px_68px_rgba(0,0,0,0.3)]">
+                  <div className="relative aspect-[8/5] overflow-hidden">
+                    <Image
+                      src={audience.image}
+                      alt={audience.imageAlt}
+                      fill
+                      sizes="(max-width: 1024px) 92vw, 31vw"
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(13,8,4,0)_34%,rgba(13,8,4,0.62)_100%)]" />
+                    <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-lg border border-[#f2b53d]/38 bg-[#120b05]/78 px-3 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[#ffe1a1] backdrop-blur">
+                      <Icon size={15} className="shrink-0 text-[#f2b53d]" />
+                      <span className="min-w-0">{audience.label}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-1 flex-col p-5 md:p-6">
+                    <h3 className="font-heading text-3xl font-semibold leading-tight text-[#fff8e8]">
+                      {audience.title}
+                    </h3>
+                    <p className="mt-4 text-sm leading-7 text-[#f0d7ab]/82 md:text-base">
+                      {audience.why}
+                    </p>
+                    <p className="mt-5 border-t border-[#d8a943]/18 pt-4 text-sm font-semibold leading-7 text-[#ffe1a1]">
+                      {audience.after}
+                    </p>
                   </div>
                 </article>
               </Reveal>

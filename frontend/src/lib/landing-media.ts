@@ -72,6 +72,9 @@ export const v4CulinaryLandingMedia = [
   '/v4/recipe-noodle-soup-product.png',
   '/v4/recipe-steamed-egg-product.png',
   '/v4/recipe-frog-legs-product.png',
+  '/v4/audience-fitness-post-workout-meal-product.png',
+  '/v4/audience-home-cook-family-dinner-product.png',
+  '/v4/audience-expecting-mother-warm-meal-product.png',
   '/v4/final-family-table-product.png',
   ...productImages,
 ];
