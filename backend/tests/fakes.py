@@ -320,7 +320,7 @@ class FakeMetaClient:
     def get_whatsapp_phone_number_health(self) -> dict[str, Any]:
         self.calls.append(("get_whatsapp_phone_number_health", {}))
         return {
-            "display_phone_number": "+65 9000 0000",
+            "display_phone_number": "+65 9626 5734",
             "verified_name": "Aqina SG",
             "quality_rating": "GREEN",
             "status": "CONNECTED",

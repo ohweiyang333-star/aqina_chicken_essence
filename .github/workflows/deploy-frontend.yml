@@ -15,9 +15,9 @@ env:
   SERVICE_NAME: aqina-frontend
   IMAGE_NAME: asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/frontend
   NEXT_PUBLIC_API_URL: 'https://aqina-backend-api-c3amale25a-as.a.run.app'
-  NEXT_PUBLIC_WHATSAPP_DISPLAY: '+65 9000 0000'
-  NEXT_PUBLIC_WHATSAPP_LINK: '6590000000'
-  NEXT_PUBLIC_CONTACT_EMAIL: 'sg-sales@aqina.com'
+  NEXT_PUBLIC_WHATSAPP_DISPLAY: '+65 9626 5734'
+  NEXT_PUBLIC_WHATSAPP_LINK: '6596265734'
+  NEXT_PUBLIC_CONTACT_EMAIL: 'aqina_marketing@aqinafarm.com'
   NEXT_PUBLIC_PAYMENT_QR_IMAGE: 'https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa'
   NEXT_PUBLIC_PAYMENT_QR_ALT: 'Boong Poultry Pte Ltd PayNow QR'
   NEXT_PUBLIC_PAYMENT_ACCOUNT_NAME: 'Boong Poultry Pte Ltd'

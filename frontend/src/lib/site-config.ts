@@ -1,6 +1,6 @@
-const DEFAULT_WHATSAPP_DISPLAY = "+65 9000 0000";
-const DEFAULT_WHATSAPP_LINK = "6590000000";
-const DEFAULT_CONTACT_EMAIL = "sg-sales@aqina.com";
+const DEFAULT_WHATSAPP_DISPLAY = "+65 9626 5734";
+const DEFAULT_WHATSAPP_LINK = "6596265734";
+const DEFAULT_CONTACT_EMAIL = "aqina_marketing@aqinafarm.com";
 const DEFAULT_PAYNOW_QR_IMAGE =
   "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa";
 const DEFAULT_PAYNOW_ACCOUNT_NAME = "Boong Poultry Pte Ltd";
