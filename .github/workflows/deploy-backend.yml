@@ -66,8 +66,23 @@ jobs:
         if: steps.resolve.outputs.platform == 'cloud_run'
         run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
-      - name: Ensure Cloud Tasks Queues
+      - name: Preflight Cloud Tasks API
         if: steps.resolve.outputs.platform == 'cloud_run'
+        id: cloudtasks
+        run: |-
+          set +e
+          gcloud services describe cloudtasks.googleapis.com --project "${{ steps.resolve.outputs.project }}" >/dev/null 2>&1
+          STATUS=$?
+          set -e
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::warning::Cloud Tasks API is disabled or inaccessible. Backend will deploy with CLOUD_TASKS_ENABLED=false. Enable cloudtasks.googleapis.com and rerun this workflow to activate campaign queues."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ensure Cloud Tasks Queues
+        if: steps.resolve.outputs.platform == 'cloud_run' && steps.cloudtasks.outputs.enabled == 'true'
         run: |-
           ensure_queue() {
             QUEUE_NAME="$1"
@@ -111,7 +126,7 @@ jobs:
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CORS_ORIGINS=${CORS_ORIGINS}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|BACKEND_BASE_URL=${BACKEND_BASE_URL}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|FRONTEND_BASE_URL=${FRONTEND_BASE_URL}"
-          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_ENABLED=true"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_ENABLED=${{ steps.cloudtasks.outputs.enabled }}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_PROJECT_ID=${{ steps.resolve.outputs.project }}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_LOCATION=${CLOUD_TASKS_LOCATION}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_EVENTS_QUEUE=${CLOUD_TASKS_EVENTS_QUEUE}"
