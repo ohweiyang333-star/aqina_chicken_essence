@@ -11,12 +11,14 @@ export interface Customer {
   customer_id: string;
   name: string;
   email: string;
-  phone: string;
+  whatsapp: string;
   address?: string;
-  total_orders: number;
+  purchase_count: number;
   total_spent: number;
+  customer_level: 'new' | 'standard' | 'vip';
+  last_purchase_date?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface CustomerFilters {
@@ -39,8 +41,23 @@ export interface PaginatedResponse<T> {
  */
 export async function getCustomers(filters?: CustomerFilters): Promise<PaginatedResponse<Customer>> {
   try {
-    const response = await apiClient.get<PaginatedResponse<Customer>>('/api/v1/customers', filters);
-    return response;
+    const response = await apiClient.get<{
+      customers?: Customer[];
+      total_count?: number;
+      page: number;
+      page_size: number;
+      items?: Customer[];
+      total?: number;
+    }>('/api/v1/customers', filters);
+    const items = response.items || response.customers || [];
+    const total = response.total ?? response.total_count ?? items.length;
+    return {
+      items,
+      total,
+      page: response.page,
+      page_size: response.page_size,
+      total_pages: Math.max(1, Math.ceil(total / response.page_size)),
+    };
   } catch (error) {
     console.error('Error fetching customers:', error);
     throw new Error(error instanceof Error ? error.message : 'Failed to fetch customers');
@@ -65,7 +82,7 @@ export async function getCustomerById(customerId: string): Promise<Customer> {
  */
 export async function updateCustomer(
   customerId: string,
-  updates: Partial<Omit<Customer, 'customer_id' | 'total_orders' | 'total_spent' | 'created_at' | 'updated_at'>>
+  updates: Partial<Omit<Customer, 'customer_id' | 'purchase_count' | 'total_spent' | 'created_at' | 'updated_at'>>
 ): Promise<Customer> {
   try {
     const customer = await apiClient.put<Customer>(`/api/v1/customers/${customerId}`, updates);

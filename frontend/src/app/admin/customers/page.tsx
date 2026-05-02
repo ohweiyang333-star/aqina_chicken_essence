@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { subscribeToAuthChanges, isAdminUser, logout } from '@/lib/auth-service';
+import { getCustomers, type Customer } from '@/lib/backend-customer-service';
 import {
   Loader2,
   Users,
@@ -15,19 +16,6 @@ import {
   Star
 } from 'lucide-react';
 import AdminSidebar from '@/components/admin/AdminSidebar';
-
-interface Customer {
-  customer_id: string;
-  name: string;
-  email: string;
-  whatsapp: string;
-  address?: string;
-  total_spent: number;
-  purchase_count: number;
-  customer_level: 'new' | 'standard' | 'vip';
-  last_purchase_date?: Date;
-  created_at: Date;
-}
 
 type CustomerLevelFilter = 'ALL' | Customer['customer_level'];
 const CUSTOMER_LEVEL_FILTERS: CustomerLevelFilter[] = ['ALL', 'new', 'standard', 'vip'];
@@ -65,11 +53,8 @@ export default function AdminCustomersPage() {
   const fetchCustomers = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('/api/customers');
-      if (response.ok) {
-        const data = await response.json();
-        setCustomers(data.customers || []);
-      }
+      const data = await getCustomers({ page_size: 100 });
+      setCustomers(data.items);
     } catch {
       console.error('Failed to fetch customers');
     } finally {

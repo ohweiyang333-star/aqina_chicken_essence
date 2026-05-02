@@ -65,6 +65,14 @@
       ]
     },
     {
+      "collectionGroup": "marketing_conversations",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "channel", "order": "ASCENDING" },
+        { "fieldPath": "last_message_at", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "marketing_checkout_sessions",
       "queryScope": "COLLECTION",
       "fields": [
