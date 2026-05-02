@@ -14,6 +14,13 @@ env:
   REGION: asia-southeast1
   SERVICE_NAME: aqina-backend-api
   IMAGE_NAME: asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/backend
+  BACKEND_BASE_URL: 'https://aqina-backend-api-c3amale25a-as.a.run.app'
+  FRONTEND_BASE_URL: 'https://aqina-frontend-c3amale25a-as.a.run.app'
+  FIREBASE_STORAGE_BUCKET: 'aqina-chicken-essence.firebasestorage.app'
+  CORS_ORIGINS: '["https://aqina-frontend-c3amale25a-as.a.run.app","https://aqina-frontend-v2-c3amale25a-as.a.run.app"]'
+  CLOUD_TASKS_LOCATION: asia-southeast1
+  CLOUD_TASKS_EVENTS_QUEUE: marketing-events
+  CLOUD_TASKS_FOLLOWUPS_QUEUE: marketing-followups
 
 jobs:
   deploy:
@@ -66,9 +73,48 @@ jobs:
 
       - name: Deploy to Cloud Run
         if: steps.resolve.outputs.platform == 'cloud_run'
+        env:
+          META_VERIFY_TOKEN: ${{ secrets.META_VERIFY_TOKEN }}
+          META_APP_SECRET: ${{ secrets.META_APP_SECRET }}
+          META_PAGE_ACCESS_TOKEN: ${{ secrets.META_PAGE_ACCESS_TOKEN }}
+          META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
+          META_WHATSAPP_ACCESS_TOKEN: ${{ secrets.META_WHATSAPP_ACCESS_TOKEN }}
+          META_WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.META_WHATSAPP_PHONE_NUMBER_ID }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          INTERNAL_TASK_SECRET: ${{ secrets.INTERNAL_TASK_SECRET }}
         run: |-
+          BACKEND_ENV_VARS="^|^FIREBASE_PROJECT_ID=${{ steps.resolve.outputs.project }}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|FIREBASE_STORAGE_BUCKET=${FIREBASE_STORAGE_BUCKET}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|ENVIRONMENT=production"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CORS_ORIGINS=${CORS_ORIGINS}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|BACKEND_BASE_URL=${BACKEND_BASE_URL}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|FRONTEND_BASE_URL=${FRONTEND_BASE_URL}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_ENABLED=false"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_PROJECT_ID=${{ steps.resolve.outputs.project }}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_LOCATION=${CLOUD_TASKS_LOCATION}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_EVENTS_QUEUE=${CLOUD_TASKS_EVENTS_QUEUE}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_FOLLOWUPS_QUEUE=${CLOUD_TASKS_FOLLOWUPS_QUEUE}"
+
+          add_secret_env() {
+            key="$1"
+            value="$2"
+            if [ -n "$value" ]; then
+              BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|${key}=${value}"
+            fi
+          }
+
+          add_secret_env META_VERIFY_TOKEN "${META_VERIFY_TOKEN}"
+          add_secret_env META_APP_SECRET "${META_APP_SECRET}"
+          add_secret_env META_PAGE_ACCESS_TOKEN "${META_PAGE_ACCESS_TOKEN}"
+          add_secret_env META_PAGE_ID "${META_PAGE_ID}"
+          add_secret_env META_WHATSAPP_ACCESS_TOKEN "${META_WHATSAPP_ACCESS_TOKEN}"
+          add_secret_env META_WHATSAPP_PHONE_NUMBER_ID "${META_WHATSAPP_PHONE_NUMBER_ID}"
+          add_secret_env GEMINI_API_KEY "${GEMINI_API_KEY}"
+          add_secret_env INTERNAL_TASK_SECRET "${INTERNAL_TASK_SECRET}"
+
           gcloud run deploy ${{ steps.resolve.outputs.service }} \
             --image ${{ steps.resolve.outputs.image }}:${{ github.sha }} \
             --region ${{ steps.resolve.outputs.region }} \
             --platform managed \
-            --allow-unauthenticated
+            --allow-unauthenticated \
+            --update-env-vars "${BACKEND_ENV_VARS}"

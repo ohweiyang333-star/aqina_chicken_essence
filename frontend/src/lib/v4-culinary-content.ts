@@ -61,7 +61,7 @@ export const v4CulinaryContent = {
       warmAlt: "暖色调的金黄原汤美食",
     },
     showcase: {
-      eyebrow: "Culinary Showcase",
+      eyebrow: "料理灵感展示",
       title: "不用固定食谱，喜欢怎么吃就怎么发挥",
       subtitle:
         "下面只是灵感方向。你可以按家人口味自由搭配，把 Aqina 加进熟悉的料理里，让滋补变成更容易坚持的一餐。",
@@ -102,7 +102,7 @@ export const v4CulinaryContent = {
       ],
     },
     proteinLifestyle: {
-      eyebrow: "High-Protein Lifestyle",
+      eyebrow: "高蛋白日常",
       title: "清爽高蛋白补给，从早上第一包开始。",
       subtitle:
         "Aqina 不只适合入菜，也可以作为日常液体蛋白选择。早上睡醒先喝一包，清爽、方便、没有油腻负担；健身轻食、控油饮食、家庭餐桌，也能顺手多一份高蛋白补给。",
@@ -180,7 +180,7 @@ export const v4CulinaryContent = {
       subtitle:
         "从一周尝鲜到全家囤货，所有配套都能直接下单。想怎么煮不必被固定食谱限制，我们可以协助你选择适合人数和使用频率的套餐。",
       freeShipping: "免运费",
-      mostPopular: "Most Popular",
+      mostPopular: "最多人选择",
       buyNow: "立即下单 - 开始我的黄金厨房",
       items: [
         {

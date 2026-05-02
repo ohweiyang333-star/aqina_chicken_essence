@@ -183,14 +183,14 @@
         ]
       },
       "flashSale": {
-        "eyebrow": "Flash Sale 限时倒计时",
+        "eyebrow": "限时优惠倒计时",
         "imageAlt": "Aqina 新加坡高转化主视觉",
         "badges": [
           "限时满额免邮",
-          "Official Halal Certified",
+          "官方 Halal 认证",
           "2-3 天送达新加坡"
         ],
-        "buttonLabel": "立即锁定 Flash Sale"
+        "buttonLabel": "立即锁定限时优惠"
       },
       "stats": {
         "eyebrow": "新加坡用户信任数据",
@@ -216,7 +216,7 @@
       "ugcTicker": {
         "eyebrow": "用户合照横幅",
         "title": "真实生活场景，真实饮用反馈",
-        "verified": "Verified",
+        "verified": "已验证",
         "items": [
           {
             "src": "/ugc/sg-middle-aged-chinese-man.webp",
@@ -398,10 +398,10 @@
         ]
       },
       "socialProof": {
-        "verified": "✓ Verified",
-        "unverified": "Unverified",
-        "purchaseLabel": "Purchase",
-        "reviewLabel": "Review",
+        "verified": "✓ 已验证",
+        "unverified": "未验证",
+        "purchaseLabel": "购买",
+        "reviewLabel": "评价",
         "purchaseSentence": "{minutes} 分钟前购买了 {boxes} 盒",
         "reviewSentence": "{minutes} 分钟前留下 {rating}★ 好评",
         "events": [
@@ -645,7 +645,7 @@
       },
       "emotional": {
         "eyebrow": "情感关怀",
-        "title": "最高级别的关怀，是给TA最容易接受的。",
+        "title": "最高级别的关怀，是给对方最容易接受的。",
         "body": "无论是为了慰劳自己连日来的拼搏，还是为了陪伴家人走过一段需要恢复的日子，我们总想把“最好”的给最重要的人。但最好的，往往不是最贵的，而是身体真正能接纳的。每天一碗温热的 Aqina，是你默默说出口的那句：“不要太累，我只希望你健康”。"
       },
       "valueCta": {
@@ -829,10 +829,10 @@
           "从包装、口感、场景与客服回应中获得更完整的信息。"
         ],
         "retailTitle": "渠道露出",
-        "retailNote": "渠道 Logo 作为信任线索；实际售卖与库存请以门店、平台或官方客服回复为准。"
+        "retailNote": "渠道标识作为信任线索；实际售卖与库存请以门店、平台或官方客服回复为准。"
       },
       "ugc": {
-        "eyebrow": "UGC 证据墙",
+        "eyebrow": "用户反馈证据墙",
         "title": "把产品放回真实生活场景里看。",
         "body": "真实生活里的饮用习惯，通常比夸张描述更能帮助你判断是否适合自己。",
         "items": [
@@ -879,7 +879,7 @@
             "alt": "家庭餐桌上的温热饮用场景"
           }
         ],
-        "disclaimer": "UGC 内容为个人场景分享，不代表医疗建议或效果承诺；如有特殊健康状况，请先咨询专业人士。"
+        "disclaimer": "用户内容为个人场景分享，不代表医疗建议或效果承诺；如有特殊健康状况，请先咨询专业人士。"
       },
       "pricingBand": {
         "ariaLabel": "Aqina 产品配套选择"
@@ -958,7 +958,7 @@
         ]
       },
       "certifications": {
-        "eyebrow": "Sales Compliance Certifications",
+        "eyebrow": "销售合规认证",
         "title": "看得见的认证，让选择更安心。",
         "body": "Aqina 清楚展示关键合规与生产认证标识，让家庭在日常补养前，更容易识别每一包背后的标准。",
         "items": [
@@ -1038,7 +1038,7 @@
             "title": "孕产 30 天黄金调理包",
             "subtitle": "覆盖孕晚期或月子期的整月温热照顾节奏。",
             "originalPrice": "SGD 159.60",
-            "badge": "Most Popular",
+            "badge": "最多妈妈选择",
             "cta": "开启我的轻盈孕期",
             "features": [
               "每天一包，建立稳定温热仪式",

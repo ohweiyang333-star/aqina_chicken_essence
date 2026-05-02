@@ -130,13 +130,23 @@ Admin = authenticated user with UID present in `admin_users` collection.
 Required in `frontend/.env.local`:
 
 ```
+NEXT_PUBLIC_API_URL=https://aqina-backend-api-c3amale25a-as.a.run.app
 NEXT_PUBLIC_FIREBASE_API_KEY=
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=aqina-chicken-essence
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=aqina-chicken-essence.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=
 NEXT_PUBLIC_FIREBASE_APP_ID=
+NEXT_PUBLIC_WHATSAPP_DISPLAY="+65 9000 0000"
+NEXT_PUBLIC_WHATSAPP_LINK=6590000000
+NEXT_PUBLIC_CONTACT_EMAIL=sg-sales@aqina.com
+NEXT_PUBLIC_PAYMENT_QR_IMAGE=
+NEXT_PUBLIC_PAYMENT_QR_ALT="Boong Poultry Pte Ltd PayNow QR"
+NEXT_PUBLIC_PAYMENT_ACCOUNT_NAME="Boong Poultry Pte Ltd"
+NEXT_PUBLIC_WHATSAPP_PREFILL=
 ```
 
-Firebase project ID (`aqina-chicken-essence`) and storage bucket are hardcoded in `src/lib/firebase.ts`.
+See `frontend/.env.example` and `backend/.env.example` for the full runtime key list. Sensitive backend values such as Meta tokens, Gemini API key, and internal task secret must come from GitHub Secrets or Cloud Run secrets, not source code.
 
 ## Deployment
 
