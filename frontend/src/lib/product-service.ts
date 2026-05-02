@@ -35,6 +35,26 @@ export interface Product {
   category: string;
 }
 
+type SupportedLocale = "en" | "zh";
+type LocalizedField =
+  | Partial<Record<SupportedLocale, string>>
+  | string
+  | null
+  | undefined;
+
+type ProductRecord = Partial<Omit<Product, "name" | "nameShort" | "description">> & {
+  id: string;
+  name?: LocalizedField;
+  nameShort?: LocalizedField;
+  description?: LocalizedField;
+  product_name?: string;
+  product_name_zh?: string;
+  name_en?: string;
+  name_zh?: string;
+  pack_size?: string;
+  is_recommended?: boolean;
+};
+
 /**
  * DisplayProduct - 产品在 UI 中显示的格式
  * 这是经过 toDisplayProduct() 转换后的简化格式
@@ -57,6 +77,39 @@ const FIXED_PRODUCT_IMAGES = {
 } as const;
 
 export type FixedPackKey = keyof typeof FIXED_PRODUCT_IMAGES;
+
+function normalizeLocale(locale: string): SupportedLocale {
+  return locale === "zh" ? "zh" : "en";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function pickString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+}
+
+function getLocalizedText(
+  value: LocalizedField,
+  locale: SupportedLocale,
+): string | undefined {
+  if (typeof value === "string") {
+    return pickString(value);
+  }
+
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  return pickString(value[locale], value.en, value.zh);
+}
 
 function resolvePackKeyFromHints(hints: string[], price: number): FixedPackKey {
   const text = hints.join(" ").toLowerCase();
@@ -189,21 +242,42 @@ export async function getProductById(id: string): Promise<Product | null> {
  * Transform Firestore product to display format for legacy code
  */
 export function toDisplayProduct(product: Product, locale: string) {
-  const image = resolveFixedProductImageByMeta({
-    id: product.id,
-    packSize: product.packSize,
-    nameEn: product.name.en,
-    nameZh: product.name.zh,
-    price: product.price,
+  const rawProduct = product as ProductRecord;
+  const safeLocale = normalizeLocale(locale);
+  const price = Number(rawProduct.price ?? 0);
+  const nameEn =
+    pickString(
+      getLocalizedText(rawProduct.name, "en"),
+      getLocalizedText(rawProduct.nameShort, "en"),
+      rawProduct.name_en,
+      rawProduct.product_name,
+      rawProduct.id,
+    ) ?? rawProduct.id;
+  const nameZh =
+    pickString(
+      getLocalizedText(rawProduct.name, "zh"),
+      getLocalizedText(rawProduct.nameShort, "zh"),
+      rawProduct.name_zh,
+      rawProduct.product_name_zh,
+      nameEn,
+    ) ?? nameEn;
+  const packSize = pickString(rawProduct.packSize, rawProduct.pack_size) ?? "";
+  const packKey = resolveFixedPackKeyByMeta({
+    id: rawProduct.id,
+    packSize,
+    nameEn,
+    nameZh,
+    price,
   });
+  const image = FIXED_PRODUCT_IMAGES[packKey];
 
   return {
-    id: product.id,
-    name: product.name[locale as "en" | "zh"] || product.name.en,
-    price: product.price,
-    image: image,
-    label: product.packSize,
-    popular: product.isRecommended,
-    badge: product.badge,
+    id: rawProduct.id,
+    name: safeLocale === "zh" ? nameZh : nameEn,
+    price,
+    image,
+    label: packSize || packKey,
+    popular: Boolean(rawProduct.isRecommended ?? rawProduct.is_recommended),
+    badge: pickString(rawProduct.badge) ?? null,
   };
 }

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { IMAGES } from '@/lib/image-utils';
 import {
   getProducts,
+  resolveFixedPackKeyByMeta,
   toDisplayProduct,
   type DisplayProduct,
 } from '@/lib/product-service';
@@ -60,8 +61,38 @@ export default function useLandingProducts() {
       try {
         const fetchedProducts = await getProducts();
         if (fetchedProducts.length > 0) {
+          const fallbackProductsByPack = new Map(
+            fallbackProducts.map((product) => [product.id, product]),
+          );
           setProducts(
-            fetchedProducts.map((product) => toDisplayProduct(product, locale)),
+            fetchedProducts.map((product) => {
+              const displayProduct = toDisplayProduct(product, locale);
+              const packKey = resolveFixedPackKeyByMeta({
+                id: displayProduct.id,
+                packSize: displayProduct.label,
+                nameEn: displayProduct.name,
+                nameZh: displayProduct.name,
+                price: displayProduct.price,
+              });
+              const fallbackProduct = fallbackProductsByPack.get(packKey);
+
+              if (!fallbackProduct) {
+                return displayProduct;
+              }
+
+              return {
+                ...displayProduct,
+                name:
+                  displayProduct.name === displayProduct.id
+                    ? fallbackProduct.name
+                    : displayProduct.name || fallbackProduct.name,
+                label:
+                  displayProduct.label === packKey
+                    ? fallbackProduct.label
+                    : displayProduct.label,
+                badge: displayProduct.badge ?? fallbackProduct.badge,
+              };
+            }),
           );
         } else {
           setProducts(fallbackProducts);
