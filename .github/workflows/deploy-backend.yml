@@ -66,23 +66,9 @@ jobs:
         if: steps.resolve.outputs.platform == 'cloud_run'
         run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
-      - name: Preflight Cloud Tasks API
+      - name: Ensure Cloud Tasks Queues
         if: steps.resolve.outputs.platform == 'cloud_run'
         id: cloudtasks
-        run: |-
-          set +e
-          gcloud services describe cloudtasks.googleapis.com --project "${{ steps.resolve.outputs.project }}" >/dev/null 2>&1
-          STATUS=$?
-          set -e
-          if [ "$STATUS" -ne 0 ]; then
-            echo "::warning::Cloud Tasks API is disabled or inaccessible. Backend will deploy with CLOUD_TASKS_ENABLED=false. Enable cloudtasks.googleapis.com and rerun this workflow to activate campaign queues."
-            echo "enabled=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Ensure Cloud Tasks Queues
-        if: steps.resolve.outputs.platform == 'cloud_run' && steps.cloudtasks.outputs.enabled == 'true'
         run: |-
           ensure_queue() {
             QUEUE_NAME="$1"
@@ -97,9 +83,21 @@ jobs:
             fi
           }
 
+          set +e
           ensure_queue "${CLOUD_TASKS_EVENTS_QUEUE}" 5 5
+          EVENTS_STATUS=$?
           ensure_queue "${CLOUD_TASKS_FOLLOWUPS_QUEUE}" 1 2
+          FOLLOWUPS_STATUS=$?
           ensure_queue "${CLOUD_TASKS_CAMPAIGNS_QUEUE}" 0.2 1
+          CAMPAIGNS_STATUS=$?
+          set -e
+
+          if [ "$EVENTS_STATUS" -eq 0 ] && [ "$FOLLOWUPS_STATUS" -eq 0 ] && [ "$CAMPAIGNS_STATUS" -eq 0 ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Cloud Tasks queue setup failed. Backend will deploy with CLOUD_TASKS_ENABLED=false. Grant Cloud Tasks Admin to the GitHub Actions service account, then rerun this workflow."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build and Push Container
         if: steps.resolve.outputs.platform == 'cloud_run'
