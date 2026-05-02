@@ -44,11 +44,9 @@ jobs:
           STATUS=$?
           set -e
           if [ "$STATUS" -ne 0 ]; then
-            echo "::warning::Skipping Firestore deploy: service account cannot read firestore.googleapis.com service status. Grant Service Usage Viewer or Service Usage Admin to GCP_CREDENTIALS service account."
-            echo "can_deploy=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "can_deploy=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::Service account cannot read firestore.googleapis.com service status. Continuing so Firebase CLI can attempt the deploy and report the real permissions result."
           fi
+          echo "can_deploy=true" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
         if: steps.preflight.outputs.can_deploy == 'true'
