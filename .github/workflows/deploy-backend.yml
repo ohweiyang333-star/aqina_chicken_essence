@@ -21,6 +21,7 @@ env:
   CLOUD_TASKS_LOCATION: asia-southeast1
   CLOUD_TASKS_EVENTS_QUEUE: marketing-events
   CLOUD_TASKS_FOLLOWUPS_QUEUE: marketing-followups
+  CLOUD_TASKS_CAMPAIGNS_QUEUE: whatsapp-campaigns
 
 jobs:
   deploy:
@@ -65,6 +66,26 @@ jobs:
         if: steps.resolve.outputs.platform == 'cloud_run'
         run: gcloud auth configure-docker asia-southeast1-docker.pkg.dev
 
+      - name: Ensure Cloud Tasks Queues
+        if: steps.resolve.outputs.platform == 'cloud_run'
+        run: |-
+          ensure_queue() {
+            QUEUE_NAME="$1"
+            RATE="$2"
+            CONCURRENCY="$3"
+            if ! gcloud tasks queues describe "$QUEUE_NAME" --location "${CLOUD_TASKS_LOCATION}" --project "${{ steps.resolve.outputs.project }}" >/dev/null 2>&1; then
+              gcloud tasks queues create "$QUEUE_NAME" \
+                --location "${CLOUD_TASKS_LOCATION}" \
+                --project "${{ steps.resolve.outputs.project }}" \
+                --max-dispatches-per-second="$RATE" \
+                --max-concurrent-dispatches="$CONCURRENCY"
+            fi
+          }
+
+          ensure_queue "${CLOUD_TASKS_EVENTS_QUEUE}" 5 5
+          ensure_queue "${CLOUD_TASKS_FOLLOWUPS_QUEUE}" 1 2
+          ensure_queue "${CLOUD_TASKS_CAMPAIGNS_QUEUE}" 0.2 1
+
       - name: Build and Push Container
         if: steps.resolve.outputs.platform == 'cloud_run'
         run: |-
@@ -80,6 +101,7 @@ jobs:
           META_PAGE_ID: ${{ secrets.META_PAGE_ID }}
           META_WHATSAPP_ACCESS_TOKEN: ${{ secrets.META_WHATSAPP_ACCESS_TOKEN }}
           META_WHATSAPP_PHONE_NUMBER_ID: ${{ secrets.META_WHATSAPP_PHONE_NUMBER_ID }}
+          META_WHATSAPP_BUSINESS_ACCOUNT_ID: ${{ secrets.META_WHATSAPP_BUSINESS_ACCOUNT_ID }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           INTERNAL_TASK_SECRET: ${{ secrets.INTERNAL_TASK_SECRET }}
         run: |-
@@ -89,11 +111,12 @@ jobs:
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CORS_ORIGINS=${CORS_ORIGINS}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|BACKEND_BASE_URL=${BACKEND_BASE_URL}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|FRONTEND_BASE_URL=${FRONTEND_BASE_URL}"
-          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_ENABLED=false"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_ENABLED=true"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_PROJECT_ID=${{ steps.resolve.outputs.project }}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_LOCATION=${CLOUD_TASKS_LOCATION}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_EVENTS_QUEUE=${CLOUD_TASKS_EVENTS_QUEUE}"
           BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_FOLLOWUPS_QUEUE=${CLOUD_TASKS_FOLLOWUPS_QUEUE}"
+          BACKEND_ENV_VARS="${BACKEND_ENV_VARS}|CLOUD_TASKS_CAMPAIGNS_QUEUE=${CLOUD_TASKS_CAMPAIGNS_QUEUE}"
 
           add_secret_env() {
             key="$1"
@@ -109,6 +132,7 @@ jobs:
           add_secret_env META_PAGE_ID "${META_PAGE_ID}"
           add_secret_env META_WHATSAPP_ACCESS_TOKEN "${META_WHATSAPP_ACCESS_TOKEN}"
           add_secret_env META_WHATSAPP_PHONE_NUMBER_ID "${META_WHATSAPP_PHONE_NUMBER_ID}"
+          add_secret_env META_WHATSAPP_BUSINESS_ACCOUNT_ID "${META_WHATSAPP_BUSINESS_ACCOUNT_ID}"
           add_secret_env GEMINI_API_KEY "${GEMINI_API_KEY}"
           add_secret_env INTERNAL_TASK_SECRET "${INTERNAL_TASK_SECRET}"
 

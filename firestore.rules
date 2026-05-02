@@ -65,6 +65,22 @@ service cloud.firestore {
       allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
     }
 
+    match /whatsapp_templates/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /whatsapp_campaigns/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /whatsapp_campaigns/{docId}/{document=**} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
+    match /whatsapp_message_index/{docId} {
+      allow read, write: if request.auth != null && exists(/databases/$(database)/documents/admin_users/$(request.auth.uid));
+    }
+
     // Admin Users - 只有 super admin 可读写
     match /admin_users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;

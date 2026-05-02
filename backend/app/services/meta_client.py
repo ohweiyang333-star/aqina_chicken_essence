@@ -172,12 +172,14 @@ class MetaMessagingClient:
         *,
         to: str,
         template_name: str,
+        language_code: str = "en_US",
         body_variables: list[str] | None = None,
+        components: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any]:
         """Send a WhatsApp template message for escalation alerts."""
-        components = []
+        template_components: list[dict[str, Any]] = list(components or [])
         if body_variables:
-            components.append(
+            template_components.append(
                 {
                     "type": "body",
                     "parameters": [
@@ -192,15 +194,44 @@ class MetaMessagingClient:
             "type": "template",
             "template": {
                 "name": template_name,
-                "language": {"code": "en_US"},
+                "language": {"code": language_code},
             },
         }
-        if components:
-            payload["template"]["components"] = components
+        if template_components:
+            payload["template"]["components"] = template_components
         return self._post(
             f"/{settings.meta_whatsapp_phone_number_id}/messages",
             json=payload,
             params={"access_token": settings.meta_whatsapp_access_token},
+        )
+
+    def list_whatsapp_templates(self) -> dict[str, Any]:
+        """Fetch approved and pending templates from the configured WABA."""
+        return self._get(
+            f"/{settings.meta_whatsapp_business_account_id}/message_templates",
+            params={
+                "access_token": settings.meta_whatsapp_access_token,
+                "fields": "name,language,status,category,components",
+                "limit": 100,
+            },
+        )
+
+    def create_whatsapp_template(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """Create a WhatsApp template through the Business Management API."""
+        return self._post(
+            f"/{settings.meta_whatsapp_business_account_id}/message_templates",
+            json=payload,
+            params={"access_token": settings.meta_whatsapp_access_token},
+        )
+
+    def get_whatsapp_phone_number_health(self) -> dict[str, Any]:
+        """Read basic phone number status used by the admin health panel."""
+        return self._get(
+            f"/{settings.meta_whatsapp_phone_number_id}",
+            params={
+                "access_token": settings.meta_whatsapp_access_token,
+                "fields": "display_phone_number,verified_name,quality_rating,status",
+            },
         )
 
     def _post(self, path: str, **kwargs: Any) -> dict[str, Any]:

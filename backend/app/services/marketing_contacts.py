@@ -192,6 +192,31 @@ class MarketingContactService:
             },
         )
 
+    def grant_marketing_opt_in(self, contact_id: str, *, source: str) -> None:
+        """Mark a WhatsApp contact as eligible for template marketing campaigns."""
+        self.update_contact_profile(
+            contact_id,
+            {
+                "marketing_opt_in": True,
+                "opt_in_source": source,
+                "opt_in_at": utcnow(),
+                "opt_out_at": None,
+                "marketing_status": "opted_in",
+            },
+        )
+
+    def mark_marketing_opt_out(self, contact_id: str, *, source: str) -> None:
+        """Mark a WhatsApp contact as opted out from marketing broadcasts."""
+        self.update_contact_profile(
+            contact_id,
+            {
+                "marketing_opt_in": False,
+                "opt_out_source": source,
+                "opt_out_at": utcnow(),
+                "marketing_status": "opted_out",
+            },
+        )
+
     def get_contact(self, contact_id: str) -> dict[str, Any]:
         snapshot = self.db.collection("marketing_contacts").document(contact_id).get()
         if not snapshot.exists:

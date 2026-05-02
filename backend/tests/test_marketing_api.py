@@ -449,6 +449,266 @@ class MarketingApiTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["status"], "skipped_handoff_pending")
 
+    def test_whatsapp_console_allows_manual_text_inside_customer_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-window-open",
+            conversation_id="conv-window-open",
+            event_id="event-window-open",
+            channel="whatsapp",
+            incoming_text="请问今天可以下单吗？",
+            identifier_key="wa_id",
+            identifier_value="6591000001",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/whatsapp/conversations/conv-window-open/messages",
+            json={"text": "可以的，我们今天可以帮您安排。"},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "sent")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertEqual(message_calls[0][1]["to"], "6591000001")
+
+    def test_whatsapp_console_blocks_manual_text_after_customer_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-window-closed",
+            conversation_id="conv-window-closed",
+            event_id="event-window-closed",
+            channel="whatsapp",
+            incoming_text="之前想了解滴鸡精",
+            identifier_key="wa_id",
+            identifier_value="6591000002",
+        )
+        self.db.collection("marketing_contacts").document("contact-window-closed").set(
+            {"window_expires_at": "2026-04-01T00:00:00Z"},
+            merge=True,
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/whatsapp/conversations/conv-window-closed/messages",
+            json={"text": "现在还有优惠。"},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Customer service window", response.json()["detail"])
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"])
+
+    def test_whatsapp_console_allows_template_after_customer_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-template",
+            conversation_id="conv-template",
+            event_id="event-template",
+            channel="whatsapp",
+            incoming_text="之前想了解配套",
+            identifier_key="wa_id",
+            identifier_value="6591000003",
+        )
+        self.db.collection("marketing_contacts").document("contact-template").set(
+            {"window_expires_at": "2026-04-01T00:00:00Z"},
+            merge=True,
+        )
+        self.db.seed(
+            "whatsapp_templates/approved-template",
+            {
+                "name": "aqina_follow_up",
+                "language_code": "en_US",
+                "category": "MARKETING",
+                "status": "APPROVED",
+                "components": [],
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/whatsapp/conversations/conv-template/templates",
+            json={
+                "template_name": "aqina_follow_up",
+                "language_code": "en_US",
+                "body_variables": ["Alice"],
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "sent")
+        template_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_template"]
+        self.assertEqual(len(template_calls), 1)
+        self.assertEqual(template_calls[0][1]["template_name"], "aqina_follow_up")
+
+    def test_whatsapp_campaign_preview_skips_opted_out_contacts(self) -> None:
+        self._seed_campaign_contact(
+            contact_id="contact-opted-in",
+            wa_id="6592000001",
+            name="Alice",
+            marketing_opt_in=True,
+        )
+        self._seed_campaign_contact(
+            contact_id="contact-opted-out",
+            wa_id="6592000002",
+            name="Ben",
+            marketing_opt_in=False,
+            marketing_status="opted_out",
+        )
+        self.db.seed(
+            "whatsapp_templates/campaign-template",
+            {
+                "name": "aqina_may_offer",
+                "language_code": "en_US",
+                "category": "MARKETING",
+                "status": "APPROVED",
+                "components": [],
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/whatsapp/campaigns/preview",
+            json={
+                "name": "May offer",
+                "template_name": "aqina_may_offer",
+                "language_code": "en_US",
+                "body_variables": ["May"],
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["eligible_count"], 1)
+        self.assertEqual(payload["skipped_opt_out_count"], 1)
+        self.assertEqual(payload["recipients"][0]["contact_id"], "contact-opted-in")
+
+    def test_whatsapp_campaign_launch_queues_recipients_without_sync_broadcast(self) -> None:
+        self._seed_campaign_contact(
+            contact_id="contact-campaign-1",
+            wa_id="6593000001",
+            name="Alice",
+            marketing_opt_in=True,
+        )
+        self._seed_campaign_contact(
+            contact_id="contact-campaign-2",
+            wa_id="6593000002",
+            name="Joy",
+            marketing_opt_in=True,
+        )
+        self.db.seed(
+            "whatsapp_templates/launch-template",
+            {
+                "name": "aqina_launch_offer",
+                "language_code": "en_US",
+                "category": "MARKETING",
+                "status": "APPROVED",
+                "components": [],
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        create_response = client.post(
+            "/api/v1/marketing/whatsapp/campaigns",
+            json={
+                "name": "Launch offer",
+                "template_name": "aqina_launch_offer",
+                "language_code": "en_US",
+                "body_variables": ["Launch"],
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        self.assertEqual(create_response.status_code, 201)
+        campaign_id = create_response.json()["campaign_id"]
+
+        launch_response = client.post(
+            f"/api/v1/marketing/whatsapp/campaigns/{campaign_id}/launch",
+            json={"preview_confirmed": True},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(launch_response.status_code, 200)
+        payload = launch_response.json()
+        self.assertEqual(payload["status"], "queued")
+        self.assertEqual(payload["queued_count"], 2)
+        self.assertEqual(len([task for task in self.task_queue.created_tasks if task["type"] == "campaign-recipient"]), 2)
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_whatsapp_template"])
+
+    def test_whatsapp_status_webhook_updates_message_and_campaign_recipient(self) -> None:
+        self.db.seed(
+            "marketing_conversations/conv-status/messages/msg-status",
+            {
+                "direction": "outbound",
+                "role": "assistant",
+                "text": "Campaign template aqina_offer sent",
+                "provider_message_id": "wamid.status.1",
+                "message_type": "template",
+                "source": "whatsapp_campaign",
+                "campaign_id": "campaign-status",
+                "campaign_recipient_id": "recipient-status",
+                "delivery_status": "accepted",
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "whatsapp_campaigns/campaign-status/recipients/recipient-status",
+            {
+                "contact_id": "contact-status",
+                "wa_id": "6594000001",
+                "status": "sent",
+                "provider_message_id": "wamid.status.1",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        payload = {
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "value": {
+                                "statuses": [
+                                    {
+                                        "id": "wamid.status.1",
+                                        "recipient_id": "6594000001",
+                                        "status": "failed",
+                                        "errors": [{"code": 132015, "message": "Dropped by quality assessment"}],
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+
+        client = self._build_client()
+        raw_body = json.dumps(payload).encode("utf-8")
+        response = client.post(
+            "/api/v1/marketing/webhooks/whatsapp",
+            content=raw_body,
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        message = self.db.collection("marketing_conversations").document("conv-status").collection("messages").document("msg-status").get().to_dict()
+        self.assertEqual(message["delivery_status"], "failed")
+        recipient = self.db.collection("whatsapp_campaigns").document("campaign-status").collection("recipients").document("recipient-status").get().to_dict()
+        self.assertEqual(recipient["status"], "failed")
+        self.assertEqual(recipient["error_code"], 132015)
+
     def _seed_runtime_settings(self) -> None:
         self.db.seed(
             "chatbotSettings/default",
@@ -636,6 +896,45 @@ class MarketingApiTests(unittest.TestCase):
                     "provider_message_id": f"{event_id}-mid",
                 },
                 "received_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+    def _seed_campaign_contact(
+        self,
+        *,
+        contact_id: str,
+        wa_id: str,
+        name: str,
+        marketing_opt_in: bool,
+        marketing_status: str = "opted_in",
+    ) -> None:
+        self.db.seed(
+            f"marketing_contacts/{contact_id}",
+            {
+                "channel": "whatsapp",
+                "identifiers": {"wa_id": wa_id, "phone_e164": wa_id},
+                "profile": {"name": name},
+                "order_fields": {"name": name, "phone": wa_id},
+                "current_tag": "qualified_warm",
+                "marketing_opt_in": marketing_opt_in,
+                "opt_in_source": "test",
+                "opt_in_at": "2026-04-10T00:00:00Z" if marketing_opt_in else None,
+                "opt_out_at": None if marketing_opt_in else "2026-04-10T00:00:00Z",
+                "marketing_status": marketing_status,
+                "latest_conversation_id": f"conv-{contact_id}",
+                "status": "active",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            f"marketing_conversations/conv-{contact_id}",
+            {
+                "contact_id": contact_id,
+                "channel": "whatsapp",
+                "status": "open",
+                "last_message_at": "2026-04-10T00:00:00Z",
+                "message_count": 0,
             },
         )
 

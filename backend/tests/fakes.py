@@ -18,6 +18,8 @@ def utcnow() -> datetime:
 class FakeSnapshot:
     id: str
     _data: dict[str, Any] | None
+    _db: "FakeFirestore | None" = None
+    _path: tuple[str, ...] | None = None
 
     @property
     def exists(self) -> bool:
@@ -34,6 +36,12 @@ class FakeSnapshot:
                 return default
             current = current[part]
         return deepcopy(current)
+
+    @property
+    def reference(self) -> "FakeDocumentRef":
+        if self._db is None or self._path is None:
+            raise ValueError("Snapshot does not have a document reference")
+        return FakeDocumentRef(self._db, self._path)
 
 
 class FakeDocumentRef:
@@ -53,7 +61,7 @@ class FakeDocumentRef:
         return FakeCollectionRef(self._db, self._path + (name,))
 
     def get(self) -> FakeSnapshot:
-        return FakeSnapshot(self.id, self._db._docs.get(self._path))
+        return FakeSnapshot(self.id, self._db._docs.get(self._path), self._db, self._path)
 
     def set(self, data: dict[str, Any], merge: bool = False) -> None:
         existing = self._db._docs.get(self._path, {}) if merge else {}
@@ -123,7 +131,7 @@ class FakeQuery:
             if path[: len(prefix)] != prefix:
                 continue
             if all(_matches_filter(data, field, op, value) for field, op, value in self._filters):
-                docs.append(FakeSnapshot(path[-1], data))
+                docs.append(FakeSnapshot(path[-1], data, self._db, path))
 
         if self._order:
             field, descending = self._order
@@ -143,12 +151,59 @@ class FakeCollectionRef(FakeQuery):
         return FakeDocumentRef(self._db, self._path + (doc_id,))
 
 
+class FakeCollectionGroupQuery:
+    def __init__(
+        self,
+        db: "FakeFirestore",
+        collection_id: str,
+        filters: list[tuple[str, str, Any]] | None = None,
+        limit_size: int | None = None,
+    ):
+        self._db = db
+        self._collection_id = collection_id
+        self._filters = filters or []
+        self._limit_size = limit_size
+
+    def where(self, field: str, op: str, value: Any) -> "FakeCollectionGroupQuery":
+        return FakeCollectionGroupQuery(
+            self._db,
+            self._collection_id,
+            filters=[*self._filters, (field, op, value)],
+            limit_size=self._limit_size,
+        )
+
+    def limit(self, limit_size: int) -> "FakeCollectionGroupQuery":
+        return FakeCollectionGroupQuery(
+            self._db,
+            self._collection_id,
+            filters=self._filters,
+            limit_size=limit_size,
+        )
+
+    def stream(self) -> list[FakeSnapshot]:
+        docs = []
+        for path, data in self._db._docs.items():
+            if len(path) < 2:
+                continue
+            collection_name = path[-2]
+            if collection_name != self._collection_id:
+                continue
+            if all(_matches_filter(data, field, op, value) for field, op, value in self._filters):
+                docs.append(FakeSnapshot(path[-1], data, self._db, path))
+        if self._limit_size is not None:
+            docs = docs[: self._limit_size]
+        return docs
+
+
 class FakeFirestore:
     def __init__(self):
         self._docs: dict[tuple[str, ...], dict[str, Any]] = {}
 
     def collection(self, name: str) -> FakeCollectionRef:
         return FakeCollectionRef(self, (name,))
+
+    def collection_group(self, collection_id: str) -> FakeCollectionGroupQuery:
+        return FakeCollectionGroupQuery(self, collection_id)
 
     def seed(self, path: str, data: dict[str, Any]) -> None:
         self._docs[tuple(path.split("/"))] = _normalize_payload(data)
@@ -172,6 +227,16 @@ class FakeTaskQueue:
         task = {"type": "reconcile"}
         self.created_tasks.append(task)
         return f"task-reconcile-{len(self.created_tasks)}"
+
+    def enqueue_campaign_recipient(self, campaign_id: str, recipient_id: str, schedule_at: datetime | None = None) -> str:
+        task = {
+            "type": "campaign-recipient",
+            "campaign_id": campaign_id,
+            "recipient_id": recipient_id,
+            "schedule_at": schedule_at,
+        }
+        self.created_tasks.append(task)
+        return f"task-campaign-{len(self.created_tasks)}"
 
     def enqueue_escalation_notification(self, escalation_id: str) -> str:
         task = {"type": "escalation", "escalation_id": escalation_id}
@@ -233,6 +298,33 @@ class FakeMetaClient:
     def send_whatsapp_template(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("send_whatsapp_template", kwargs))
         return {"messages": [{"id": "template-id"}]}
+
+    def list_whatsapp_templates(self) -> dict[str, Any]:
+        self.calls.append(("list_whatsapp_templates", {}))
+        return {
+            "data": [
+                {
+                    "name": "aqina_escalation_alert",
+                    "language": "en_US",
+                    "category": "UTILITY",
+                    "status": "APPROVED",
+                    "components": [],
+                }
+            ]
+        }
+
+    def create_whatsapp_template(self, payload: dict[str, Any]) -> dict[str, Any]:
+        self.calls.append(("create_whatsapp_template", {"payload": payload}))
+        return {"id": "template-created-id", "status": "PENDING"}
+
+    def get_whatsapp_phone_number_health(self) -> dict[str, Any]:
+        self.calls.append(("get_whatsapp_phone_number_health", {}))
+        return {
+            "display_phone_number": "+65 9000 0000",
+            "verified_name": "Aqina SG",
+            "quality_rating": "GREEN",
+            "status": "CONNECTED",
+        }
 
 
 class FakeGeminiService:

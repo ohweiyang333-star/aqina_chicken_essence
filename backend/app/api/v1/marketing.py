@@ -10,9 +10,16 @@ from app.api.deps import Admin, DB
 from app.core.config import settings
 from app.models.chatbot import CheckoutSessionResponse
 from app.models.marketing import (
+    LaunchWhatsAppCampaignRequest,
+    ProcessWhatsAppCampaignRecipientRequest,
     ProcessFollowUpJobRequest,
     ProcessMarketingEventRequest,
     ReconcileDueJobsRequest,
+    SendWhatsAppTemplateRequest,
+    SendWhatsAppTextRequest,
+    UpdateWhatsAppAutomationRequest,
+    UpsertWhatsAppTemplateRequest,
+    WhatsAppCampaignRequest,
 )
 from app.services.chatbot_settings import ChatbotSettingsService
 from app.services.follow_up import FollowUpEngine
@@ -21,6 +28,7 @@ from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_orchestrator import MarketingAutomationOrchestrator
 from app.services.meta_client import get_meta_client
 from app.services.task_queue import get_task_queue_service
+from app.services.whatsapp_console import WhatsAppConsoleService
 
 router = APIRouter(prefix="/marketing", tags=["Marketing"])
 
@@ -117,6 +125,203 @@ async def reconcile_due_jobs(
     _verify_internal_token(x_internal_token)
     engine = _build_follow_up_engine(db)
     return engine.reconcile_due_jobs(limit=body.limit)
+
+
+@router.post("/tasks/process-whatsapp-campaign-recipient")
+async def process_whatsapp_campaign_recipient(
+    body: ProcessWhatsAppCampaignRecipientRequest,
+    db: DB,
+    x_internal_token: str | None = Header(default=None),
+):
+    """Internal task endpoint for one WhatsApp campaign recipient."""
+    _verify_internal_token(x_internal_token)
+    service = _build_whatsapp_console(db)
+    return service.process_campaign_recipient(body.campaign_id, body.recipient_id)
+
+
+@router.get("/whatsapp/health")
+async def whatsapp_health(db: DB, admin: Admin):
+    """Return WhatsApp Cloud API configuration health for the admin console."""
+    del admin
+    return _build_whatsapp_console(db).health()
+
+
+@router.get("/whatsapp/conversations")
+async def list_whatsapp_conversations(db: DB, admin: Admin, limit: int = Query(default=50, ge=1, le=100)):
+    """List WhatsApp conversations for the admin inbox."""
+    del admin
+    return _build_whatsapp_console(db).list_conversations(limit=limit)
+
+
+@router.get("/whatsapp/conversations/{conversation_id}")
+async def get_whatsapp_conversation(conversation_id: str, db: DB, admin: Admin):
+    """Return a WhatsApp conversation with messages and customer context."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).get_conversation(conversation_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/whatsapp/conversations/{conversation_id}/messages")
+async def send_whatsapp_manual_message(
+    conversation_id: str,
+    body: SendWhatsAppTextRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Send a free-form WhatsApp reply inside the active customer service window."""
+    try:
+        return _build_whatsapp_console(db).send_manual_text(conversation_id, body.text, admin)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/whatsapp/conversations/{conversation_id}/templates")
+async def send_whatsapp_template_message(
+    conversation_id: str,
+    body: SendWhatsAppTemplateRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Send an approved WhatsApp template from the admin inbox."""
+    try:
+        return _build_whatsapp_console(db).send_template(
+            conversation_id,
+            template_name=body.template_name,
+            language_code=body.language_code,
+            body_variables=body.body_variables,
+            admin=admin,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/whatsapp/conversations/{conversation_id}/automation")
+async def update_whatsapp_automation(
+    conversation_id: str,
+    body: UpdateWhatsAppAutomationRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Pause or resume chatbot automation for a WhatsApp conversation."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).update_automation(
+            conversation_id,
+            paused=body.paused,
+            reason=body.reason,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/whatsapp/templates")
+async def list_whatsapp_templates(db: DB, admin: Admin):
+    """List locally mirrored WhatsApp templates."""
+    del admin
+    return _build_whatsapp_console(db).list_templates()
+
+
+@router.post("/whatsapp/templates")
+async def upsert_whatsapp_template(body: UpsertWhatsAppTemplateRequest, db: DB, admin: Admin):
+    """Save a local WhatsApp template mirror for inbox and campaigns."""
+    del admin
+    return _build_whatsapp_console(db).upsert_template(body.model_dump())
+
+
+@router.post("/whatsapp/templates/sync")
+async def sync_whatsapp_templates(db: DB, admin: Admin):
+    """Sync WhatsApp templates from Meta into the local admin console."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).sync_templates()
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@router.get("/whatsapp/campaigns")
+async def list_whatsapp_campaigns(db: DB, admin: Admin):
+    """List WhatsApp broadcast campaigns."""
+    del admin
+    return _build_whatsapp_console(db).list_campaigns()
+
+
+@router.post("/whatsapp/campaigns/preview")
+async def preview_whatsapp_campaign(body: WhatsAppCampaignRequest, db: DB, admin: Admin):
+    """Preview a compliant template campaign audience before launch."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).preview_campaign(body)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/whatsapp/campaigns", status_code=status.HTTP_201_CREATED)
+async def create_whatsapp_campaign(body: WhatsAppCampaignRequest, db: DB, admin: Admin):
+    """Create a WhatsApp template campaign draft."""
+    try:
+        return _build_whatsapp_console(db).create_campaign(body, admin)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/whatsapp/campaigns/{campaign_id}")
+async def get_whatsapp_campaign(campaign_id: str, db: DB, admin: Admin):
+    """Get a campaign and its recipient statuses."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).get_campaign(campaign_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/whatsapp/campaigns/{campaign_id}/launch")
+async def launch_whatsapp_campaign(
+    campaign_id: str,
+    body: LaunchWhatsAppCampaignRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Queue a WhatsApp campaign after an admin confirms the preview."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).launch_campaign(
+            campaign_id,
+            preview_confirmed=body.preview_confirmed,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/whatsapp/campaigns/{campaign_id}/pause")
+async def pause_whatsapp_campaign(campaign_id: str, db: DB, admin: Admin):
+    """Pause a queued or sending WhatsApp campaign."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).pause_campaign(campaign_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/whatsapp/campaigns/{campaign_id}/cancel")
+async def cancel_whatsapp_campaign(campaign_id: str, db: DB, admin: Admin):
+    """Cancel a WhatsApp campaign."""
+    del admin
+    try:
+        return _build_whatsapp_console(db).cancel_campaign(campaign_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 @router.get("/checkout/{token}", response_model=CheckoutSessionResponse)
@@ -223,6 +428,15 @@ def _build_follow_up_engine(db, contact_service: MarketingContactService | None 
         contact_service=contact_service or MarketingContactService(db),
         meta_client=get_meta_client(),
         gemini_service=get_gemini_service(),
+    )
+
+
+def _build_whatsapp_console(db) -> WhatsAppConsoleService:
+    return WhatsAppConsoleService(
+        db=db,
+        task_queue=get_task_queue_service(),
+        contact_service=MarketingContactService(db),
+        meta_client=get_meta_client(),
     )
 
 

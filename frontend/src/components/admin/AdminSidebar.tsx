@@ -6,6 +6,7 @@ import {
   BrainCircuit,
   Users,
   LogOut,
+  MessageCircle,
   ShoppingBag
 } from 'lucide-react';
 
@@ -17,6 +18,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+  { label: 'WhatsApp', href: '/admin/whatsapp', icon: MessageCircle },
   { label: 'CRM & AI', href: '/admin/crm', icon: BrainCircuit },
   { label: 'Customers', href: '/admin/customers', icon: Users },
 ];

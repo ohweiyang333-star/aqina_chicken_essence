@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     meta_private_reply_template: str = "__TODO__"
     meta_whatsapp_access_token: str = ""
     meta_whatsapp_phone_number_id: str = ""
+    meta_whatsapp_business_account_id: str = ""
 
     # Gemini
     gemini_api_key: str = ""
@@ -63,6 +64,7 @@ class Settings(BaseSettings):
     cloud_tasks_location: str = "asia-southeast1"
     cloud_tasks_events_queue: str = "marketing-events"
     cloud_tasks_followups_queue: str = "marketing-followups"
+    cloud_tasks_campaigns_queue: str = "whatsapp-campaigns"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=False)
 

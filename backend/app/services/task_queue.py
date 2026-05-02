@@ -37,6 +37,14 @@ class CloudTasksService:
             payload={},
         )
 
+    def enqueue_campaign_recipient(self, campaign_id: str, recipient_id: str, schedule_at: datetime | None = None) -> str:
+        return self._create_task(
+            queue_name=settings.cloud_tasks_campaigns_queue,
+            path="/api/v1/marketing/tasks/process-whatsapp-campaign-recipient",
+            payload={"campaign_id": campaign_id, "recipient_id": recipient_id},
+            schedule_at=schedule_at,
+        )
+
     def enqueue_escalation_notification(self, escalation_id: str) -> str:
         return self._create_task(
             queue_name=settings.cloud_tasks_events_queue,

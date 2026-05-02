@@ -13,6 +13,7 @@ from app.services.follow_up import FollowUpEngine
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, excerpt, payload_hash, stable_id, utcnow
 from app.services.storage_uploads import upload_public_file_to_firebase
+from app.services.whatsapp_console import WhatsAppConsoleService, is_marketing_opt_out_text
 
 
 class MarketingAutomationOrchestrator:
@@ -164,6 +165,11 @@ class MarketingAutomationOrchestrator:
                         message_type=message_type,
                         created_at=occurred_at,
                     )
+                    if is_marketing_opt_out_text(message_text):
+                        self.contact_service.mark_marketing_opt_out(
+                            contact_id,
+                            source="whatsapp_inbound_keyword",
+                        )
                     normalized = NormalizedMarketingEvent(
                         provider="meta",
                         channel="whatsapp",
@@ -196,6 +202,12 @@ class MarketingAutomationOrchestrator:
                         accepted += 1
 
                 for status in value.get("statuses", []):
+                    WhatsAppConsoleService(
+                        db=self.db,
+                        meta_client=self.meta_client,
+                        task_queue=self.task_queue,
+                        contact_service=self.contact_service,
+                    ).update_delivery_status(status)
                     normalized = NormalizedMarketingEvent(
                         provider="meta",
                         channel="whatsapp",
@@ -315,6 +327,8 @@ class MarketingAutomationOrchestrator:
             "future_contact_opt_in": bool(turn.opt_in_granted),
         }
         self.contact_service.update_contact_profile(contact_id, update_fields)
+        if turn.opt_in_granted:
+            self.contact_service.grant_marketing_opt_in(contact_id, source="chatbot_opt_in")
 
         if turn.escalate or turn.next_tag == "handoff_pending":
             escalation_id = self._escalate_contact(
