@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { subscribeToAuthChanges, isUserAdmin, logout } from '@/lib/auth-service';
+import { subscribeToAuthChanges, isAdminUser, logout } from '@/lib/auth-service';
 import {
   Loader2,
   Users,
@@ -42,12 +42,22 @@ export default function AdminCustomersPage() {
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
-      if (!user || !isUserAdmin(user)) {
-        router.push('/admin/login');
-      } else {
+      void (async () => {
+        if (!user) {
+          router.push('/admin/login');
+          return;
+        }
+
+        const isAdmin = await isAdminUser(user);
+        if (!isAdmin) {
+          await logout();
+          router.push('/admin/login');
+          return;
+        }
+
         setIsAuthLoading(false);
         fetchCustomers();
-      }
+      })();
     });
     return () => unsubscribe();
   }, [router]);

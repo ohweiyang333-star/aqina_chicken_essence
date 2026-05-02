@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 
 import AdminSidebar from "@/components/admin/AdminSidebar";
-import { isUserAdmin, logout, subscribeToAuthChanges } from "@/lib/auth-service";
+import { isAdminUser, logout, subscribeToAuthChanges } from "@/lib/auth-service";
 import {
   ChatbotSettings,
   getChatbotSettings,
@@ -53,12 +53,22 @@ export default function AdminCRMPage() {
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
-      if (!user || !isUserAdmin(user)) {
-        router.push("/admin/login");
-        return;
-      }
-      setIsAuthLoading(false);
-      void loadData();
+      void (async () => {
+        if (!user) {
+          router.push("/admin/login");
+          return;
+        }
+
+        const isAdmin = await isAdminUser(user);
+        if (!isAdmin) {
+          await logout();
+          router.push("/admin/login");
+          return;
+        }
+
+        setIsAuthLoading(false);
+        void loadData();
+      })();
     });
     return () => unsubscribe();
   }, [router]);

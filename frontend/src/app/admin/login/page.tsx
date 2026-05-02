@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginWithGoogle, subscribeToAuthChanges, isUserAdmin } from '@/lib/auth-service';
+import { loginWithGoogle, subscribeToAuthChanges, isAdminUser, logout } from '@/lib/auth-service';
 import { LogIn, ShieldCheck, Loader2 } from 'lucide-react';
 
 export default function AdminLoginPage() {
@@ -12,10 +12,21 @@ export default function AdminLoginPage() {
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
-      if (user && isUserAdmin(user)) {
-        router.push('/admin');
-      }
-      setIsLoading(false);
+      void (async () => {
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+
+        const isAdmin = await isAdminUser(user);
+        if (isAdmin) {
+          router.push('/admin');
+          return;
+        }
+
+        await logout();
+        setIsLoading(false);
+      })();
     });
     return () => unsubscribe();
   }, [router]);

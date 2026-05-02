@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   subscribeToAuthChanges,
-  isUserAdmin,
+  isAdminUser,
   logout,
 } from "@/lib/auth-service";
 import {
@@ -39,12 +39,22 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
-      if (!user || !isUserAdmin(user)) {
-        router.push("/admin/login");
-      } else {
+      void (async () => {
+        if (!user) {
+          router.push("/admin/login");
+          return;
+        }
+
+        const isAdmin = await isAdminUser(user);
+        if (!isAdmin) {
+          await logout();
+          router.push("/admin/login");
+          return;
+        }
+
         setIsAuthLoading(false);
         fetchOrders();
-      }
+      })();
     });
     return () => unsubscribe();
   }, [router]);
