@@ -1,3 +1,7 @@
+"use client";
+
+import { Reveal } from "./V2Motion";
+
 interface V2SectionHeadingProps {
   eyebrow: string;
   title: string;
@@ -12,7 +16,7 @@ export default function V2SectionHeading({
   align = "left",
 }: V2SectionHeadingProps) {
   return (
-    <div
+    <Reveal
       className={[
         "max-w-3xl space-y-4",
         align === "center" ? "mx-auto text-center" : "",
@@ -27,6 +31,6 @@ export default function V2SectionHeading({
       {body ? (
         <p className="text-base leading-8 text-[#6f5a43] md:text-lg">{body}</p>
       ) : null}
-    </div>
+    </Reveal>
   );
 }

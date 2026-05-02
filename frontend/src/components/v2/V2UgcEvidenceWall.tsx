@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { MessageCircle } from "lucide-react";
 import V2SectionHeading from "./V2SectionHeading";
+import { MotionItem, Reveal, StaggerGroup } from "./V2Motion";
 
 interface UGCItem {
   name: string;
@@ -27,11 +28,16 @@ export default function V2UgcEvidenceWall() {
           align="center"
         />
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <StaggerGroup
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          staggerChildren={0.1}
+        >
           {items.map((item, index) => (
-            <article
+            <MotionItem
+              as="article"
               key={`${item.name}-${item.context}`}
-              className="overflow-hidden rounded-lg border border-[#dcc08c] bg-white shadow-[0_14px_34px_rgba(91,57,24,0.07)]"
+              className="overflow-hidden rounded-lg border border-[#dcc08c] bg-white shadow-[0_14px_34px_rgba(91,57,24,0.07)] hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(91,57,24,0.11)]"
+              y={24}
             >
               <div className="relative aspect-[4/3]">
                 <Image
@@ -60,13 +66,17 @@ export default function V2UgcEvidenceWall() {
                   &ldquo;{item.quote}&rdquo;
                 </p>
               </div>
-            </article>
+            </MotionItem>
           ))}
-        </div>
+        </StaggerGroup>
 
-        <p className="mx-auto max-w-3xl text-center text-xs leading-6 text-[#7b6958]">
+        <Reveal
+          as="p"
+          className="mx-auto max-w-3xl text-center text-xs leading-6 text-[#7b6958]"
+          y={16}
+        >
           {t("disclaimer")}
-        </p>
+        </Reveal>
       </div>
     </section>
   );

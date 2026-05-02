@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Droplets, Flame, PackageCheck, Soup } from "lucide-react";
 import V2SectionHeading from "./V2SectionHeading";
+import { MotionItem, Reveal, StaggerGroup } from "./V2Motion";
 
 interface CraftStep {
   title: string;
@@ -25,19 +26,29 @@ export default function V2CraftLightnessSection() {
             title={t("title")}
             body={t("body")}
           />
-          <p className="rounded-lg border border-[#ead3a7] bg-[#fff7e8] px-5 py-4 text-sm leading-7 text-[#6f5a43]">
+          <Reveal
+            as="p"
+            className="rounded-lg border border-[#ead3a7] bg-[#fff7e8] px-5 py-4 text-sm leading-7 text-[#6f5a43]"
+            delay={0.08}
+            x={20}
+          >
             {t("note")}
-          </p>
+          </Reveal>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StaggerGroup
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+          staggerChildren={0.09}
+        >
           {steps.map((step, index) => {
             const Icon = icons[index % icons.length];
 
             return (
-              <article
+              <MotionItem
+                as="article"
                 key={step.title}
-                className="rounded-lg border border-[#ead3a7] bg-white px-5 py-6 shadow-[0_12px_34px_rgba(91,57,24,0.06)]"
+                className="rounded-lg border border-[#ead3a7] bg-white px-5 py-6 shadow-[0_12px_34px_rgba(91,57,24,0.06)] hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(91,57,24,0.1)]"
+                y={24}
               >
                 <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-[#f2dba8] text-[#7c531c]">
                   <Icon size={20} />
@@ -48,12 +59,17 @@ export default function V2CraftLightnessSection() {
                 <p className="mt-3 text-sm leading-7 text-[#6f5a43]">
                   {step.body}
                 </p>
-              </article>
+              </MotionItem>
             );
           })}
-        </div>
+        </StaggerGroup>
 
-        <figure className="grid overflow-hidden rounded-lg border border-[#e2c894] bg-[#1b130c] text-[#fff7e8] md:grid-cols-[0.95fr_1.05fr]">
+        <Reveal
+          as="figure"
+          className="grid overflow-hidden rounded-lg border border-[#e2c894] bg-[#1b130c] text-[#fff7e8] md:grid-cols-[0.95fr_1.05fr]"
+          scale={0.96}
+          y={32}
+        >
           <div className="relative min-h-72">
             <Image
               src="/v2/aqina-v2-golden-essence.webp"
@@ -74,7 +90,7 @@ export default function V2CraftLightnessSection() {
               {t("ritualBody")}
             </p>
           </figcaption>
-        </figure>
+        </Reveal>
       </div>
     </section>
   );

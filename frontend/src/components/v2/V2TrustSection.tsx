@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { BadgeCheck, ShieldCheck, Store } from "lucide-react";
 import { IMAGES } from "@/lib/image-utils";
 import V2SectionHeading from "./V2SectionHeading";
+import { MotionItem, StaggerGroup } from "./V2Motion";
 
 const certifications = [
   {
@@ -52,11 +53,16 @@ export default function V2TrustSection() {
           align="center"
         />
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <StaggerGroup
+          className="grid gap-4 md:grid-cols-3"
+          staggerChildren={0.1}
+        >
           {certifications.map((certification) => (
-            <article
+            <MotionItem
+              as="article"
               key={certification.id}
-              className="rounded-lg border border-[#dcc08c] bg-white px-5 py-5 text-center shadow-[0_14px_34px_rgba(91,57,24,0.07)]"
+              className="rounded-lg border border-[#dcc08c] bg-white px-5 py-5 text-center shadow-[0_14px_34px_rgba(91,57,24,0.07)] hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(91,57,24,0.1)]"
+              y={22}
             >
               <div className="relative mx-auto h-20 w-full">
                 <Image
@@ -70,12 +76,19 @@ export default function V2TrustSection() {
               <p className="mt-4 text-xs font-bold uppercase tracking-[0.14em] text-[#6d451d]">
                 {t(certification.labelKey)}
               </p>
-            </article>
+            </MotionItem>
           ))}
-        </div>
+        </StaggerGroup>
 
-        <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <article className="rounded-lg border border-[#e2c894] bg-[#1b130c] p-6 text-[#fff7e8] md:p-7">
+        <StaggerGroup
+          className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]"
+          staggerChildren={0.12}
+        >
+          <MotionItem
+            as="article"
+            className="rounded-lg border border-[#e2c894] bg-[#1b130c] p-6 text-[#fff7e8] md:p-7"
+            x={-18}
+          >
             <div className="inline-flex items-center gap-2 rounded-lg border border-[#e9c371]/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[#e9c371]">
               <ShieldCheck size={15} />
               <span>{t("assuranceEyebrow")}</span>
@@ -91,9 +104,13 @@ export default function V2TrustSection() {
                 </li>
               ))}
             </ul>
-          </article>
+          </MotionItem>
 
-          <article className="rounded-lg border border-[#dcc08c] bg-white p-6 md:p-7">
+          <MotionItem
+            as="article"
+            className="rounded-lg border border-[#dcc08c] bg-white p-6 md:p-7"
+            x={18}
+          >
             <div className="mb-5 flex items-center gap-2 text-sm font-bold uppercase tracking-[0.14em] text-[#6d451d]">
               <Store size={17} />
               <span>{t("retailTitle")}</span>
@@ -119,8 +136,8 @@ export default function V2TrustSection() {
             <p className="mt-5 text-sm leading-7 text-[#6f5a43]">
               {t("retailNote")}
             </p>
-          </article>
-        </div>
+          </MotionItem>
+        </StaggerGroup>
       </div>
     </section>
   );

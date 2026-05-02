@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { HeartHandshake, Users } from "lucide-react";
 import V2SectionHeading from "./V2SectionHeading";
+import { MotionItem, Reveal, StaggerGroup } from "./V2Motion";
 
 interface AudienceItem {
   title: string;
@@ -25,17 +26,26 @@ export default function V2AudienceSection() {
             title={t("title")}
             body={t("body")}
           />
-          <div className="inline-flex w-fit items-center gap-2 rounded-lg border border-[#d9b46b] bg-white/72 px-4 py-3 text-sm font-bold text-[#6d451d]">
+          <Reveal
+            className="inline-flex w-fit items-center gap-2 rounded-lg border border-[#d9b46b] bg-white/72 px-4 py-3 text-sm font-bold text-[#6d451d]"
+            delay={0.08}
+            x={20}
+          >
             <Users size={18} />
             <span>{t("badge")}</span>
-          </div>
+          </Reveal>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <StaggerGroup
+          className="grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+          staggerChildren={0.09}
+        >
           {items.map((item) => (
-            <article
+            <MotionItem
+              as="article"
               key={item.title}
-              className="overflow-hidden rounded-lg border border-[#dcc08c] bg-white shadow-[0_14px_36px_rgba(91,57,24,0.07)]"
+              className="overflow-hidden rounded-lg border border-[#dcc08c] bg-white shadow-[0_14px_36px_rgba(91,57,24,0.07)] hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(91,57,24,0.11)]"
+              y={24}
             >
               <div className="relative aspect-[4/3]">
                 <Image
@@ -55,9 +65,9 @@ export default function V2AudienceSection() {
                 </div>
                 <p className="text-sm leading-7 text-[#6f5a43]">{item.body}</p>
               </div>
-            </article>
+            </MotionItem>
           ))}
-        </div>
+        </StaggerGroup>
       </div>
     </section>
   );
