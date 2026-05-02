@@ -15,9 +15,9 @@ env:
   SERVICE_NAME: aqina-backend-api
   IMAGE_NAME: asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/backend
   BACKEND_BASE_URL: 'https://aqina-backend-api-c3amale25a-as.a.run.app'
-  FRONTEND_BASE_URL: 'https://aqina-frontend-c3amale25a-as.a.run.app'
+  FRONTEND_BASE_URL: 'https://aqina-sg.web.app'
   FIREBASE_STORAGE_BUCKET: 'aqina-chicken-essence.firebasestorage.app'
-  CORS_ORIGINS: '["https://aqina-frontend-c3amale25a-as.a.run.app","https://aqina-frontend-v2-c3amale25a-as.a.run.app"]'
+  CORS_ORIGINS: '["https://aqina-sg.web.app","https://aqina-sg.firebaseapp.com","https://aqina-frontend-c3amale25a-as.a.run.app","https://aqina-frontend-v2-c3amale25a-as.a.run.app"]'
   CLOUD_TASKS_LOCATION: asia-southeast1
   CLOUD_TASKS_EVENTS_QUEUE: marketing-events
   CLOUD_TASKS_FOLLOWUPS_QUEUE: marketing-followups
