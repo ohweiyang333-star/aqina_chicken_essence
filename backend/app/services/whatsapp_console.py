@@ -15,6 +15,7 @@ from app.services.task_queue import get_task_queue_service
 OPT_OUT_KEYWORDS = {
     "stop",
     "unsubscribe",
+    "停止",
     "退订",
     "不要再发",
     "不要发",

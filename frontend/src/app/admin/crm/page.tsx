@@ -7,6 +7,7 @@ import {
   Bot,
   Brain,
   Loader2,
+  MessageCircle,
   Package2,
   QrCode,
   RefreshCw,
@@ -24,7 +25,9 @@ import {
 } from "@/lib/backend-chatbot-service";
 import {
   EscalationRecord,
+  FacebookCommentEvent,
   acknowledgeEscalation,
+  listFacebookCommentEvents,
   listEscalations,
   resolveEscalation,
 } from "@/lib/backend-marketing-service";
@@ -46,6 +49,7 @@ export default function AdminCRMPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState<ChatbotSettings | null>(null);
   const [escalations, setEscalations] = useState<EscalationRecord[]>([]);
+  const [commentEvents, setCommentEvents] = useState<FacebookCommentEvent[]>([]);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
@@ -75,8 +79,10 @@ export default function AdminCRMPage() {
         getChatbotSettings(),
         listEscalations(),
       ]);
+      const facebookRows = await listFacebookCommentEvents();
       setSettings(fetchedSettings);
       setEscalations(escalationRows);
+      setCommentEvents(facebookRows);
     } catch (error) {
       console.error("Failed to load CRM settings", error);
     } finally {
@@ -145,6 +151,22 @@ export default function AdminCRMPage() {
     });
   }
 
+  function updateFacebookAutomation(
+    field: keyof ChatbotSettings["facebook_comment_automation"],
+    value: boolean | string[],
+  ) {
+    setSettings((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        facebook_comment_automation: {
+          ...current.facebook_comment_automation,
+          [field]: value,
+        },
+      };
+    });
+  }
+
   if (isAuthLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#f4f1eb]">
@@ -207,7 +229,7 @@ export default function AdminCRMPage() {
             </div>
           ) : (
             <div className="space-y-8">
-              <section className="grid gap-4 md:grid-cols-3">
+              <section className="grid gap-4 md:grid-cols-4">
                 <StatCard
                   icon={<ShieldAlert size={18} />}
                   title="待人工处理"
@@ -221,6 +243,13 @@ export default function AdminCRMPage() {
                   value={`${RULE_FIELDS.length} 项`}
                   caption="Live CRM triggers"
                   accent="from-[#7a531f] to-[#b88c51]"
+                />
+                <StatCard
+                  icon={<MessageCircle size={18} />}
+                  title="FB 留言私讯"
+                  value={settings.facebook_comment_automation.enabled ? "ON" : "OFF"}
+                  caption={`${commentEvents.length} recent events`}
+                  accent="from-[#33534a] to-[#5f927f]"
                 />
                 <StatCard
                   icon={<QrCode size={18} />}
@@ -483,6 +512,148 @@ export default function AdminCRMPage() {
                         );
                       }}
                     />
+                  </div>
+                </div>
+              </SectionShell>
+
+              <SectionShell
+                icon={<MessageCircle size={18} />}
+                title="Facebook 留言转 Messenger"
+                subtitle="只针对购买意图关键词评论发送一次 Messenger 破冰私讯；顾客回复后才进入 AI 销售流程。"
+              >
+                <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+                  <div className="space-y-4">
+                    <ToggleRow
+                      label="启用 Comment-to-Messenger"
+                      value={settings.facebook_comment_automation.enabled}
+                      onToggle={() =>
+                        updateFacebookAutomation(
+                          "enabled",
+                          !settings.facebook_comment_automation.enabled,
+                        )
+                      }
+                    />
+                    <ToggleRow
+                      label="发送公开回复"
+                      value={settings.facebook_comment_automation.public_reply_enabled}
+                      onToggle={() =>
+                        updateFacebookAutomation(
+                          "public_reply_enabled",
+                          !settings.facebook_comment_automation.public_reply_enabled,
+                        )
+                      }
+                    />
+                    <ToggleRow
+                      label="发送 Messenger 私讯"
+                      value={settings.facebook_comment_automation.private_reply_enabled}
+                      onToggle={() =>
+                        updateFacebookAutomation(
+                          "private_reply_enabled",
+                          !settings.facebook_comment_automation.private_reply_enabled,
+                        )
+                      }
+                    />
+                    <ToggleRow
+                      label="忽略 Page 自己留言"
+                      value={settings.facebook_comment_automation.ignore_page_self_comments}
+                      onToggle={() =>
+                        updateFacebookAutomation(
+                          "ignore_page_self_comments",
+                          !settings.facebook_comment_automation.ignore_page_self_comments,
+                        )
+                      }
+                    />
+                    <FieldBlock label="触发关键词（逗号或换行分隔）">
+                      <textarea
+                        id="crm-facebook-comment-keywords"
+                        value={settings.facebook_comment_automation.keywords.join(", ")}
+                        onChange={(event) =>
+                          updateFacebookAutomation(
+                            "keywords",
+                            splitKeywords(event.target.value),
+                          )
+                        }
+                        className={textareaClassName}
+                        rows={6}
+                      />
+                    </FieldBlock>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      <FieldBlock label="公开回复文案">
+                        <textarea
+                          id="crm-facebook-public-reply"
+                          value={settings.crm_follow_up_rules?.comment_hook?.public_reply?.instruction || ""}
+                          onChange={(event) =>
+                            updateRule("comment_hook", "public_reply", event.target.value)
+                          }
+                          className={textareaClassName}
+                          rows={6}
+                        />
+                      </FieldBlock>
+                      <FieldBlock label="Messenger 破冰私讯">
+                        <textarea
+                          id="crm-facebook-private-reply"
+                          value={settings.crm_follow_up_rules?.comment_hook?.private_opening?.instruction || ""}
+                          onChange={(event) =>
+                            updateRule("comment_hook", "private_opening", event.target.value)
+                          }
+                          className={textareaClassName}
+                          rows={6}
+                        />
+                      </FieldBlock>
+                    </div>
+
+                    <div className="rounded-[24px] border border-[#e7d8c7] bg-[#fffaf4] p-5">
+                      <div className="mb-4 flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#a07b56]">
+                            Recent delivery
+                          </p>
+                          <h3 className="text-lg font-bold text-[#2b2018]">最近 FB 留言发送状态</h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => void loadData()}
+                          className="inline-flex items-center gap-2 rounded-full border border-[#d6c2ab] bg-white px-4 py-2 text-sm font-semibold text-[#6c5849] transition hover:border-[#8e5d34] hover:text-[#8e5d34]"
+                        >
+                          <RefreshCw size={14} />
+                          刷新
+                        </button>
+                      </div>
+
+                      {commentEvents.length === 0 ? (
+                        <div className="rounded-2xl border border-dashed border-[#d9c5ad] bg-white p-5 text-sm text-[#6c5849]">
+                          还没有 Facebook 评论自动化记录。
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {commentEvents.slice(0, 6).map((item) => (
+                            <div key={item.event_id} className="rounded-2xl border border-[#eadccd] bg-white p-4">
+                              <div className="mb-2 flex flex-wrap items-center gap-2">
+                                <StatusPill value={item.status} />
+                                <StatusPill value={`Public: ${item.public_reply_status}`} muted />
+                                <StatusPill value={`DM: ${item.private_reply_status}`} muted />
+                              </div>
+                              <p className="line-clamp-2 text-sm leading-6 text-[#2b2018]">
+                                {item.comment_text || "无评论内容"}
+                              </p>
+                              <p className="mt-2 text-xs text-[#8a6c52]">
+                                {item.from_name || "Facebook 用户"} · keyword: {item.matched_keyword || "-"}
+                              </p>
+                              {Object.keys(item.reply_errors || {}).length > 0 ? (
+                                <p className="mt-2 line-clamp-2 text-xs text-[#9a3412]">
+                                  {Object.entries(item.reply_errors)
+                                    .map(([key, value]) => `${key}: ${value}`)
+                                    .join(" | ")}
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </SectionShell>
@@ -902,6 +1073,25 @@ function ToggleChip({
       {label}
     </button>
   );
+}
+
+function StatusPill({ value, muted = false }: { value: string; muted?: boolean }) {
+  return (
+    <span
+      className={`inline-flex rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+        muted ? "bg-[#eadfd1] text-[#7a614d]" : "bg-[#2b2018] text-[#f7f2ea]"
+      }`}
+    >
+      {value || "pending"}
+    </span>
+  );
+}
+
+function splitKeywords(value: string): string[] {
+  return value
+    .split(/[\n,]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 const inputClassName =

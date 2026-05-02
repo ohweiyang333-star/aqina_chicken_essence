@@ -80,6 +80,8 @@ class FollowUpEngine:
         contact = self.contact_service.get_contact(job["contact_id"])
         if contact.get("current_tag") == "handoff_pending" or contact.get("automation_paused"):
             return self._mark_job(ref, status="skipped_handoff_pending", skip_reason="handoff_pending")
+        if contact.get("marketing_status") == "opted_out" or contact.get("opt_out_at"):
+            return self._mark_job(ref, status="skipped_opt_out", skip_reason="marketing_opt_out")
 
         last_interaction = ensure_datetime(contact.get("last_interaction_time"))
         anchor = ensure_datetime(job.get("anchor_interaction_time"))

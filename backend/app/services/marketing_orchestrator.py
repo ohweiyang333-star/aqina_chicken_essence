@@ -8,12 +8,29 @@ from app.core.config import settings
 from app.models.chatbot import SalesConversationTurn
 from app.models.marketing import NormalizedMarketingEvent
 from app.services.meta_media_assets import MetaMediaAssetService
-from app.services.chatbot_settings import ChatbotSettingsService
+from app.services.chatbot_settings import ChatbotSettingsService, DEFAULT_FACEBOOK_COMMENT_KEYWORDS
 from app.services.follow_up import FollowUpEngine
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, excerpt, payload_hash, stable_id, utcnow
 from app.services.storage_uploads import upload_public_file_to_firebase
 from app.services.whatsapp_console import WhatsAppConsoleService, is_marketing_opt_out_text
+
+
+FACEBOOK_PRIVATE_REPLY_QUICK_REPLIES = [
+    {"content_type": "text", "title": "自己喝", "payload": "AQINA_SELF_CARE"},
+    {"content_type": "text", "title": "孕期/月子", "payload": "AQINA_MATERNITY"},
+    {"content_type": "text", "title": "送长辈", "payload": "AQINA_GIFT_ELDER"},
+]
+
+FINAL_COMMENT_EVENT_STATUSES = {
+    "processed",
+    "processed_with_errors",
+    "reply_failed",
+    "skipped_disabled",
+    "skipped_no_keyword",
+    "skipped_self_comment",
+    "skipped_replies_disabled",
+}
 
 
 class MarketingAutomationOrchestrator:
@@ -72,10 +89,16 @@ class MarketingAutomationOrchestrator:
                     message_type=message_type,
                     created_at=occurred_at,
                 )
+                is_opt_out = message_type == "text" and is_marketing_opt_out_text(message_text)
+                if is_opt_out:
+                    self.contact_service.mark_marketing_opt_out(
+                        contact_id,
+                        source="messenger_inbound_keyword",
+                    )
                 normalized = NormalizedMarketingEvent(
                     provider="meta",
                     channel="messenger",
-                    event_type="messenger_message_received",
+                    event_type="messenger_opt_out_received" if is_opt_out else "messenger_message_received",
                     dedupe_key=f"messenger:{message.get('mid')}",
                     occurred_at=occurred_at,
                     contact_id=contact_id,
@@ -93,6 +116,17 @@ class MarketingAutomationOrchestrator:
                 created = self._record_event(normalized)
                 if created:
                     event_id = stable_id("event", normalized.dedupe_key)
+                    if is_opt_out:
+                        self.db.collection("marketing_events").document(event_id).set(
+                            {
+                                "status": "processed_opt_out",
+                                "processed_at": utcnow(),
+                                "updated_at": utcnow(),
+                            },
+                            merge=True,
+                        )
+                        accepted += 1
+                        continue
                     self.task_queue.enqueue_marketing_event(event_id, "process-inbound-message")
                     self.follow_up_engine.schedule_follow_up_jobs(
                         contact_id=contact_id,
@@ -106,20 +140,44 @@ class MarketingAutomationOrchestrator:
                 value = change.get("value", {})
                 if change.get("field") != "feed" or value.get("item") != "comment":
                     continue
-                occurred_at = utcnow()
+                if value.get("verb") and value.get("verb") != "add":
+                    continue
+
+                runtime_settings = self.settings_service.get_settings(persist_migration=False)
+                automation = self._facebook_comment_automation_settings(runtime_settings)
+                if not automation["enabled"]:
+                    continue
+                if self._is_page_self_comment(value=value, entry=entry, automation=automation):
+                    continue
+
+                comment_text = str(value.get("message", ""))
+                matched_keyword = self._matched_comment_keyword(comment_text, automation["keywords"])
+                if not matched_keyword:
+                    continue
+
+                comment_id = str(value.get("comment_id") or "")
+                if not comment_id:
+                    continue
+
+                occurred_at = ensure_datetime(value.get("created_time")) or utcnow()
+                page_id = str(entry.get("id") or value.get("page_id") or settings.meta_page_id or "")
                 normalized = NormalizedMarketingEvent(
                     provider="meta",
                     channel="facebook",
                     event_type="facebook_comment_created",
-                    dedupe_key=f"facebook-comment:{value.get('comment_id')}",
+                    dedupe_key=f"facebook-comment:{comment_id}",
                     occurred_at=occurred_at,
                     identifiers={"commenter_id": str(value.get("from", {}).get("id", ""))},
                     payload={
-                        "comment_id": value.get("comment_id"),
+                        "comment_id": comment_id,
                         "post_id": value.get("post_id"),
-                        "comment_text": value.get("message", ""),
+                        "comment_text": comment_text,
                         "from_id": value.get("from", {}).get("id"),
-                        "page_id": entry.get("id"),
+                        "from_name": value.get("from", {}).get("name"),
+                        "page_id": page_id,
+                        "matched_keyword": matched_keyword,
+                        "public_reply_enabled": automation["public_reply_enabled"],
+                        "private_reply_enabled": automation["private_reply_enabled"],
                     },
                 )
                 if self._record_event(normalized):
@@ -226,9 +284,37 @@ class MarketingAutomationOrchestrator:
         if not snapshot.exists:
             raise KeyError(f"Marketing event not found: {event_id}")
 
-        runtime_settings = self.settings_service.get_settings()
         event = snapshot.to_dict()
+        existing_status = event.get("status")
+        if existing_status in FINAL_COMMENT_EVENT_STATUSES:
+            return {"status": existing_status, "contact_id": event.get("contact_id")}
+
         payload = event.get("payload", {})
+        runtime_settings = self.settings_service.get_settings()
+        automation = self._facebook_comment_automation_settings(runtime_settings)
+        if not automation["enabled"]:
+            return self._mark_comment_event(
+                ref,
+                status="skipped_disabled",
+                payload={"skip_reason": "facebook_comment_automation_disabled"},
+            )
+        if self._is_page_self_comment_from_payload(payload=payload, automation=automation):
+            return self._mark_comment_event(
+                ref,
+                status="skipped_self_comment",
+                payload={"skip_reason": "page_self_comment"},
+            )
+        matched_keyword = payload.get("matched_keyword") or self._matched_comment_keyword(
+            str(payload.get("comment_text", "")),
+            automation["keywords"],
+        )
+        if not matched_keyword:
+            return self._mark_comment_event(
+                ref,
+                status="skipped_no_keyword",
+                payload={"skip_reason": "no_purchase_intent_keyword"},
+            )
+
         occurred_at = ensure_datetime(event.get("received_at")) or utcnow()
         contact_id, conversation_id = self.contact_service.upsert_contact_from_event(
             channel="facebook",
@@ -248,43 +334,93 @@ class MarketingAutomationOrchestrator:
             message_type="comment",
             created_at=occurred_at,
         )
-        public_reply = (
+        public_reply_template = (
             runtime_settings.get("crm_follow_up_rules", {})
             .get("comment_hook", {})
             .get("public_reply", {})
             .get("instruction")
             or settings.meta_comment_reply_template
         )
-        private_reply = (
+        private_reply_template = (
             runtime_settings.get("crm_follow_up_rules", {})
             .get("comment_hook", {})
             .get("private_opening", {})
             .get("instruction")
             or settings.meta_private_reply_template
         )
-        self.meta_client.reply_to_comment(comment_id=payload.get("comment_id", ""), message=public_reply)
-        self.meta_client.send_private_reply(comment_id=payload.get("comment_id", ""), message=private_reply)
-        self.contact_service.append_message(
-            contact_id=contact_id,
-            channel="facebook",
-            direction="outbound",
-            role="assistant",
-            text=private_reply,
-            source="facebook_private_reply",
-            provider_comment_id=payload.get("comment_id"),
-            message_type="private_reply",
-        )
+        public_reply = self._render_comment_template(public_reply_template, payload)
+        private_reply = self._render_comment_template(private_reply_template, payload)
+        comment_id = str(payload.get("comment_id") or "")
+
+        public_reply_status = "disabled"
+        private_reply_status = "disabled"
+        provider_responses: dict[str, Any] = {}
+        errors: dict[str, str] = {}
+
+        if automation["public_reply_enabled"] and public_reply:
+            try:
+                provider_responses["public_reply"] = self.meta_client.reply_to_comment(
+                    comment_id=comment_id,
+                    message=public_reply,
+                )
+                public_reply_status = "sent"
+            except Exception as exc:  # noqa: BLE001 - persist provider errors instead of retrying duplicate DMs.
+                public_reply_status = "failed"
+                errors["public_reply"] = str(exc)[:500]
+
+        if automation["private_reply_enabled"] and private_reply:
+            try:
+                provider_responses["private_reply"] = self.meta_client.send_private_reply(
+                    comment_id=comment_id,
+                    message=private_reply,
+                    quick_replies=FACEBOOK_PRIVATE_REPLY_QUICK_REPLIES,
+                )
+                private_reply_status = "sent"
+                self.contact_service.append_message(
+                    contact_id=contact_id,
+                    channel="facebook",
+                    direction="outbound",
+                    role="assistant",
+                    text=private_reply,
+                    source="facebook_private_reply",
+                    provider_comment_id=comment_id,
+                    message_type="private_reply",
+                    delivery_status="sent",
+                )
+            except Exception as exc:  # noqa: BLE001 - record failure and avoid task retry loops.
+                private_reply_status = "failed"
+                errors["private_reply"] = str(exc)[:500]
+
+        if public_reply_status == "disabled" and private_reply_status == "disabled":
+            status_value = "skipped_replies_disabled"
+        elif errors and (public_reply_status == "sent" or private_reply_status == "sent"):
+            status_value = "processed_with_errors"
+        elif errors:
+            status_value = "reply_failed"
+        else:
+            status_value = "processed"
+
         ref.set(
             {
-                "status": "processed",
+                "status": status_value,
                 "contact_id": contact_id,
                 "conversation_id": conversation_id,
+                "matched_keyword": matched_keyword,
+                "public_reply_status": public_reply_status,
+                "private_reply_status": private_reply_status,
+                "provider_responses": provider_responses,
+                "reply_errors": errors,
                 "processed_at": utcnow(),
                 "updated_at": utcnow(),
             },
             merge=True,
         )
-        return {"status": "processed", "contact_id": contact_id}
+        return {
+            "status": status_value,
+            "contact_id": contact_id,
+            "public_reply_status": public_reply_status,
+            "private_reply_status": private_reply_status,
+        }
 
     def process_inbound_message(self, event_id: str) -> dict[str, Any]:
         ref = self.db.collection("marketing_events").document(event_id)
@@ -297,14 +433,21 @@ class MarketingAutomationOrchestrator:
         if payload.get("message_type") == "image":
             return self._process_payment_receipt_event(ref=ref, event=event)
 
+        contact_id = event["contact_id"]
+        contact = self.contact_service.get_contact(contact_id)
+        incoming_text = str(payload.get("text", ""))
+        if is_marketing_opt_out_text(incoming_text) or contact.get("marketing_status") == "opted_out":
+            if is_marketing_opt_out_text(incoming_text):
+                self.contact_service.mark_marketing_opt_out(contact_id, source=f"{event['channel']}_inbound_keyword")
+            ref.set({"status": "skipped_opt_out", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+            return {"status": "skipped_opt_out"}
+
         if not self.gemini_service.is_ready():
             ref.set({"status": "blocked_configuration", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
             return {"status": "blocked_configuration"}
 
         runtime_settings = self.settings_service.get_settings()
-        contact_id = event["contact_id"]
         conversation_id = event["conversation_id"]
-        contact = self.contact_service.get_contact(contact_id)
         messages = self.contact_service.get_recent_messages(conversation_id)
         turn = self._normalize_turn(
             self.gemini_service.generate_chat_reply(
@@ -806,6 +949,67 @@ class MarketingAutomationOrchestrator:
             if value:
                 merged[key] = value
         return merged
+
+    @staticmethod
+    def _facebook_comment_automation_settings(runtime_settings: dict[str, Any]) -> dict[str, Any]:
+        raw = runtime_settings.get("facebook_comment_automation", {}) or {}
+        keywords = raw.get("keywords") or DEFAULT_FACEBOOK_COMMENT_KEYWORDS
+        return {
+            "enabled": bool(raw.get("enabled", True)),
+            "keywords": [
+                keyword.strip()
+                for keyword in (str(item) for item in keywords)
+                if keyword.strip()
+            ],
+            "public_reply_enabled": bool(raw.get("public_reply_enabled", True)),
+            "private_reply_enabled": bool(raw.get("private_reply_enabled", True)),
+            "ignore_page_self_comments": bool(raw.get("ignore_page_self_comments", True)),
+        }
+
+    @staticmethod
+    def _matched_comment_keyword(comment_text: str, keywords: list[str]) -> str | None:
+        normalized_text = comment_text.casefold()
+        for keyword in keywords:
+            normalized_keyword = keyword.casefold().strip()
+            if normalized_keyword and normalized_keyword in normalized_text:
+                return keyword
+        return None
+
+    @staticmethod
+    def _is_page_self_comment(*, value: dict[str, Any], entry: dict[str, Any], automation: dict[str, Any]) -> bool:
+        if not automation.get("ignore_page_self_comments", True):
+            return False
+        commenter_id = str(value.get("from", {}).get("id") or "")
+        page_id = str(entry.get("id") or value.get("page_id") or settings.meta_page_id or "")
+        configured_page_id = str(settings.meta_page_id or "")
+        return bool(commenter_id and (commenter_id == page_id or commenter_id == configured_page_id))
+
+    @staticmethod
+    def _is_page_self_comment_from_payload(*, payload: dict[str, Any], automation: dict[str, Any]) -> bool:
+        if not automation.get("ignore_page_self_comments", True):
+            return False
+        commenter_id = str(payload.get("from_id") or "")
+        page_id = str(payload.get("page_id") or settings.meta_page_id or "")
+        configured_page_id = str(settings.meta_page_id or "")
+        return bool(commenter_id and (commenter_id == page_id or commenter_id == configured_page_id))
+
+    @staticmethod
+    def _render_comment_template(template: str, payload: dict[str, Any]) -> str:
+        name = str(payload.get("from_name") or "").strip() or "您"
+        rendered = str(template or "").replace("[顾客名字]", name)
+        rendered = rendered.replace("{{name}}", name).replace("{name}", name)
+        return rendered.strip()
+
+    @staticmethod
+    def _mark_comment_event(ref: Any, *, status: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
+        update_payload = {
+            "status": status,
+            "processed_at": utcnow(),
+            "updated_at": utcnow(),
+            **(payload or {}),
+        }
+        ref.set(update_payload, merge=True)
+        return {"status": status}
 
     def _record_event(self, event: NormalizedMarketingEvent) -> bool:
         event_id = stable_id("event", event.dedupe_key)

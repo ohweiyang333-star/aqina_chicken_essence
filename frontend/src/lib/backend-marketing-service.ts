@@ -43,6 +43,21 @@ export interface MarketingCheckoutPayload {
   package_code?: string | null;
 }
 
+export interface FacebookCommentEvent {
+  event_id: string;
+  status: string;
+  comment_id: string;
+  post_id: string;
+  comment_text: string;
+  from_name: string;
+  matched_keyword: string;
+  public_reply_status: string;
+  private_reply_status: string;
+  reply_errors: Record<string, string>;
+  received_at?: string;
+  processed_at?: string | null;
+}
+
 export async function listEscalations(): Promise<EscalationRecord[]> {
   const response = await apiClient.get<{ items: EscalationRecord[] }>(
     "/api/v1/marketing/escalations",
@@ -62,6 +77,13 @@ export async function resolveEscalation(escalationId: string) {
     `/api/v1/marketing/escalations/${escalationId}/resolve`,
     {},
   );
+}
+
+export async function listFacebookCommentEvents(): Promise<FacebookCommentEvent[]> {
+  const response = await apiClient.get<{ items: FacebookCommentEvent[] }>(
+    "/api/v1/marketing/facebook/comment-events",
+  );
+  return response.items;
 }
 
 export async function getMarketingCheckout(token: string) {

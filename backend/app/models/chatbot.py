@@ -79,6 +79,16 @@ class EscalationSettings(BaseModel):
     pause_automation_on_handoff: bool = True
 
 
+class FacebookCommentAutomationSettings(BaseModel):
+    """Configuration for Facebook comment-to-Messenger automation."""
+
+    enabled: bool = True
+    keywords: list[str] = Field(default_factory=list)
+    public_reply_enabled: bool = True
+    private_reply_enabled: bool = True
+    ignore_page_self_comments: bool = True
+
+
 class ChatbotSettingsResponse(BaseModel):
     """Canonical chatbot settings document returned to admin UI."""
 
@@ -87,6 +97,9 @@ class ChatbotSettingsResponse(BaseModel):
     packages: dict[str, ChatbotPackage]
     knowledge_base: KnowledgeBase
     crm_follow_up_rules: dict[str, dict[str, dict[str, Any]]]
+    facebook_comment_automation: FacebookCommentAutomationSettings = Field(
+        default_factory=FacebookCommentAutomationSettings
+    )
     payment: PaymentSettings
     escalation: EscalationSettings
     faq: list[FAQItem] = Field(default_factory=list)
@@ -100,6 +113,7 @@ class UpdateChatbotSettingsRequest(BaseModel):
     packages: dict[str, ChatbotPackage] | None = None
     knowledge_base: KnowledgeBase | None = None
     crm_follow_up_rules: dict[str, dict[str, dict[str, Any]]] | None = None
+    facebook_comment_automation: FacebookCommentAutomationSettings | None = None
     payment: PaymentSettings | None = None
     escalation: EscalationSettings | None = None
     faq: list[FAQItem] | None = None

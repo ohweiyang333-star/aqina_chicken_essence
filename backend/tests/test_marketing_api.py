@@ -22,6 +22,7 @@ class MarketingApiTests(unittest.TestCase):
         os.environ["GEMINI_API_KEY"] = "test-api-key"
         os.environ["GEMINI_MODEL"] = "gemini-3-flash-preview"
         os.environ["FRONTEND_BASE_URL"] = "https://aqina.example.com"
+        os.environ["META_PAGE_ID"] = "page-1"
         os.environ["META_WHATSAPP_PHONE_NUMBER_ID"] = "phone-number-id"
 
         self.db = FakeFirestore()
@@ -81,6 +82,189 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["faq"][0]["keywords"], ["delivery"])
         self.assertEqual(payload["payment"]["paynow"]["enabled"], True)
         self.assertEqual(payload["escalation"]["pause_automation_on_handoff"], True)
+        self.assertTrue(payload["facebook_comment_automation"]["enabled"])
+        self.assertIn("price", payload["facebook_comment_automation"]["keywords"])
+
+    def test_facebook_comment_webhook_processes_keyword_comment_to_private_reply(self) -> None:
+        self._seed_runtime_settings()
+        client = self._build_client()
+        payload = self._facebook_comment_payload(
+            comment_id="comment-keyword-1",
+            message="请问多少钱？我要买给妈妈",
+            from_name="Alice Tan",
+        )
+
+        response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["accepted_events"], 1)
+        self.assertEqual(self.task_queue.created_tasks[0]["processor"], "process-comment-event")
+
+        event_id = self.task_queue.created_tasks[0]["event_id"]
+        task_response = client.post(
+            "/api/v1/marketing/tasks/process-comment-event",
+            json={"event_id": event_id},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(task_response.status_code, 200)
+        self.assertEqual(task_response.json()["status"], "processed")
+        public_calls = [call for call in self.meta_client.calls if call[0] == "reply_to_comment"]
+        private_calls = [call for call in self.meta_client.calls if call[0] == "send_private_reply"]
+        self.assertEqual(len(public_calls), 1)
+        self.assertEqual(len(private_calls), 1)
+        self.assertEqual(private_calls[0][1]["comment_id"], "comment-keyword-1")
+        self.assertEqual(len(private_calls[0][1]["quick_replies"]), 3)
+
+        event = self.db.collection("marketing_events").document(event_id).get().to_dict()
+        self.assertEqual(event["public_reply_status"], "sent")
+        self.assertEqual(event["private_reply_status"], "sent")
+        self.assertEqual(event["matched_keyword"], "多少钱")
+
+    def test_facebook_comment_webhook_skips_unmatched_self_and_duplicate_comments(self) -> None:
+        client = self._build_client()
+
+        no_keyword = self._facebook_comment_payload(
+            comment_id="comment-no-keyword",
+            message="看起来不错，支持一下",
+        )
+        no_keyword_response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(no_keyword).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(no_keyword),
+                "Content-Type": "application/json",
+            },
+        )
+        self.assertEqual(no_keyword_response.status_code, 202)
+        self.assertEqual(no_keyword_response.json()["accepted_events"], 0)
+
+        self_comment = self._facebook_comment_payload(
+            comment_id="comment-page-self",
+            message="PM 我们了解更多优惠",
+            from_id="page-1",
+            from_name="Aqina SG",
+        )
+        self_comment_response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(self_comment).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(self_comment),
+                "Content-Type": "application/json",
+            },
+        )
+        self.assertEqual(self_comment_response.status_code, 202)
+        self.assertEqual(self_comment_response.json()["accepted_events"], 0)
+
+        duplicate = self._facebook_comment_payload(
+            comment_id="comment-duplicate",
+            message="price pls",
+        )
+        first_response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(duplicate).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(duplicate),
+                "Content-Type": "application/json",
+            },
+        )
+        second_response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(duplicate).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(duplicate),
+                "Content-Type": "application/json",
+            },
+        )
+        self.assertEqual(first_response.json()["accepted_events"], 1)
+        self.assertEqual(second_response.json()["accepted_events"], 0)
+        self.assertEqual(len(self.task_queue.created_tasks), 1)
+
+    def test_facebook_private_reply_failure_is_recorded_without_retrying_duplicate_dm(self) -> None:
+        class FailingPrivateReplyMetaClient(FakeMetaClient):
+            def send_private_reply(self, **kwargs):
+                self.calls.append(("send_private_reply", kwargs))
+                raise RuntimeError("Meta private reply failed")
+
+        self.meta_client = FailingPrivateReplyMetaClient()
+        client = self._build_client()
+        payload = self._facebook_comment_payload(
+            comment_id="comment-private-fail",
+            message="how much for 4 boxes?",
+        )
+        response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+        self.assertEqual(response.status_code, 202)
+        event_id = self.task_queue.created_tasks[0]["event_id"]
+
+        first_task = client.post(
+            "/api/v1/marketing/tasks/process-comment-event",
+            json={"event_id": event_id},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+        second_task = client.post(
+            "/api/v1/marketing/tasks/process-comment-event",
+            json={"event_id": event_id},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(first_task.status_code, 200)
+        self.assertEqual(first_task.json()["status"], "processed_with_errors")
+        self.assertEqual(second_task.json()["status"], "processed_with_errors")
+        private_calls = [call for call in self.meta_client.calls if call[0] == "send_private_reply"]
+        self.assertEqual(len(private_calls), 1)
+        event = self.db.collection("marketing_events").document(event_id).get().to_dict()
+        self.assertEqual(event["private_reply_status"], "failed")
+        self.assertIn("private_reply", event["reply_errors"])
+
+    def test_messenger_opt_out_marks_contact_and_skips_ai_queue(self) -> None:
+        client = self._build_client()
+        payload = {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "messaging": [
+                        {
+                            "sender": {"id": "psid-stop-1"},
+                            "timestamp": 1770000000000,
+                            "message": {"mid": "mid-stop-1", "text": "STOP"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["accepted_events"], 1)
+        self.assertFalse(self.task_queue.created_tasks)
+        contacts = self.db.collection("marketing_contacts").stream()
+        self.assertEqual(len(contacts), 1)
+        contact = contacts[0].to_dict()
+        self.assertEqual(contact["marketing_status"], "opted_out")
+        events = self.db.collection("marketing_events").stream()
+        self.assertEqual(events[0].to_dict()["status"], "processed_opt_out")
 
     def test_process_inbound_message_creates_paynow_checkout_session_without_email(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -966,6 +1150,35 @@ class MarketingApiTests(unittest.TestCase):
         raw = json.dumps(payload).encode("utf-8")
         digest = hmac.new(b"top-secret", msg=raw, digestmod=hashlib.sha256).hexdigest()
         return f"sha256={digest}"
+
+    def _facebook_comment_payload(
+        self,
+        *,
+        comment_id: str,
+        message: str,
+        from_id: str = "fb-user-1",
+        from_name: str = "Facebook User",
+    ) -> dict[str, object]:
+        return {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "changes": [
+                        {
+                            "field": "feed",
+                            "value": {
+                                "item": "comment",
+                                "verb": "add",
+                                "comment_id": comment_id,
+                                "post_id": "post-1",
+                                "message": message,
+                                "from": {"id": from_id, "name": from_name},
+                            },
+                        }
+                    ],
+                }
+            ]
+        }
 
 
 if __name__ == "__main__":

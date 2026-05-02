@@ -19,6 +19,27 @@ FOLLOW_UP_STAGE_DELAYS = {
 DEFAULT_PAYNOW_QR_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa"
 LEGACY_PAYNOW_QR_IMAGE = "/paynow/bp-paynow-qr.png"
 
+DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
+    "pm",
+    "dm",
+    "price",
+    "how much",
+    "价钱",
+    "几钱",
+    "多少钱",
+    "我要",
+    "想买",
+    "购买",
+    "订购",
+    "下单",
+    "buy",
+    "order",
+    "info",
+    "资料",
+    "配套",
+    "优惠",
+]
+
 
 AQINA_SYSTEM_PROMPT = """
 Role Definition (角色定义)
@@ -202,6 +223,13 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             "t23h": {
                 "default": {"instruction": "请明确告知系统对话窗口即将关闭，并引导顾客回复 YES 以保留未来优惠资格。"}
             },
+        },
+        "facebook_comment_automation": {
+            "enabled": True,
+            "keywords": DEFAULT_FACEBOOK_COMMENT_KEYWORDS,
+            "public_reply_enabled": True,
+            "private_reply_enabled": True,
+            "ignore_page_self_comments": True,
         },
         "payment": {
             "paynow": {

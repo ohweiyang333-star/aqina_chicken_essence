@@ -139,6 +139,43 @@ async def process_whatsapp_campaign_recipient(
     return service.process_campaign_recipient(body.campaign_id, body.recipient_id)
 
 
+@router.get("/facebook/comment-events")
+async def list_facebook_comment_events(db: DB, admin: Admin, limit: int = Query(default=20, ge=1, le=50)):
+    """List recent Facebook comment-to-Messenger automation events for the CRM console."""
+    del admin
+    docs = (
+        db.collection("marketing_events")
+        .order_by("received_at", direction="DESCENDING")
+        .limit(150)
+        .stream()
+    )
+    items = []
+    for doc in docs:
+        row = doc.to_dict()
+        if row.get("event_type") != "facebook_comment_created":
+            continue
+        payload = row.get("payload", {})
+        items.append(
+            {
+                "event_id": doc.id,
+                "status": row.get("status", ""),
+                "comment_id": payload.get("comment_id", ""),
+                "post_id": payload.get("post_id", ""),
+                "comment_text": payload.get("comment_text", ""),
+                "from_name": payload.get("from_name") or "",
+                "matched_keyword": row.get("matched_keyword") or payload.get("matched_keyword") or "",
+                "public_reply_status": row.get("public_reply_status") or "pending",
+                "private_reply_status": row.get("private_reply_status") or "pending",
+                "reply_errors": row.get("reply_errors") or {},
+                "received_at": row.get("received_at"),
+                "processed_at": row.get("processed_at"),
+            }
+        )
+        if len(items) >= limit:
+            break
+    return {"items": items}
+
+
 @router.get("/whatsapp/health")
 async def whatsapp_health(db: DB, admin: Admin):
     """Return WhatsApp Cloud API configuration health for the admin console."""

@@ -41,12 +41,21 @@ export interface FollowUpRuleCell {
   instruction: string;
 }
 
+export interface FacebookCommentAutomationSettings {
+  enabled: boolean;
+  keywords: string[];
+  public_reply_enabled: boolean;
+  private_reply_enabled: boolean;
+  ignore_page_self_comments: boolean;
+}
+
 export interface ChatbotSettings {
   system_prompt: string;
   handoff_message: string;
   packages: Record<string, ChatbotPackage>;
   knowledge_base: KnowledgeBase;
   crm_follow_up_rules: Record<string, Record<string, FollowUpRuleCell>>;
+  facebook_comment_automation: FacebookCommentAutomationSettings;
   payment: {
     paynow: {
       enabled: boolean;

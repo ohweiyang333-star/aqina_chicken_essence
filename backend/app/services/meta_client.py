@@ -39,11 +39,29 @@ class MetaMessagingClient:
             data={"message": message, "access_token": settings.meta_page_access_token},
         )
 
-    def send_private_reply(self, comment_id: str, message: str) -> dict[str, Any]:
-        """Send a private reply from a Facebook comment thread."""
+    def send_private_reply(
+        self,
+        comment_id: str,
+        message: str,
+        quick_replies: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        """Send a private reply from a Facebook comment using the Page Send API."""
+        if not settings.meta_page_id:
+            raise ValueError("META_PAGE_ID is required to send Facebook private replies")
+
+        message_payload: dict[str, Any] = {"text": message}
+        if quick_replies:
+            message_payload["quick_replies"] = quick_replies
+
+        payload = {
+            "recipient": {"comment_id": comment_id},
+            "messaging_type": "RESPONSE",
+            "message": message_payload,
+        }
         return self._post(
-            f"/{comment_id}/private_replies",
-            data={"message": message, "access_token": settings.meta_page_access_token},
+            f"/{settings.meta_page_id}/messages",
+            json=payload,
+            params={"access_token": settings.meta_page_access_token},
         )
 
     def send_messenger_text(self, recipient_psid: str, text: str) -> dict[str, Any]:
