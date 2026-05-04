@@ -33,7 +33,13 @@ from app.services.whatsapp_console import WhatsAppConsoleService
 router = APIRouter(prefix="/marketing", tags=["Marketing"])
 
 
-@router.get("/webhooks/facebook", response_class=PlainTextResponse)
+@router.api_route("/webhooks/facebook", methods=["GET", "HEAD"], response_class=PlainTextResponse)
+@router.api_route(
+    "/webhooks/facebook/",
+    methods=["GET", "HEAD"],
+    response_class=PlainTextResponse,
+    include_in_schema=False,
+)
 async def verify_facebook_webhook(
     hub_mode: str | None = Query(default=None, alias="hub.mode"),
     hub_verify_token: str | None = Query(default=None, alias="hub.verify_token"),
@@ -43,7 +49,13 @@ async def verify_facebook_webhook(
     return _verify_webhook(hub_mode, hub_verify_token, hub_challenge)
 
 
-@router.get("/webhooks/whatsapp", response_class=PlainTextResponse)
+@router.api_route("/webhooks/whatsapp", methods=["GET", "HEAD"], response_class=PlainTextResponse)
+@router.api_route(
+    "/webhooks/whatsapp/",
+    methods=["GET", "HEAD"],
+    response_class=PlainTextResponse,
+    include_in_schema=False,
+)
 async def verify_whatsapp_webhook(
     hub_mode: str | None = Query(default=None, alias="hub.mode"),
     hub_verify_token: str | None = Query(default=None, alias="hub.verify_token"),

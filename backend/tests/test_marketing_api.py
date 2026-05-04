@@ -44,6 +44,29 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.text, "challenge-token")
 
+    def test_webhook_verification_accepts_head_and_trailing_slash(self) -> None:
+        client = self._build_client()
+        trailing_slash_response = client.get(
+            "/api/v1/marketing/webhooks/whatsapp/",
+            params={
+                "hub.mode": "subscribe",
+                "hub.verify_token": "test-verify-token",
+                "hub.challenge": "slash-challenge",
+            },
+        )
+        head_response = client.head(
+            "/api/v1/marketing/webhooks/whatsapp",
+            params={
+                "hub.mode": "subscribe",
+                "hub.verify_token": "test-verify-token",
+                "hub.challenge": "head-challenge",
+            },
+        )
+
+        self.assertEqual(trailing_slash_response.status_code, 200)
+        self.assertEqual(trailing_slash_response.text, "slash-challenge")
+        self.assertEqual(head_response.status_code, 200)
+
     def test_chatbot_settings_migrates_legacy_document(self) -> None:
         self.db.seed(
             "chatbotSettings/default",
@@ -1196,6 +1219,9 @@ class AsyncAppClient:
 
     def post(self, url: str, **kwargs):
         return asyncio.run(self._request("POST", url, **kwargs))
+
+    def head(self, url: str, **kwargs):
+        return asyncio.run(self._request("HEAD", url, **kwargs))
 
     async def _request(self, method: str, url: str, **kwargs):
         transport = httpx.ASGITransport(app=self._app)
