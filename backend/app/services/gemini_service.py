@@ -7,6 +7,7 @@ from typing import Any
 
 from app.core.config import settings
 from app.models.chatbot import FollowUpTurnResult, SalesConversationTurn
+from app.services.chatbot_skill_router import ChatbotSkillRouter
 
 
 VALID_LEAD_GOALS = {"self_care", "pregnancy", "postpartum", "gift_elder", "unknown"}
@@ -99,6 +100,24 @@ class GeminiConversationService:
         except json.JSONDecodeError:
             return None
 
+    def transcribe_audio_bytes(self, *, data: bytes, mime_type: str) -> str:
+        """Transcribe customer audio with Gemini and return only the transcript."""
+        if not self.is_ready():
+            raise RuntimeError("Gemini configuration is incomplete")
+
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=settings.gemini_api_key)
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=[
+                "Transcribe this customer audio in the original language. Return only the transcript text.",
+                types.Part.from_bytes(data=data, mime_type=mime_type or "audio/ogg"),
+            ],
+        )
+        return (response.text or "").strip()
+
     @staticmethod
     def _normalize_sales_turn_payload(payload: dict[str, Any]) -> SalesConversationTurn:
         normalized = dict(payload)
@@ -171,22 +190,39 @@ class GeminiConversationService:
             f"{item.get('role', 'user')}: {item.get('text', '')}"
             for item in messages[-12:]
         )
-        packages = json.dumps(runtime_settings.get("packages", {}), ensure_ascii=False)
+        available_packages = runtime_settings.get("packages", {})
+        package_codes = sorted(str(code) for code in available_packages.keys())
+        packages = json.dumps(available_packages, ensure_ascii=False)
         knowledge_base = json.dumps(runtime_settings.get("knowledge_base", {}), ensure_ascii=False)
+        active_skills = ChatbotSkillRouter(runtime_settings).active_skill_payloads(
+            contact=contact,
+            incoming_text=incoming_text,
+            max_skills=3,
+        )
+        active_skills_json = json.dumps(active_skills, ensure_ascii=False)
         return (
             f"Channel: {channel}\n"
             f"Current tag: {contact.get('current_tag', 'lead_cold')}\n"
             f"Lead goal: {contact.get('lead_goal', 'unknown')}\n"
             f"Known order fields: {json.dumps(contact.get('order_fields', {}), ensure_ascii=False)}\n"
+            f"Allowed package codes: {json.dumps(package_codes, ensure_ascii=False)}\n"
             f"Available packages: {packages}\n"
+            f"Active chatbot skills: {active_skills_json}\n"
             f"Knowledge base: {knowledge_base}\n"
             f"Incoming message: {incoming_text}\n"
             f"Conversation history:\n{history}\n\n"
+            "只使用 Active chatbot skills 作为当前场景 playbook；不要把未注入的 skill 规则写进回复。\n"
+            "不要在 reply_text 里输出 skill_id、lead tag、package code、checkout_ready、escalate 或任何内部字段。\n"
+            "图片会由系统作为媒体文件另发；不要把图片 URL 或 checkout URL 写进 reply_text。\n"
             "输出 JSON，字段固定为：reply_text, next_tag, lead_goal, recommended_package_code, "
             "upgrade_package_code, selected_package_code, order_fields, missing_order_fields, "
             "checkout_ready, escalate, escalation_reason, faq_topic, opt_in_granted。\n"
             "next_tag 只能是 lead_cold, qualified_warm, cart_hot, handoff_pending。\n"
-            "lead_goal 只能是 self_care, pregnancy, postpartum, gift_elder, unknown。"
+            "lead_goal 只能是 self_care, pregnancy, postpartum, gift_elder, unknown。\n"
+            "recommended_package_code, upgrade_package_code, selected_package_code 只能使用 Allowed package codes 中存在的值，"
+            "如果没有合适套餐请填 null，不要发明新的 package code。\n"
+            "只有顾客明确购买，并且 name、phone、address 都已经收集完整时，checkout_ready 才能为 true；"
+            "资料不齐时 checkout_ready=false，missing_order_fields 必须列出缺少字段。"
         )
 
     @staticmethod

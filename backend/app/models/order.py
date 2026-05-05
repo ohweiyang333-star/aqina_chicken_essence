@@ -1,7 +1,7 @@
 """Order models for API requests and responses."""
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
-from datetime import datetime
+from datetime import date, datetime
 
 
 class OrderItem(BaseModel):
@@ -64,6 +64,54 @@ class UpdateOrderStatusRequest(BaseModel):
 
     order_status: Literal["pending", "processing", "shipped", "delivered", "cancelled"]
     notes: Optional[str] = Field(None, max_length=1000)
+
+
+class OrderContactTemplate(BaseModel):
+    """Approved WhatsApp template available for order notifications."""
+
+    name: str
+    language_code: str = "en_US"
+    category: Optional[str] = None
+
+
+class OrderContactContextResponse(BaseModel):
+    """Admin contact context for following up on an order."""
+
+    order_id: str
+    source_label: str
+    customer_name: str
+    raw_whatsapp: str
+    normalized_whatsapp: Optional[str] = None
+    whatsapp_draft_url: Optional[str] = None
+    contact_id: Optional[str] = None
+    conversation_id: Optional[str] = None
+    conversation_url: Optional[str] = None
+    window_is_open: bool = False
+    window_expires_at: Optional[datetime] = None
+    backend_send_method: Optional[Literal["free_text", "template"]] = None
+    approved_templates: list[OrderContactTemplate] = Field(default_factory=list)
+
+
+class SendOrderWhatsAppNotificationRequest(BaseModel):
+    """Admin request to send a WhatsApp order follow-up."""
+
+    expected_ship_date: date
+    message: str = Field(..., min_length=1, max_length=4096)
+    template_name: Optional[str] = Field(None, min_length=1, max_length=512)
+    language_code: str = Field(default="en_US", min_length=2, max_length=32)
+    body_variables: list[str] = Field(default_factory=list)
+
+
+class SendOrderWhatsAppNotificationResponse(BaseModel):
+    """Result of sending a WhatsApp order follow-up."""
+
+    status: Literal["sent"]
+    method: Literal["free_text", "template"]
+    order_id: str
+    expected_ship_date: date
+    conversation_id: str
+    provider_message_id: Optional[str] = None
+    message_id: Optional[str] = None
 
 
 class ListOrdersResponse(BaseModel):

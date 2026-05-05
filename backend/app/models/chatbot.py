@@ -89,6 +89,30 @@ class FacebookCommentAutomationSettings(BaseModel):
     ignore_page_self_comments: bool = True
 
 
+class ChatbotSkill(BaseModel):
+    """Small playbook injected only when a conversation matches the scene."""
+
+    skill_id: str
+    title: str = ""
+    trigger_keywords: list[str] = Field(default_factory=list)
+    listening_goal: str = ""
+    instruction: str = ""
+    required_questions: list[str] = Field(default_factory=list)
+    recommended_package_code: str | None = None
+    upgrade_package_code: str | None = None
+    media_keys: list[str] = Field(default_factory=list)
+    next_referrals: list[str] = Field(default_factory=list)
+    safety_rules: list[str] = Field(default_factory=list)
+
+
+class ChatbotMediaAssets(BaseModel):
+    """Reusable media assets the chatbot may send as files."""
+
+    brand_intro: str = ""
+    package_images: dict[str, str] = Field(default_factory=dict)
+    captions: dict[str, str] = Field(default_factory=dict)
+
+
 class ChatbotSettingsResponse(BaseModel):
     """Canonical chatbot settings document returned to admin UI."""
 
@@ -102,6 +126,8 @@ class ChatbotSettingsResponse(BaseModel):
     )
     payment: PaymentSettings
     escalation: EscalationSettings
+    chatbot_skills: dict[str, ChatbotSkill] = Field(default_factory=dict)
+    media_assets: ChatbotMediaAssets = Field(default_factory=ChatbotMediaAssets)
     faq: list[FAQItem] = Field(default_factory=list)
 
 
@@ -116,6 +142,8 @@ class UpdateChatbotSettingsRequest(BaseModel):
     facebook_comment_automation: FacebookCommentAutomationSettings | None = None
     payment: PaymentSettings | None = None
     escalation: EscalationSettings | None = None
+    chatbot_skills: dict[str, ChatbotSkill] | None = None
+    media_assets: ChatbotMediaAssets | None = None
     faq: list[FAQItem] | None = None
 
 

@@ -1,6 +1,7 @@
 """Orchestration logic for webhook ingestion and internal marketing tasks."""
 from __future__ import annotations
 
+from copy import deepcopy
 import logging
 from typing import Any
 import requests
@@ -67,13 +68,24 @@ class MarketingAutomationOrchestrator:
                     (item for item in attachments if item.get("type") == "image"),
                     None,
                 )
-                if "text" not in message and not image_attachment:
+                audio_attachment = next(
+                    (item for item in attachments if item.get("type") == "audio"),
+                    None,
+                )
+                if "text" not in message and not image_attachment and not audio_attachment:
                     continue
 
                 occurred_at = ensure_datetime(message_event.get("timestamp")) or utcnow()
                 identifiers = {"psid": str(message_event.get("sender", {}).get("id", ""))}
-                message_type = "image" if image_attachment else "text"
-                message_text = message.get("text", "") if message_type == "text" else "[image]"
+                if audio_attachment:
+                    message_type = "audio"
+                    message_text = "[audio]"
+                elif image_attachment:
+                    message_type = "image"
+                    message_text = "[image]"
+                else:
+                    message_type = "text"
+                    message_text = message.get("text", "")
                 contact_id, conversation_id = self.contact_service.upsert_contact_from_event(
                     channel="messenger",
                     identifiers=identifiers,
@@ -111,7 +123,8 @@ class MarketingAutomationOrchestrator:
                         "channel": "messenger",
                         "text": message_text,
                         "message_type": message_type,
-                        "attachment_url": (image_attachment or {}).get("payload", {}).get("url"),
+                        "attachment_url": (image_attachment or audio_attachment or {}).get("payload", {}).get("url"),
+                        "mime_type": (image_attachment or audio_attachment or {}).get("payload", {}).get("mime_type"),
                         "provider_message_id": message.get("mid"),
                         "sender_psid": identifiers["psid"],
                     },
@@ -244,7 +257,7 @@ class MarketingAutomationOrchestrator:
                 )
                 for message in messages:
                     message_type = message.get("type")
-                    if message_type not in {"text", "image"}:
+                    if message_type not in {"text", "image", "audio"}:
                         logger.info(
                             "whatsapp_webhook_message_skipped reason=unsupported_type type=%s",
                             message_type,
@@ -257,7 +270,7 @@ class MarketingAutomationOrchestrator:
                     message_text = (
                         message.get("text", {}).get("body", "")
                         if message_type == "text"
-                        else message.get("image", {}).get("caption") or "[image]"
+                        else message.get("image", {}).get("caption") or ("[audio]" if message_type == "audio" else "[image]")
                     )
                     contact_id, conversation_id = self.contact_service.upsert_contact_from_event(
                         channel="whatsapp",
@@ -295,9 +308,9 @@ class MarketingAutomationOrchestrator:
                             "channel": "whatsapp",
                             "text": message_text,
                             "message_type": message_type,
-                            "media_id": message.get("image", {}).get("id"),
-                            "mime_type": message.get("image", {}).get("mime_type"),
-                            "sha256": message.get("image", {}).get("sha256"),
+                            "media_id": (message.get("image") or message.get("audio") or {}).get("id"),
+                            "mime_type": (message.get("image") or message.get("audio") or {}).get("mime_type"),
+                            "sha256": (message.get("image") or message.get("audio") or {}).get("sha256"),
                             "provider_message_id": message.get("id"),
                             "wa_id": wa_id,
                         },
@@ -501,12 +514,31 @@ class MarketingAutomationOrchestrator:
         contact_id = event["contact_id"]
         contact = self.contact_service.get_contact(contact_id)
         incoming_text = str(payload.get("text", ""))
+        if payload.get("message_type") == "audio":
+            if not self.gemini_service.is_ready():
+                ref.set({"status": "blocked_configuration", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+                logger.info("inbound_message_processing_blocked reason=gemini_not_ready_audio channel=%s", event["channel"])
+                return {"status": "blocked_configuration"}
+            try:
+                incoming_text = self._transcribe_audio_event(ref=ref, event=event)
+            except Exception as exc:  # noqa: BLE001 - customers should receive a readable fallback.
+                logger.warning("audio_transcription_failed channel=%s error=%s", event["channel"], exc)
+                return self._process_audio_transcription_failure(ref=ref, event=event, contact=contact)
+
         if is_marketing_opt_out_text(incoming_text) or contact.get("marketing_status") == "opted_out":
             if is_marketing_opt_out_text(incoming_text):
                 self.contact_service.mark_marketing_opt_out(contact_id, source=f"{event['channel']}_inbound_keyword")
             ref.set({"status": "skipped_opt_out", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
             logger.info("inbound_message_processing_skipped reason=opt_out channel=%s", event["channel"])
             return {"status": "skipped_opt_out"}
+
+        if self._is_payment_confirmation_text(incoming_text) and self._find_active_checkout_session(contact_id):
+            return self._process_payment_confirmation_text(
+                ref=ref,
+                event=event,
+                contact=contact,
+                incoming_text=incoming_text,
+            )
 
         if not self.gemini_service.is_ready():
             ref.set({"status": "blocked_configuration", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
@@ -520,7 +552,7 @@ class MarketingAutomationOrchestrator:
             self.gemini_service.generate_chat_reply(
                 contact=contact,
                 messages=messages,
-                incoming_text=payload.get("text", ""),
+                incoming_text=incoming_text,
                 channel=event["channel"],
                 runtime_settings=runtime_settings,
             )
@@ -541,13 +573,32 @@ class MarketingAutomationOrchestrator:
             self.contact_service.grant_marketing_opt_in(contact_id, source="chatbot_opt_in")
 
         if turn.escalate or turn.next_tag == "handoff_pending":
+            escalation_reply = turn.reply_text.strip()
+            if escalation_reply:
+                send_result = self._send_channel_reply(
+                    channel=event["channel"],
+                    contact=self.contact_service.get_contact(contact_id),
+                    text=escalation_reply,
+                )
+                self.contact_service.append_message(
+                    contact_id=contact_id,
+                    channel=event["channel"],
+                    direction="outbound",
+                    role="assistant",
+                    text=escalation_reply,
+                    source="gemini_chatbot",
+                    provider_message_id=self._extract_provider_message_id(event["channel"], send_result),
+                    created_at=utcnow(),
+                    delivery_status="sent",
+                )
             escalation_id = self._escalate_contact(
                 contact=contact,
                 contact_id=contact_id,
                 conversation_id=conversation_id,
-                latest_customer_message=payload.get("text", ""),
+                latest_customer_message=incoming_text,
                 reason=turn.escalation_reason or "manual_handoff_requested",
                 runtime_settings=runtime_settings,
+                send_customer_message=False,
             )
             ref.set({"status": "escalated", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
             logger.info("inbound_message_processing_escalated channel=%s", event["channel"])
@@ -594,6 +645,13 @@ class MarketingAutomationOrchestrator:
             provider_message_id=provider_message_id,
             created_at=utcnow(),
             delivery_status="sent",
+        )
+        self._send_chatbot_media_assets(
+            channel=event["channel"],
+            contact_id=contact_id,
+            conversation_id=conversation_id,
+            turn=turn,
+            runtime_settings=runtime_settings,
         )
         if checkout_session:
             qr_result = self._send_checkout_qr_image(
@@ -724,10 +782,11 @@ class MarketingAutomationOrchestrator:
         latest_customer_message: str,
         reason: str,
         runtime_settings: dict[str, Any],
+        send_customer_message: bool = True,
     ) -> str:
         escalation_settings = runtime_settings.get("escalation", {})
-        handoff_message = runtime_settings.get("handoff_message", "")
-        if handoff_message:
+        handoff_message = self._safe_handoff_message(runtime_settings.get("handoff_message", ""))
+        if send_customer_message and handoff_message:
             self._send_channel_reply(channel=contact["channel"], contact=contact, text=handoff_message)
             self.contact_service.append_message(
                 contact_id=contact_id,
@@ -803,6 +862,174 @@ class MarketingAutomationOrchestrator:
             caption=caption,
         )
 
+    def _send_chatbot_media_assets(
+        self,
+        *,
+        channel: str,
+        contact_id: str,
+        conversation_id: str,
+        turn: SalesConversationTurn,
+        runtime_settings: dict[str, Any],
+    ) -> None:
+        media_assets = runtime_settings.get("media_assets", {}) or {}
+        if not media_assets:
+            return
+
+        contact = self.contact_service.get_contact(contact_id)
+        sent_media = deepcopy(contact.get("sent_media") or {})
+        sent_media.setdefault("package_images", {})
+        media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
+
+        brand_intro = str(media_assets.get("brand_intro") or "").strip()
+        if brand_intro and not sent_media.get("brand_intro"):
+            try:
+                result = media_service.send_chatbot_image(
+                    channel=channel,
+                    contact=contact,
+                    source_url=brand_intro,
+                    cache_key="brand_intro",
+                    caption=(media_assets.get("captions", {}) or {}).get("brand_intro"),
+                )
+                self._append_outbound_media_message(
+                    contact_id=contact_id,
+                    conversation_id=conversation_id,
+                    channel=channel,
+                    text="Brand intro image sent",
+                    source="chatbot_brand_intro_media",
+                    provider_message_id=self._extract_provider_message_id(channel, result),
+                )
+                sent_media["brand_intro"] = True
+                self.contact_service.update_contact_profile(contact_id, {"sent_media": sent_media})
+                contact = self.contact_service.get_contact(contact_id)
+            except Exception as exc:  # noqa: BLE001 - media failures should not block chatbot text.
+                logger.warning("chatbot_brand_intro_media_failed contact_id=%s error=%s", contact_id, exc)
+
+        package_code = turn.selected_package_code or turn.recommended_package_code
+        package_images = media_assets.get("package_images", {}) or {}
+        package_image = str(package_images.get(package_code or "") or "").strip()
+        if package_code and package_image and not sent_media.get("package_images", {}).get(package_code):
+            try:
+                result = media_service.send_chatbot_image(
+                    channel=channel,
+                    contact=contact,
+                    source_url=package_image,
+                    cache_key=f"package_{package_code}",
+                    caption=(media_assets.get("captions", {}) or {}).get(package_code),
+                )
+                self._append_outbound_media_message(
+                    contact_id=contact_id,
+                    conversation_id=conversation_id,
+                    channel=channel,
+                    text=f"Product image sent: {package_code}",
+                    source="chatbot_product_media",
+                    provider_message_id=self._extract_provider_message_id(channel, result),
+                )
+                sent_media.setdefault("package_images", {})[package_code] = True
+                self.contact_service.update_contact_profile(contact_id, {"sent_media": sent_media})
+            except Exception as exc:  # noqa: BLE001 - media failures should not block chatbot text.
+                logger.warning("chatbot_product_media_failed contact_id=%s package_code=%s error=%s", contact_id, package_code, exc)
+
+    def _append_outbound_media_message(
+        self,
+        *,
+        contact_id: str,
+        conversation_id: str,
+        channel: str,
+        text: str,
+        source: str,
+        provider_message_id: str | None,
+    ) -> None:
+        self.contact_service.append_message(
+            contact_id=contact_id,
+            channel=channel,
+            direction="outbound",
+            role="assistant",
+            text=text,
+            source=source,
+            provider_message_id=provider_message_id,
+            message_type="image",
+            created_at=utcnow(),
+            delivery_status="sent",
+        )
+
+    def _transcribe_audio_event(self, *, ref: Any, event: dict[str, Any]) -> str:
+        payload = event.get("payload", {})
+        data, content_type = self._download_audio_payload(event)
+        mime_type = str(payload.get("mime_type") or content_type or "audio/ogg").split(";")[0]
+        transcript = self.gemini_service.transcribe_audio_bytes(data=data, mime_type=mime_type).strip()
+        if not transcript:
+            raise ValueError("Gemini audio transcription returned empty text")
+        updated_payload = dict(payload)
+        updated_payload["transcribed_text"] = transcript
+        updated_payload["text"] = transcript
+        ref.set({"payload": updated_payload, "updated_at": utcnow()}, merge=True)
+        return transcript
+
+    def _download_audio_payload(self, event: dict[str, Any]) -> tuple[bytes, str]:
+        payload = event.get("payload", {})
+        if event["channel"] == "whatsapp":
+            media_id = payload.get("media_id")
+            if not media_id:
+                raise ValueError("WhatsApp audio is missing media_id")
+            return self.meta_client.download_whatsapp_media(media_id)
+        if event["channel"] == "messenger":
+            attachment_url = payload.get("attachment_url")
+            if not attachment_url:
+                raise ValueError("Messenger audio is missing attachment_url")
+            response = requests.get(attachment_url, timeout=20)
+            response.raise_for_status()
+            return response.content, response.headers.get("content-type", "audio/ogg").split(";")[0]
+        raise ValueError(f"Unsupported audio channel: {event['channel']}")
+
+    def _process_audio_transcription_failure(self, *, ref: Any, event: dict[str, Any], contact: dict[str, Any]) -> dict[str, Any]:
+        reply_text = "不好意思，我这边暂时听不清这段语音，方便您打字发给我吗？"
+        send_result = self._send_channel_reply(channel=event["channel"], contact=contact, text=reply_text)
+        self.contact_service.append_message(
+            contact_id=event["contact_id"],
+            channel=event["channel"],
+            direction="outbound",
+            role="assistant",
+            text=reply_text,
+            source="audio_transcription_failed",
+            provider_message_id=self._extract_provider_message_id(event["channel"], send_result),
+            created_at=utcnow(),
+            delivery_status="sent",
+        )
+        ref.set({"status": "audio_transcription_failed", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+        return {"status": "audio_transcription_failed"}
+
+    def _process_payment_confirmation_text(
+        self,
+        *,
+        ref: Any,
+        event: dict[str, Any],
+        contact: dict[str, Any],
+        incoming_text: str,
+    ) -> dict[str, Any]:
+        reply_text = self._payment_ack_text()
+        send_result = self._send_channel_reply(channel=event["channel"], contact=contact, text=reply_text)
+        self.contact_service.append_message(
+            contact_id=event["contact_id"],
+            channel=event["channel"],
+            direction="outbound",
+            role="assistant",
+            text=reply_text,
+            source="payment_confirmation_ack",
+            provider_message_id=self._extract_provider_message_id(event["channel"], send_result),
+            created_at=utcnow(),
+            delivery_status="sent",
+        )
+        ref.set(
+            {
+                "status": "payment_confirmation_processed",
+                "latest_customer_message": incoming_text,
+                "processed_at": utcnow(),
+                "updated_at": utcnow(),
+            },
+            merge=True,
+        )
+        return {"status": "payment_confirmation_processed"}
+
     def _process_payment_receipt_event(self, *, ref: Any, event: dict[str, Any]) -> dict[str, Any]:
         runtime_settings = self.settings_service.get_settings()
         contact_id = event["contact_id"]
@@ -817,6 +1044,7 @@ class MarketingAutomationOrchestrator:
                 latest_customer_message="PayNow receipt image received but no active checkout session was found.",
                 reason="unmatched_payment_receipt",
                 runtime_settings=runtime_settings,
+                send_customer_message=False,
             )
             ref.set(
                 {
@@ -863,7 +1091,7 @@ class MarketingAutomationOrchestrator:
             {"status": "receipt_submitted", "payment_receipt_url": receipt_url, "updated_at": now},
             merge=True,
         )
-        reply_text = "收到您的 PayNow 付款截图了，我们会人工核对后尽快安排发货。"
+        reply_text = self._payment_ack_text()
         send_result = self._send_channel_reply(channel=event["channel"], contact=contact, text=reply_text)
         provider_message_id = self._extract_provider_message_id(event["channel"], send_result)
         self.contact_service.append_message(
@@ -912,6 +1140,27 @@ class MarketingAutomationOrchestrator:
             session["session_id"] = docs[0].id
             return session
         return None
+
+    @staticmethod
+    def _is_payment_confirmation_text(text: str) -> bool:
+        normalized = str(text or "").casefold()
+        payment_terms = ["完成付款", "已付款", "已经付款", "付款了", "付了", "paid", "paynow done", "payment done"]
+        screenshot_terms = ["截图", "receipt", "screenshot"]
+        return any(term in normalized for term in payment_terms) or (
+            "付款" in normalized and any(term in normalized for term in screenshot_terms)
+        )
+
+    @staticmethod
+    def _payment_ack_text() -> str:
+        return "收到您的 PayNow 付款截图了，我们会尽快核对并安排发货。"
+
+    @staticmethod
+    def _safe_handoff_message(value: str) -> str:
+        text = str(value or "").strip()
+        blocked_terms = ["转接人工", "人工同事", "人工智能", "ai chatbot", "ai chartboard", "chatbot"]
+        if any(term in text.casefold() for term in blocked_terms):
+            return ""
+        return text
 
     def _store_inbound_receipt(self, *, event: dict[str, Any], order_id: str) -> str:
         payload = event.get("payload", {})

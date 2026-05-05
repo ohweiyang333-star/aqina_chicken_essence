@@ -123,10 +123,26 @@ export default function AdminWhatsAppPage() {
       setConversations(conversationRows);
       setTemplates(templateRows);
       setCampaigns(campaignRows);
-      const nextConversationId = selectedConversationId || conversationRows[0]?.conversation_id || null;
+      const requestedConversationId =
+        typeof window === "undefined"
+          ? null
+          : new URLSearchParams(window.location.search).get("conversation");
+      const nextConversationId =
+        selectedConversationId ||
+        requestedConversationId ||
+        conversationRows[0]?.conversation_id ||
+        null;
       setSelectedConversationId(nextConversationId);
       if (nextConversationId) {
-        await loadConversation(nextConversationId);
+        try {
+          await loadConversation(nextConversationId);
+        } catch (error) {
+          if (nextConversationId !== conversationRows[0]?.conversation_id && conversationRows[0]) {
+            await loadConversation(conversationRows[0].conversation_id);
+          } else {
+            throw error;
+          }
+        }
       } else {
         setConversationDetail(null);
       }

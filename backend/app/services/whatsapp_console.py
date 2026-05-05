@@ -66,6 +66,101 @@ class WhatsAppConsoleService:
             "window": self._window_payload(contact),
         }
 
+    def order_contact_context(self, order_id: str) -> dict[str, Any]:
+        order = self._get_order(order_id)
+        customer = order.get("customer") if isinstance(order.get("customer"), dict) else {}
+        raw_whatsapp = str(customer.get("whatsapp") or order.get("customerPhone") or "")
+        normalized_whatsapp = normalize_singapore_whatsapp(raw_whatsapp)
+        contact_id, contact = self._contact_for_order(order, normalized_whatsapp)
+        conversation_id = None
+        window = {"is_open": False, "expires_at": None}
+        if contact:
+            conversation_id = contact.get("latest_conversation_id")
+            window = self._window_payload(contact)
+
+        templates = self._approved_templates()
+        backend_send_method = None
+        if conversation_id and window["is_open"]:
+            backend_send_method = "free_text"
+        elif conversation_id and templates:
+            backend_send_method = "template"
+
+        return {
+            "order_id": order_id,
+            "source_label": self._order_source_label(order.get("source")),
+            "customer_name": str(customer.get("name") or order.get("customerName") or ""),
+            "raw_whatsapp": raw_whatsapp,
+            "normalized_whatsapp": normalized_whatsapp,
+            "whatsapp_draft_url": (
+                f"https://wa.me/{normalized_whatsapp}" if normalized_whatsapp else None
+            ),
+            "contact_id": contact_id,
+            "conversation_id": conversation_id,
+            "conversation_url": (
+                f"/admin/whatsapp?conversation={conversation_id}" if conversation_id else None
+            ),
+            "window_is_open": bool(window["is_open"]),
+            "window_expires_at": window["expires_at"],
+            "backend_send_method": backend_send_method,
+            "approved_templates": templates,
+        }
+
+    def send_order_notification(
+        self,
+        order_id: str,
+        *,
+        expected_ship_date: Any,
+        message: str,
+        template_name: str | None,
+        language_code: str,
+        body_variables: list[str],
+        admin: dict[str, Any],
+    ) -> dict[str, Any]:
+        if not message.strip():
+            raise ValueError("Notification message cannot be empty.")
+        self._get_order(order_id)
+        context = self.order_contact_context(order_id)
+        conversation_id = context.get("conversation_id")
+        if not conversation_id:
+            raise ValueError("No WhatsApp conversation is linked to this order. Use the WhatsApp draft link instead.")
+
+        if context.get("window_is_open"):
+            result = self.send_manual_text(conversation_id, message.strip(), admin)
+            method = "free_text"
+        else:
+            if not template_name:
+                raise ValueError("Customer service window is closed. Select an approved WhatsApp template.")
+            result = self.send_template(
+                conversation_id,
+                template_name=template_name,
+                language_code=language_code,
+                body_variables=body_variables,
+                admin=admin,
+            )
+            method = "template"
+
+        update = {
+            "expected_ship_date": expected_ship_date.isoformat() if hasattr(expected_ship_date, "isoformat") else str(expected_ship_date),
+            "last_customer_contact_at": utcnow(),
+            "last_customer_contact_method": method,
+            "last_customer_contact_conversation_id": conversation_id,
+            "last_customer_contact_message": message.strip(),
+            "updated_at": utcnow(),
+        }
+        if template_name:
+            update["last_customer_contact_template_name"] = template_name
+        self.db.collection("orders").document(order_id).set(update, merge=True)
+
+        return {
+            "status": "sent",
+            "method": method,
+            "order_id": order_id,
+            "expected_ship_date": expected_ship_date,
+            "conversation_id": conversation_id,
+            "provider_message_id": result.get("provider_message_id"),
+            "message_id": result.get("message_id"),
+        }
+
     def send_manual_text(self, conversation_id: str, text: str, admin: dict[str, Any]) -> dict[str, Any]:
         conversation = self._get_conversation(conversation_id)
         contact = self.contact_service.get_contact(conversation["contact_id"])
@@ -639,6 +734,70 @@ class WhatsAppConsoleService:
         orders.sort(key=lambda item: str(item.get("created_at", "")), reverse=True)
         return orders
 
+    def _get_order(self, order_id: str) -> dict[str, Any]:
+        snapshot = self.db.collection("orders").document(order_id).get()
+        if not snapshot.exists:
+            raise KeyError(f"Order not found: {order_id}")
+        order = snapshot.to_dict()
+        order["order_id"] = order_id
+        return order
+
+    def _contact_for_order(
+        self,
+        order: dict[str, Any],
+        normalized_whatsapp: str | None,
+    ) -> tuple[str | None, dict[str, Any] | None]:
+        marketing_contact_id = order.get("marketing_contact_id")
+        if marketing_contact_id:
+            try:
+                contact = self.contact_service.get_contact(marketing_contact_id)
+                contact["contact_id"] = marketing_contact_id
+                return marketing_contact_id, contact
+            except KeyError:
+                pass
+
+        if not normalized_whatsapp:
+            return None, None
+
+        for field in ("identifiers.wa_id", "identifiers.phone_e164"):
+            docs = list(
+                self.db.collection("marketing_contacts")
+                .where(field, "==", normalized_whatsapp)
+                .limit(1)
+                .stream()
+            )
+            if docs:
+                contact = docs[0].to_dict()
+                contact["contact_id"] = docs[0].id
+                return docs[0].id, contact
+
+        return None, None
+
+    def _approved_templates(self) -> list[dict[str, Any]]:
+        templates = []
+        for doc in self.db.collection("whatsapp_templates").stream():
+            template = doc.to_dict()
+            if str(template.get("status", "")).upper() != "APPROVED":
+                continue
+            templates.append(
+                {
+                    "name": str(template.get("name", "")),
+                    "language_code": str(template.get("language_code") or "en_US"),
+                    "category": template.get("category"),
+                }
+            )
+        templates = [item for item in templates if item["name"]]
+        templates.sort(key=lambda item: (item["name"], item["language_code"]))
+        return templates
+
+    @staticmethod
+    def _order_source_label(source: Any) -> str:
+        if source == "marketing_chatbot":
+            return "WhatsApp Chatbot"
+        if source == "landing_page":
+            return "Landing checkout"
+        return str(source or "Landing checkout")
+
     def _window_payload(self, contact: dict[str, Any]) -> dict[str, Any]:
         expires_at = ensure_datetime(contact.get("window_expires_at"))
         return {
@@ -792,3 +951,14 @@ class WhatsAppConsoleService:
 def is_marketing_opt_out_text(message_text: str) -> bool:
     normalized = message_text.strip().lower()
     return any(keyword in normalized for keyword in OPT_OUT_KEYWORDS)
+
+
+def normalize_singapore_whatsapp(value: Any) -> str | None:
+    digits = "".join(character for character in str(value or "") if character.isdigit())
+    if not digits:
+        return None
+    if len(digits) == 8:
+        return f"65{digits}"
+    if digits.startswith("0065") and len(digits) > 4:
+        return digits[2:]
+    return digits

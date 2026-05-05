@@ -9,13 +9,20 @@ import uuid
 from app.api.deps import DB, Admin, PageParam, PageSizeParam, OrderFilters
 from app.models.order import (
     CreateOrderRequest,
+    OrderContactContextResponse,
+    SendOrderWhatsAppNotificationRequest,
+    SendOrderWhatsAppNotificationResponse,
     OrderResponse,
     UpdateOrderStatusRequest,
     ListOrdersResponse,
     OrderItem,
     CustomerInfo,
 )
+from app.services.marketing_contacts import MarketingContactService
+from app.services.meta_client import get_meta_client
 from app.services.storage_uploads import upload_public_file_to_firebase
+from app.services.task_queue import get_task_queue_service
+from app.services.whatsapp_console import WhatsAppConsoleService
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
 
@@ -117,6 +124,51 @@ async def list_orders(
     )
 
 
+@router.get("/{order_id}/contact-context", response_model=OrderContactContextResponse)
+async def get_order_contact_context(order_id: str, db: DB, admin: Admin):
+    """
+    Get WhatsApp follow-up context for an order.
+
+    Requires admin authentication.
+    """
+    del admin
+    try:
+        return _build_whatsapp_console(db).order_contact_context(order_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+
+
+@router.post("/{order_id}/whatsapp-notifications", response_model=SendOrderWhatsAppNotificationResponse)
+async def send_order_whatsapp_notification(
+    order_id: str,
+    body: SendOrderWhatsAppNotificationRequest,
+    db: DB,
+    admin: Admin,
+):
+    """
+    Send a WhatsApp order notification from the admin order dashboard.
+
+    Uses free-form text only while the customer service window is open. When
+    the window is closed, an approved WhatsApp template must be selected.
+    """
+    try:
+        return _build_whatsapp_console(db).send_order_notification(
+            order_id,
+            expected_ship_date=body.expected_ship_date,
+            message=body.message,
+            template_name=body.template_name,
+            language_code=body.language_code,
+            body_variables=body.body_variables,
+            admin=admin,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
 @router.get("/{order_id}", response_model=OrderResponse)
 async def get_order(order_id: str, db: DB, admin: Admin):
     """
@@ -147,6 +199,15 @@ async def get_order(order_id: str, db: DB, admin: Admin):
     )
 
     return OrderResponse(**order_data)
+
+
+def _build_whatsapp_console(db) -> WhatsAppConsoleService:
+    return WhatsAppConsoleService(
+        db=db,
+        task_queue=get_task_queue_service(),
+        contact_service=MarketingContactService(db),
+        meta_client=get_meta_client(),
+    )
 
 
 @router.post("/with-receipt", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)

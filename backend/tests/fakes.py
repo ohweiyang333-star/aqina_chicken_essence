@@ -277,7 +277,7 @@ class FakeMetaClient:
 
     def send_whatsapp_image(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("send_whatsapp_image", kwargs))
-        return {"messages": [{"id": "whatsapp-image-id"}]}
+        return {"messages": [{"id": f"whatsapp-image-id-{len(self.calls)}"}]}
 
     def download_whatsapp_media(self, media_id: str) -> tuple[bytes, str]:
         self.calls.append(("download_whatsapp_media", {"media_id": media_id}))
@@ -289,11 +289,11 @@ class FakeMetaClient:
 
     def send_messenger_image_attachment(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("send_messenger_image_attachment", kwargs))
-        return {"message_id": "messenger-image-id"}
+        return {"message_id": f"messenger-image-id-{len(self.calls)}"}
 
     def send_messenger_image_url(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("send_messenger_image_url", kwargs))
-        return {"message_id": "messenger-image-url-id"}
+        return {"message_id": f"messenger-image-url-id-{len(self.calls)}"}
 
     def send_whatsapp_template(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("send_whatsapp_template", kwargs))
@@ -332,11 +332,13 @@ class FakeGeminiService:
         self,
         reply_text: str = "stubbed model reply",
         chat_result: dict[str, Any] | None = None,
-        follow_up_result: dict[str, Any] | None = None,
+        follow_up_result: Any | None = None,
+        audio_transcript: str = "请问多少钱？",
     ):
         self.reply_text = reply_text
         self.chat_result = chat_result
         self.follow_up_result = follow_up_result
+        self.audio_transcript = audio_transcript
         self.calls: list[tuple[str, dict[str, Any]]] = []
 
     def is_ready(self) -> bool:
@@ -349,6 +351,10 @@ class FakeGeminiService:
     def generate_follow_up_reply(self, **kwargs: Any) -> Any:
         self.calls.append(("generate_follow_up_reply", kwargs))
         return self.follow_up_result or self.reply_text
+
+    def transcribe_audio_bytes(self, **kwargs: Any) -> str:
+        self.calls.append(("transcribe_audio_bytes", kwargs))
+        return self.audio_transcript
 
 
 def _matches_filter(data: dict[str, Any], field: str, op: str, value: Any) -> bool:

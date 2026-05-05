@@ -37,10 +37,29 @@ class MetaMediaAssetService:
         source = str(paynow_settings.get("payment_qr_image") or "").strip()
         if not source:
             raise ValueError("PayNow QR image is not configured")
+        return self.send_chatbot_image(
+            channel=channel,
+            contact=contact,
+            source_url=source,
+            cache_key="paynow_qr",
+            caption=caption,
+        )
 
+    def send_chatbot_image(
+        self,
+        *,
+        channel: str,
+        contact: dict[str, Any],
+        source_url: str,
+        cache_key: str,
+        caption: str | None = None,
+    ) -> dict[str, Any]:
+        source = str(source_url or "").strip()
+        if not source:
+            raise ValueError("Chatbot image source is not configured")
         identifiers = contact.get("identifiers", {})
         if channel == "whatsapp":
-            media_id = self._get_or_upload_whatsapp_media(source)
+            media_id = self._get_or_upload_whatsapp_media(source, cache_key=cache_key)
             return self.meta_client.send_whatsapp_image(
                 to=identifiers["wa_id"],
                 media_id=media_id,
@@ -49,7 +68,7 @@ class MetaMediaAssetService:
 
         if channel == "messenger":
             try:
-                attachment_id = self._get_or_upload_messenger_attachment(source)
+                attachment_id = self._get_or_upload_messenger_attachment(source, cache_key=cache_key)
                 return self.meta_client.send_messenger_image_attachment(
                     recipient_psid=identifiers["psid"],
                     attachment_id=attachment_id,
@@ -65,9 +84,9 @@ class MetaMediaAssetService:
 
         raise ValueError(f"Unsupported outbound channel: {channel}")
 
-    def _get_or_upload_whatsapp_media(self, source: str) -> str:
+    def _get_or_upload_whatsapp_media(self, source: str, *, cache_key: str) -> str:
         source_url = _resolve_source_url(source)
-        ref = self.db.collection("meta_media_assets").document("paynow_qr_whatsapp")
+        ref = self.db.collection("meta_media_assets").document(_cache_doc_id(cache_key, "whatsapp"))
         snapshot = ref.get()
         current = snapshot.to_dict() if snapshot.exists else {}
         if current.get("source_url") == source_url and current.get("whatsapp_media_id"):
@@ -94,9 +113,9 @@ class MetaMediaAssetService:
         )
         return media_id
 
-    def _get_or_upload_messenger_attachment(self, source: str) -> str:
+    def _get_or_upload_messenger_attachment(self, source: str, *, cache_key: str) -> str:
         source_url = _resolve_source_url(source)
-        ref = self.db.collection("meta_media_assets").document("paynow_qr_messenger")
+        ref = self.db.collection("meta_media_assets").document(_cache_doc_id(cache_key, "messenger"))
         snapshot = ref.get()
         current = snapshot.to_dict() if snapshot.exists else {}
         if current.get("source_url") == source_url and current.get("messenger_attachment_id"):
@@ -150,3 +169,8 @@ def _filename_from_url(source_url: str) -> str:
     path = urlparse(source_url).path.rstrip("/")
     filename = path.rsplit("/", 1)[-1] if path else "paynow-qr.png"
     return filename or "paynow-qr.png"
+
+
+def _cache_doc_id(cache_key: str, channel: str) -> str:
+    normalized = "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in cache_key)
+    return f"{normalized or 'chatbot_image'}_{channel}"

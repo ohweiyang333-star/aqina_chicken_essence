@@ -350,7 +350,7 @@ export default function AdminCRMPage() {
               <SectionShell
                 icon={<Package2 size={18} />}
                 title="套餐与知识库"
-                subtitle="固定四个配套，编辑文案与价格；知识库则提供 USP、FAQ 与医疗免责。"
+                subtitle="管理 Chatbot 可推荐配套，编辑文案与价格；知识库则提供 USP、FAQ 与医疗免责。"
               >
                 <div className="space-y-8">
                   <div className="grid gap-4 xl:grid-cols-2">

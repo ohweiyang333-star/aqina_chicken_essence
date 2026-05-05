@@ -1,6 +1,8 @@
 """Follow-up scheduling and processing engine."""
 from __future__ import annotations
 
+import ast
+import re
 from datetime import timedelta
 from typing import Any
 
@@ -179,15 +181,50 @@ class FollowUpEngine:
 
     @staticmethod
     def _normalize_follow_up_result(result: Any, *, checkout_url: str | None) -> tuple[str, str | None]:
+        payload: dict[str, Any] | None = None
         if isinstance(result, dict):
-            reply_text = str(result.get("reply_text", "")).strip()
-            next_tag = result.get("next_tag")
-            if result.get("checkout_link_required") and checkout_url:
+            payload = result
+        elif isinstance(result, str):
+            payload = FollowUpEngine._parse_structured_result_string(result)
+        elif hasattr(result, "model_dump"):
+            dumped = result.model_dump()
+            if isinstance(dumped, dict):
+                payload = dumped
+        elif hasattr(result, "reply_text"):
+            payload = {
+                "reply_text": getattr(result, "reply_text", ""),
+                "next_tag": getattr(result, "next_tag", None),
+                "checkout_link_required": getattr(result, "checkout_link_required", False),
+            }
+
+        if payload is not None:
+            reply_text = str(payload.get("reply_text", "")).strip()
+            next_tag = payload.get("next_tag")
+            if payload.get("checkout_link_required") and checkout_url:
                 reminder = "请使用前面发送的 PayNow QR 图片付款，完成后把截图发回这里即可。"
                 if reminder not in reply_text:
                     reply_text = f"{reply_text}\n\n{reminder}".strip()
             return reply_text, next_tag
         return str(result).strip(), None
+
+    @staticmethod
+    def _parse_structured_result_string(value: str) -> dict[str, Any] | None:
+        """Recover customer text when a structured follow-up object was stringified."""
+        text = str(value or "").strip()
+        if "reply_text=" not in text:
+            return None
+
+        reply_text = _extract_python_literal_field(text, "reply_text")
+        if reply_text is None:
+            return None
+
+        next_tag = _extract_python_literal_field(text, "next_tag")
+        checkout_link_required = _extract_bool_field(text, "checkout_link_required")
+        return {
+            "reply_text": reply_text,
+            "next_tag": next_tag,
+            "checkout_link_required": bool(checkout_link_required),
+        }
 
     def _mark_job(self, ref: Any, *, status: str, skip_reason: str | None) -> dict[str, Any]:
         payload = {
@@ -198,3 +235,44 @@ class FollowUpEngine:
         }
         ref.set(payload, merge=True)
         return {"status": status}
+
+
+def _extract_python_literal_field(text: str, field_name: str) -> Any:
+    prefix = f"{field_name}="
+    start = text.find(prefix)
+    if start < 0:
+        return None
+    index = start + len(prefix)
+    while index < len(text) and text[index].isspace():
+        index += 1
+    if index >= len(text) or text[index] not in {"'", '"'}:
+        raw_match = re.match(r"([^\s]+)", text[index:])
+        if not raw_match:
+            return None
+        raw_value = raw_match.group(1)
+        return None if raw_value == "None" else raw_value
+
+    quote = text[index]
+    escaped = False
+    cursor = index + 1
+    while cursor < len(text):
+        char = text[cursor]
+        if escaped:
+            escaped = False
+        elif char == "\\":
+            escaped = True
+        elif char == quote:
+            candidate = text[index : cursor + 1]
+            try:
+                return ast.literal_eval(candidate)
+            except (SyntaxError, ValueError):
+                return candidate[1:-1]
+        cursor += 1
+    return None
+
+
+def _extract_bool_field(text: str, field_name: str) -> bool | None:
+    match = re.search(rf"{re.escape(field_name)}=(True|False)", text)
+    if not match:
+        return None
+    return match.group(1) == "True"

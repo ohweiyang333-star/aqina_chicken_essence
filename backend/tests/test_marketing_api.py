@@ -102,11 +102,21 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
+        self.assertIn("先理解，后推荐", payload["system_prompt"])
+        self.assertIn("MD2 凤梨长大的快乐鸡", payload["system_prompt"])
+        self.assertIn("主治医生", payload["system_prompt"])
+        self.assertIn("trial_3", payload["packages"])
+        self.assertEqual(payload["packages"]["trial_3"]["price_sgd"], 18.0)
+        self.assertEqual(payload["packages"]["pack1"]["name_zh"], "日常滋养装")
         self.assertEqual(payload["faq"][0]["keywords"], ["delivery"])
         self.assertEqual(payload["payment"]["paynow"]["enabled"], True)
         self.assertEqual(payload["escalation"]["pause_automation_on_handoff"], True)
         self.assertTrue(payload["facebook_comment_automation"]["enabled"])
         self.assertIn("price", payload["facebook_comment_automation"]["keywords"])
+        self.assertIn("chatbot_skills", payload)
+        self.assertIn("ice_breaking", payload["chatbot_skills"])
+        self.assertIn("media_assets", payload)
+        self.assertIn("brand_intro", payload["media_assets"])
 
     def test_facebook_comment_webhook_processes_keyword_comment_to_private_reply(self) -> None:
         self._seed_runtime_settings()
@@ -331,6 +341,149 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(self.task_queue.created_tasks[0]["type"], "event")
         self.assertEqual(self.task_queue.created_tasks[0]["processor"], "process-inbound-message")
 
+    def test_whatsapp_audio_message_is_transcribed_before_chatbot_reply(self) -> None:
+        self._seed_runtime_settings()
+        self.gemini_service = FakeGeminiService(
+            audio_transcript="请问多少钱？我想自己喝",
+            chat_result={
+                "reply_text": "您好！如果是自己日常提神，我会先了解您是经常熬夜还是想日常补养。",
+                "next_tag": "lead_cold",
+                "lead_goal": "self_care",
+                "recommended_package_code": None,
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            },
+        )
+        client = self._build_client()
+        payload = {
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "field": "messages",
+                            "value": {
+                                "messages": [
+                                    {
+                                        "from": "6591113333",
+                                        "id": "wamid.audio.1",
+                                        "timestamp": "1777957353",
+                                        "type": "audio",
+                                        "audio": {
+                                            "id": "audio-media-id",
+                                            "mime_type": "audio/ogg",
+                                            "sha256": "audio-sha",
+                                        },
+                                    }
+                                ]
+                            },
+                        }
+                    ]
+                }
+            ]
+        }
+
+        response = client.post(
+            "/api/v1/marketing/webhooks/whatsapp",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["accepted_events"], 1)
+        event_id = self.task_queue.created_tasks[0]["event_id"]
+
+        task_response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": event_id},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(task_response.status_code, 200)
+        transcript_calls = [call for call in self.gemini_service.calls if call[0] == "transcribe_audio_bytes"]
+        self.assertEqual(len(transcript_calls), 1)
+        chat_calls = [call for call in self.gemini_service.calls if call[0] == "generate_chat_reply"]
+        self.assertEqual(chat_calls[0][1]["incoming_text"], "请问多少钱？我想自己喝")
+        event = self.db.collection("marketing_events").document(event_id).get().to_dict()
+        self.assertEqual(event["payload"]["transcribed_text"], "请问多少钱？我想自己喝")
+
+    def test_messenger_audio_message_is_transcribed_before_chatbot_reply(self) -> None:
+        self._seed_runtime_settings()
+        self.gemini_service = FakeGeminiService(
+            audio_transcript="我要买给妈妈补身",
+            chat_result={
+                "reply_text": "懂您，买给妈妈补身的话，我先帮您看更适合长辈的配套。",
+                "next_tag": "qualified_warm",
+                "lead_goal": "gift_elder",
+                "recommended_package_code": "pack6",
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            },
+        )
+        client = self._build_client()
+        payload = {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "messaging": [
+                        {
+                            "sender": {"id": "psid-audio-1"},
+                            "timestamp": 1770000000000,
+                            "message": {
+                                "mid": "mid-audio-1",
+                                "attachments": [
+                                    {
+                                        "type": "audio",
+                                        "payload": {"url": "https://cdn.example.com/audio.ogg"},
+                                    }
+                                ],
+                            },
+                        }
+                    ],
+                }
+            ]
+        }
+
+        response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["accepted_events"], 1)
+        event_id = self.task_queue.created_tasks[0]["event_id"]
+
+        with patch("app.services.marketing_orchestrator.requests.get", return_value=FakeHttpResponse(content_type="audio/ogg")):
+            task_response = client.post(
+                "/api/v1/marketing/tasks/process-inbound-message",
+                json={"event_id": event_id},
+                headers={"X-Internal-Token": "internal-secret"},
+            )
+
+        self.assertEqual(task_response.status_code, 200)
+        transcript_calls = [call for call in self.gemini_service.calls if call[0] == "transcribe_audio_bytes"]
+        self.assertEqual(len(transcript_calls), 1)
+        chat_calls = [call for call in self.gemini_service.calls if call[0] == "generate_chat_reply"]
+        self.assertEqual(chat_calls[0][1]["incoming_text"], "我要买给妈妈补身")
+
     def test_gemini_sales_turn_normalizes_unexpected_schema_values(self) -> None:
         from app.services.gemini_service import GeminiConversationService
 
@@ -359,6 +512,94 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(result.next_tag, "qualified_warm")
         self.assertEqual(result.lead_goal, "unknown")
         self.assertEqual(result.order_fields.name, None)
+
+    def test_gemini_chat_prompt_restricts_package_codes_and_checkout_readiness(self) -> None:
+        from app.services.gemini_service import GeminiConversationService
+
+        prompt = GeminiConversationService._build_chat_prompt(
+            contact={"current_tag": "qualified_warm", "lead_goal": "self_care"},
+            messages=[],
+            incoming_text="我要先试试看",
+            channel="whatsapp",
+            runtime_settings={
+                "packages": {
+                    "trial_3": {"code": "trial_3", "price_sgd": 18.0},
+                    "pack2": {"code": "pack2", "price_sgd": 75.0},
+                },
+                "knowledge_base": {},
+            },
+        )
+
+        self.assertIn("Allowed package codes", prompt)
+        self.assertIn("trial_3", prompt)
+        self.assertIn("不要发明新的 package code", prompt)
+        self.assertIn("checkout_ready 才能为 true", prompt)
+
+    def test_chatbot_skill_router_selects_contextual_skills(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.chatbot_skill_router import ChatbotSkillRouter
+
+        settings_doc = get_default_chatbot_settings()
+        router = ChatbotSkillRouter(settings_doc)
+
+        self.assertIn(
+            "self_care_fatigue",
+            router.select_active_skill_ids(
+                contact={"current_tag": "lead_cold", "lead_goal": "unknown"},
+                incoming_text="最近熬夜很累，白天没精神",
+            ),
+        )
+        self.assertIn(
+            "maternity_consultation",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "pregnancy"},
+                incoming_text="孕早期可以喝吗？我有点怕腥",
+            ),
+        )
+        self.assertIn(
+            "elder_gift_recovery",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "gift_elder"},
+                incoming_text="想买给妈妈术后恢复补身",
+            ),
+        )
+        self.assertIn(
+            "price_objection",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "self_care"},
+                incoming_text="多少钱？会不会太贵？",
+            ),
+        )
+        self.assertIn(
+            "medical_safety",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+                incoming_text="我在吃药治疗糖尿病，可以喝吗？",
+            ),
+        )
+        self.assertIn(
+            "payment_receipt",
+            router.select_active_skill_ids(
+                contact={"current_tag": "cart_hot", "lead_goal": "self_care"},
+                incoming_text="我已经完成付款，截图发了",
+            ),
+        )
+
+    def test_gemini_chat_prompt_injects_only_active_skill_playbooks(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import GeminiConversationService
+
+        prompt = GeminiConversationService._build_chat_prompt(
+            contact={"current_tag": "qualified_warm", "lead_goal": "self_care"},
+            messages=[],
+            incoming_text="多少钱？有点贵",
+            channel="whatsapp",
+            runtime_settings=get_default_chatbot_settings(),
+        )
+
+        self.assertIn("Active chatbot skills", prompt)
+        self.assertIn("price_objection", prompt)
+        self.assertNotIn('"maternity_consultation"', prompt)
 
     def test_process_inbound_message_creates_paynow_checkout_session_without_email(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -427,8 +668,181 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(len(message_calls), 1)
         self.assertNotIn("/paynow/", message_calls[0][1]["text"])
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
-        self.assertEqual(len(image_calls), 1)
-        self.assertEqual(image_calls[0][1]["media_id"], "whatsapp-media-id")
+        self.assertEqual(len(image_calls), 3)
+        outbound_images = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-1")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("message_type") == "image"
+        ]
+        self.assertEqual(
+            {item["source"] for item in outbound_images},
+            {"chatbot_brand_intro_media", "chatbot_product_media", "paynow_qr_media"},
+        )
+
+    def test_process_inbound_message_creates_trial_checkout_with_shipping(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "可以的，我先帮您安排新手体验装，适合先试口感 🎈",
+                "next_tag": "cart_hot",
+                "lead_goal": "self_care",
+                "recommended_package_code": "trial_3",
+                "upgrade_package_code": "pack2",
+                "selected_package_code": "trial_3",
+                "order_fields": {
+                    "name": "Ben Lim",
+                    "phone": "6592223333",
+                    "address": "20 Tampines Central, Singapore 529538",
+                },
+                "missing_order_fields": [],
+                "checkout_ready": True,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-trial",
+            conversation_id="conv-trial",
+            event_id="event-trial",
+            channel="whatsapp",
+            incoming_text="我要新手体验装",
+            identifier_key="wa_id",
+            identifier_value="6592223333",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-trial"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        order = self.db.collection("orders").stream()[0].to_dict()
+        self.assertEqual(order["items"][0]["product_id"], "trial_3")
+        self.assertEqual(order["subtotal_amount"], 18.0)
+        self.assertEqual(order["shipping_fee"], 8.0)
+        self.assertEqual(order["total_amount"], 26.0)
+        self.assertEqual(order["box_count"], 1)
+
+        contact = self.db.collection("marketing_contacts").document("contact-trial").get().to_dict()
+        self.assertEqual(contact["selected_package_code"], "trial_3")
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(image_calls), 3)
+
+    def test_process_inbound_message_sends_brand_and_package_images_without_url_text(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "懂您，经常熬夜确实很容易白天没精神。我更建议您看【活力升级装】，刚好两盒免运费。",
+                "next_tag": "qualified_warm",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-media",
+            conversation_id="conv-media",
+            event_id="event-media",
+            channel="whatsapp",
+            incoming_text="我经常熬夜很累",
+            identifier_key="wa_id",
+            identifier_value="6592220000",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-media"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertNotIn("firebasestorage.googleapis.com", message_calls[0][1]["text"])
+        self.assertNotIn("http", message_calls[0][1]["text"])
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(image_calls), 2)
+
+        outbound_images = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-media")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("message_type") == "image"
+        ]
+        self.assertEqual(
+            [item["source"] for item in outbound_images],
+            ["chatbot_brand_intro_media", "chatbot_product_media"],
+        )
+        contact = self.db.collection("marketing_contacts").document("contact-media").get().to_dict()
+        self.assertTrue(contact["sent_media"]["brand_intro"])
+        self.assertTrue(contact["sent_media"]["package_images"]["pack2"])
+
+    def test_process_inbound_message_does_not_resend_seen_chatbot_images(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "我继续建议您拿【活力升级装】，两盒刚好免运费。",
+                "next_tag": "qualified_warm",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-media-seen",
+            conversation_id="conv-media-seen",
+            event_id="event-media-seen",
+            channel="whatsapp",
+            incoming_text="那两盒如何？",
+            identifier_key="wa_id",
+            identifier_value="6592221111",
+        )
+        self.db.collection("marketing_contacts").document("contact-media-seen").set(
+            {
+                "sent_media": {
+                    "brand_intro": True,
+                    "package_images": {"pack2": True},
+                }
+            },
+            merge=True,
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-media-seen"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(image_calls), 0)
 
     def test_landing_order_with_receipt_charges_shipping_for_one_box(self) -> None:
         client = self._build_client()
@@ -595,8 +1009,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(escalation["status"], "open")
 
         call_names = [call[0] for call in self.meta_client.calls]
-        self.assertIn("send_whatsapp_text", call_names)
         self.assertIn("send_whatsapp_template", call_names)
+        customer_texts = [call[1]["text"] for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertFalse(any("转接人工" in text or "人工同事" in text for text in customer_texts))
 
     def test_checkout_token_endpoint_returns_paynow_payload(self) -> None:
         self._seed_runtime_settings()
@@ -742,6 +1157,60 @@ class MarketingApiTests(unittest.TestCase):
         payments = self.db.collection("payments").stream()
         self.assertEqual(len(payments), 1)
         self.assertEqual(payments[0].to_dict()["status"], "payment_submitted")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertIn("收到您的 PayNow 付款截图", message_calls[0][1]["text"])
+        self.assertNotIn("转接人工", message_calls[0][1]["text"])
+        self.assertNotIn("人工同事", message_calls[0][1]["text"])
+        self.assertNotIn("人工核对", message_calls[0][1]["text"])
+
+    def test_payment_confirmation_text_does_not_send_extra_handoff_message(self) -> None:
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-payment-text",
+            conversation_id="conv-payment-text",
+            event_id="event-payment-text",
+            channel="whatsapp",
+            incoming_text="完成付款",
+            identifier_key="wa_id",
+            identifier_value="6591115555",
+        )
+        self.db.collection("marketing_contacts").document("contact-payment-text").set(
+            {
+                "current_tag": "cart_hot",
+                "checkout_session_id": "session-payment-text",
+            },
+            merge=True,
+        )
+        self.db.seed(
+            "marketing_checkout_sessions/session-payment-text",
+            {
+                "order_id": "order_payment_text",
+                "token": "token-payment-text",
+                "package_code": "pack2",
+                "checkout_url": "https://aqina.example.com/paynow/token-payment-text",
+                "status": "active",
+                "contact_id": "contact-payment-text",
+                "total_amount": 75.0,
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-payment-text"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "payment_confirmation_processed")
+        self.assertFalse([call for call in self.gemini_service.calls if call[0] == "generate_chat_reply"])
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertIn("收到", message_calls[0][1]["text"])
+        self.assertIn("核对", message_calls[0][1]["text"])
+        self.assertNotIn("转接人工", message_calls[0][1]["text"])
+        self.assertNotIn("人工同事", message_calls[0][1]["text"])
 
     def test_follow_up_job_skips_when_contact_is_handoff_pending(self) -> None:
         self._seed_runtime_settings()
@@ -785,6 +1254,241 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         payload = response.json()
         self.assertEqual(payload["status"], "skipped_handoff_pending")
+
+    def test_follow_up_result_model_normalizes_to_reply_text_only(self) -> None:
+        from app.models.chatbot import FollowUpTurnResult
+        from app.services.follow_up import FollowUpEngine
+
+        reply_text, next_tag = FollowUpEngine._normalize_follow_up_result(
+            FollowUpTurnResult(
+                reply_text="哈喽~ 您是不是刚好在忙呀？没关系的。",
+                next_tag="lead_cold",
+                checkout_link_required=False,
+                escalate=False,
+                escalation_reason=None,
+                opt_in_request=False,
+            ),
+            checkout_url=None,
+        )
+
+        self.assertEqual(reply_text, "哈喽~ 您是不是刚好在忙呀？没关系的。")
+        self.assertEqual(next_tag, "lead_cold")
+        self.assertNotIn("reply_text=", reply_text)
+        self.assertNotIn("next_tag=", reply_text)
+        self.assertNotIn("checkout_link_required", reply_text)
+
+    def test_follow_up_result_string_repr_normalizes_to_reply_text_only(self) -> None:
+        from app.services.follow_up import FollowUpEngine
+
+        reply_text, next_tag = FollowUpEngine._normalize_follow_up_result(
+            "reply_text='想象一下，早晨起来撕开一包 Aqina 滴鸡精，倒出来是清澈透亮的金黄色。它完全没有传统鸡精的腥苦味，喝起来像一碗精华鸡汤。' next_tag='lead_cold' checkout_link_required=False escalate=False escalation_reason=None opt_in_request=False",
+            checkout_url=None,
+        )
+
+        self.assertEqual(next_tag, "lead_cold")
+        self.assertEqual(
+            reply_text,
+            "想象一下，早晨起来撕开一包 Aqina 滴鸡精，倒出来是清澈透亮的金黄色。它完全没有传统鸡精的腥苦味，喝起来像一碗精华鸡汤。",
+        )
+        self.assertNotIn("reply_text=", reply_text)
+        self.assertNotIn("next_tag=", reply_text)
+        self.assertNotIn("checkout_link_required", reply_text)
+
+    def test_follow_up_result_model_appends_customer_readable_paynow_reminder(self) -> None:
+        from app.models.chatbot import FollowUpTurnResult
+        from app.services.follow_up import FollowUpEngine
+
+        reply_text, next_tag = FollowUpEngine._normalize_follow_up_result(
+            FollowUpTurnResult(
+                reply_text="明天新加坡发货批次快截单了，您可以用前面那张 PayNow QR 完成付款。",
+                next_tag="cart_hot",
+                checkout_link_required=True,
+            ),
+            checkout_url="https://aqina.example.com/paynow/token-123",
+        )
+
+        self.assertEqual(next_tag, "cart_hot")
+        self.assertIn("请使用前面发送的 PayNow QR 图片付款", reply_text)
+        self.assertNotIn("checkout_link_required", reply_text)
+        self.assertNotIn("https://aqina.example.com/paynow/token-123", reply_text)
+
+    def test_follow_up_result_string_repr_appends_paynow_reminder_without_url_or_fields(self) -> None:
+        from app.services.follow_up import FollowUpEngine
+
+        reply_text, next_tag = FollowUpEngine._normalize_follow_up_result(
+            "reply_text='明天新加坡发货批次快截单了，您可以用前面那张 PayNow QR 完成付款。' next_tag='cart_hot' checkout_link_required=True escalate=False escalation_reason=None opt_in_request=False",
+            checkout_url="https://aqina.example.com/paynow/token-123",
+        )
+
+        self.assertEqual(next_tag, "cart_hot")
+        self.assertIn("请使用前面发送的 PayNow QR 图片付款", reply_text)
+        self.assertNotIn("reply_text=", reply_text)
+        self.assertNotIn("checkout_link_required", reply_text)
+        self.assertNotIn("https://aqina.example.com/paynow/token-123", reply_text)
+
+    def test_follow_up_job_sends_only_reply_text_from_structured_model(self) -> None:
+        from app.models.chatbot import FollowUpTurnResult
+
+        self.gemini_service = FakeGeminiService(
+            follow_up_result=FollowUpTurnResult(
+                reply_text="哈喽~ 您是不是刚好在忙呀？没关系的。",
+                next_tag="lead_cold",
+                checkout_link_required=False,
+                escalate=False,
+                escalation_reason=None,
+                opt_in_request=False,
+            )
+        )
+        self._seed_runtime_settings()
+        self.db.seed(
+            "marketing_contacts/contact-followup",
+            {
+                "channel": "whatsapp",
+                "identifiers": {"wa_id": "6595551111"},
+                "current_tag": "lead_cold",
+                "follow_up_stage": "none",
+                "last_interaction_time": "2026-04-10T00:00:00Z",
+                "window_expires_at": "2099-01-01T00:00:00Z",
+                "latest_conversation_id": "conv-followup",
+                "status": "active",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-followup",
+            {
+                "contact_id": "contact-followup",
+                "channel": "whatsapp",
+                "status": "open",
+                "message_count": 1,
+                "opened_at": "2026-04-10T00:00:00Z",
+                "last_message_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-followup/messages/msg-1",
+            {
+                "direction": "inbound",
+                "role": "user",
+                "text": "请问多少钱？",
+                "source": "whatsapp_webhook",
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_follow_up_jobs/job-followup",
+            {
+                "contact_id": "contact-followup",
+                "conversation_id": "conv-followup",
+                "stage": "t15m",
+                "anchor_interaction_time": "2026-04-10T00:00:00Z",
+                "due_at": "2026-04-10T00:15:00Z",
+                "eligible_tags": ["lead_cold", "qualified_warm", "cart_hot"],
+                "status": "scheduled",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-follow-up-job",
+            json={"job_id": "job-followup"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "completed")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertEqual(message_calls[0][1]["text"], "哈喽~ 您是不是刚好在忙呀？没关系的。")
+        self.assertNotIn("reply_text=", message_calls[0][1]["text"])
+
+        outbound_messages = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-followup")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("direction") == "outbound"
+        ]
+        self.assertEqual(len(outbound_messages), 1)
+        self.assertEqual(outbound_messages[0]["text"], "哈喽~ 您是不是刚好在忙呀？没关系的。")
+
+    def test_follow_up_job_sends_only_reply_text_from_string_repr(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            follow_up_result="reply_text='想象一下，早晨起来撕开一包 Aqina 滴鸡精，喝起来像一碗精华鸡汤。' next_tag='lead_cold' checkout_link_required=False escalate=False escalation_reason=None opt_in_request=False"
+        )
+        self._seed_runtime_settings()
+        self.db.seed(
+            "marketing_contacts/contact-followup-repr",
+            {
+                "channel": "messenger",
+                "identifiers": {"psid": "psid-followup-repr"},
+                "current_tag": "lead_cold",
+                "follow_up_stage": "none",
+                "last_interaction_time": "2026-04-10T00:00:00Z",
+                "window_expires_at": "2099-01-01T00:00:00Z",
+                "latest_conversation_id": "conv-followup-repr",
+                "status": "active",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-followup-repr",
+            {
+                "contact_id": "contact-followup-repr",
+                "channel": "messenger",
+                "status": "open",
+                "message_count": 1,
+                "opened_at": "2026-04-10T00:00:00Z",
+                "last_message_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-followup-repr/messages/msg-1",
+            {
+                "direction": "inbound",
+                "role": "user",
+                "text": "请问多少钱？",
+                "source": "messenger_webhook",
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_follow_up_jobs/job-followup-repr",
+            {
+                "contact_id": "contact-followup-repr",
+                "conversation_id": "conv-followup-repr",
+                "stage": "t15m",
+                "anchor_interaction_time": "2026-04-10T00:00:00Z",
+                "due_at": "2026-04-10T00:15:00Z",
+                "eligible_tags": ["lead_cold", "qualified_warm", "cart_hot"],
+                "status": "scheduled",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-follow-up-job",
+            json={"job_id": "job-followup-repr"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "completed")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_messenger_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertEqual(
+            message_calls[0][1]["text"],
+            "想象一下，早晨起来撕开一包 Aqina 滴鸡精，喝起来像一碗精华鸡汤。",
+        )
+        self.assertNotIn("reply_text=", message_calls[0][1]["text"])
+        self.assertNotIn("next_tag=", message_calls[0][1]["text"])
 
     def test_whatsapp_console_allows_manual_text_inside_customer_window(self) -> None:
         self._seed_contact_and_event(
@@ -881,6 +1585,266 @@ class MarketingApiTests(unittest.TestCase):
         template_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_template"]
         self.assertEqual(len(template_calls), 1)
         self.assertEqual(template_calls[0][1]["template_name"], "aqina_follow_up")
+
+    def test_order_contact_context_links_phone_to_whatsapp_thread(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-order-context",
+            conversation_id="conv-order-context",
+            event_id="event-order-context",
+            channel="whatsapp",
+            incoming_text="我刚刚下单了",
+            identifier_key="wa_id",
+            identifier_value="6591112222",
+        )
+        self.db.seed(
+            "orders/order_context",
+            {
+                "customer": {
+                    "name": "Alice Tan",
+                    "email": None,
+                    "whatsapp": "91112222",
+                    "address": "1 Orchard Road, Singapore 238823",
+                },
+                "items": [],
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "payment_status": "payment_submitted",
+                "order_status": "pending",
+                "source": "landing_page",
+                "created_at": "2026-05-05T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/orders/order_context/contact-context",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["source_label"], "Landing checkout")
+        self.assertEqual(payload["normalized_whatsapp"], "6591112222")
+        self.assertEqual(payload["conversation_id"], "conv-order-context")
+        self.assertEqual(payload["backend_send_method"], "free_text")
+        self.assertEqual(payload["whatsapp_draft_url"], "https://wa.me/6591112222")
+        self.assertEqual(payload["conversation_url"], "/admin/whatsapp?conversation=conv-order-context")
+
+    def test_order_whatsapp_notification_sends_free_text_inside_customer_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-order-send",
+            conversation_id="conv-order-send",
+            event_id="event-order-send",
+            channel="whatsapp",
+            incoming_text="付款截图已发",
+            identifier_key="wa_id",
+            identifier_value="6592223333",
+        )
+        self.db.seed(
+            "orders/order_send",
+            {
+                "customer": {
+                    "name": "Ben Lim",
+                    "email": None,
+                    "whatsapp": "6592223333",
+                    "address": "20 Tampines Central, Singapore 529538",
+                },
+                "items": [],
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "payment_status": "paid",
+                "order_status": "pending",
+                "source": "marketing_chatbot",
+                "marketing_contact_id": "contact-order-send",
+                "created_at": "2026-05-05T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/orders/order_send/whatsapp-notifications",
+            json={
+                "expected_ship_date": "2026-05-08",
+                "message": "Hi Ben, your order will be arranged for shipment on 8 May 2026.",
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "sent")
+        self.assertEqual(payload["method"], "free_text")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertEqual(message_calls[0][1]["to"], "6592223333")
+        order = self.db.collection("orders").document("order_send").get().to_dict()
+        self.assertEqual(order["expected_ship_date"], "2026-05-08")
+        self.assertEqual(order["last_customer_contact_method"], "free_text")
+        outbound_messages = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-order-send")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("direction") == "outbound"
+        ]
+        self.assertEqual(len(outbound_messages), 1)
+
+    def test_order_whatsapp_notification_blocks_free_text_when_window_closed_without_template(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-order-closed",
+            conversation_id="conv-order-closed",
+            event_id="event-order-closed",
+            channel="whatsapp",
+            incoming_text="之前下单了",
+            identifier_key="wa_id",
+            identifier_value="6593334444",
+        )
+        self.db.collection("marketing_contacts").document("contact-order-closed").set(
+            {"window_expires_at": "2026-04-01T00:00:00Z"},
+            merge=True,
+        )
+        self.db.seed(
+            "orders/order_closed",
+            {
+                "customer": {
+                    "name": "Chloe Ng",
+                    "email": None,
+                    "whatsapp": "6593334444",
+                    "address": "88 Bedok North, Singapore",
+                },
+                "items": [],
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "payment_status": "paid",
+                "order_status": "pending",
+                "source": "marketing_chatbot",
+                "marketing_contact_id": "contact-order-closed",
+                "created_at": "2026-05-05T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/orders/order_closed/whatsapp-notifications",
+            json={
+                "expected_ship_date": "2026-05-08",
+                "message": "Your order will ship soon.",
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("approved WhatsApp template", response.json()["detail"])
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"])
+
+    def test_order_whatsapp_notification_sends_template_when_window_closed(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-order-template",
+            conversation_id="conv-order-template",
+            event_id="event-order-template",
+            channel="whatsapp",
+            incoming_text="上周下单了",
+            identifier_key="wa_id",
+            identifier_value="6594445555",
+        )
+        self.db.collection("marketing_contacts").document("contact-order-template").set(
+            {"window_expires_at": "2026-04-01T00:00:00Z"},
+            merge=True,
+        )
+        self.db.seed(
+            "whatsapp_templates/order-template",
+            {
+                "name": "aqina_order_update",
+                "language_code": "en_US",
+                "category": "UTILITY",
+                "status": "APPROVED",
+                "components": [],
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "orders/order_template",
+            {
+                "customer": {
+                    "name": "Daniel Koh",
+                    "email": None,
+                    "whatsapp": "6594445555",
+                    "address": "8 Raffles Place, Singapore",
+                },
+                "items": [],
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "payment_status": "paid",
+                "order_status": "pending",
+                "source": "marketing_chatbot",
+                "marketing_contact_id": "contact-order-template",
+                "created_at": "2026-05-05T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/orders/order_template/whatsapp-notifications",
+            json={
+                "expected_ship_date": "2026-05-08",
+                "message": "Your order will be arranged for shipment on 8 May 2026.",
+                "template_name": "aqina_order_update",
+                "language_code": "en_US",
+                "body_variables": ["Daniel Koh", "8 May 2026", "order_template"],
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["method"], "template")
+        template_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_template"]
+        self.assertEqual(len(template_calls), 1)
+        self.assertEqual(template_calls[0][1]["template_name"], "aqina_order_update")
+        self.assertEqual(template_calls[0][1]["body_variables"], ["Daniel Koh", "8 May 2026", "order_template"])
+        order = self.db.collection("orders").document("order_template").get().to_dict()
+        self.assertEqual(order["last_customer_contact_method"], "template")
+        self.assertEqual(order["last_customer_contact_template_name"], "aqina_order_update")
+
+    def test_order_whatsapp_notification_returns_errors_for_missing_order_or_phone(self) -> None:
+        self.db.seed(
+            "orders/order_no_phone",
+            {
+                "customer": {
+                    "name": "No Phone",
+                    "email": None,
+                    "whatsapp": "",
+                    "address": "1 Orchard Road, Singapore",
+                },
+                "items": [],
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "payment_status": "paid",
+                "order_status": "pending",
+                "source": "landing_page",
+                "created_at": "2026-05-05T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        missing_order = client.get(
+            "/api/v1/orders/missing_order/contact-context",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        missing_phone = client.post(
+            "/api/v1/orders/order_no_phone/whatsapp-notifications",
+            json={
+                "expected_ship_date": "2026-05-08",
+                "message": "Your order will ship soon.",
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(missing_order.status_code, 404)
+        self.assertEqual(missing_phone.status_code, 400)
+        self.assertIn("No WhatsApp conversation", missing_phone.json()["detail"])
 
     def test_whatsapp_campaign_preview_skips_opted_out_contacts(self) -> None:
         self._seed_campaign_contact(
@@ -1051,12 +2015,12 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
-                "handoff_message": "我先为您转接人工同事优先处理，请稍等一下 🙏",
+                "handoff_message": "",
                 "packages": {
                     "pack1": {
                         "code": "pack1",
-                        "name_zh": "7天启动装",
-                        "name_en": "7-Day Starter Pack",
+                        "name_zh": "日常滋养装",
+                        "name_en": "Daily Nourishment Pack",
                         "price_sgd": 39.9,
                         "pack_count": 7,
                         "box_count": 1,
@@ -1066,8 +2030,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "pack2": {
                         "code": "pack2",
-                        "name_zh": "14天常备装",
-                        "name_en": "14-Day Care Pack",
+                        "name_zh": "活力升级装",
+                        "name_en": "Energy Upgrade Pack",
                         "price_sgd": 75.0,
                         "pack_count": 14,
                         "box_count": 2,
@@ -1077,8 +2041,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "pack4": {
                         "code": "pack4",
-                        "name_zh": "28天月度装",
-                        "name_en": "28-Day Monthly Pack",
+                        "name_zh": "孕产妇30天调理套餐",
+                        "name_en": "Maternity 30-Day Pack",
                         "price_sgd": 149.0,
                         "pack_count": 28,
                         "box_count": 4,
@@ -1088,8 +2052,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "pack6": {
                         "code": "pack6",
-                        "name_zh": "42天家庭装",
-                        "name_en": "42-Day Family Pack",
+                        "name_zh": "家庭月度订阅包",
+                        "name_en": "Family Monthly Subscription Pack",
                         "price_sgd": 219.0,
                         "pack_count": 42,
                         "box_count": 6,
@@ -1287,6 +2251,8 @@ class MarketingApiTests(unittest.TestCase):
             patch("app.api.v1.marketing.get_task_queue_service", return_value=self.task_queue),
             patch("app.api.v1.marketing.get_meta_client", return_value=self.meta_client),
             patch("app.api.v1.marketing.get_gemini_service", return_value=self.gemini_service),
+            patch("app.api.v1.orders.get_task_queue_service", return_value=self.task_queue),
+            patch("app.api.v1.orders.get_meta_client", return_value=self.meta_client),
             patch("app.services.follow_up.get_task_queue_service", return_value=self.task_queue),
             patch("app.services.follow_up.get_meta_client", return_value=self.meta_client),
             patch("app.services.follow_up.get_gemini_service", return_value=self.gemini_service),
@@ -1360,8 +2326,9 @@ class AsyncAppClient:
 
 
 class FakeHttpResponse:
-    content = b"fake-paynow-qr"
-    headers = {"content-type": "image/png"}
+    def __init__(self, *, content: bytes = b"fake-paynow-qr", content_type: str = "image/png") -> None:
+        self.content = content
+        self.headers = {"content-type": content_type}
 
     def raise_for_status(self) -> None:
         return None

@@ -8,6 +8,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from './firebase';
+import { apiClient } from './api-client';
 
 export type OrderStatus = 'PENDING' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED';
 export type OrderPaymentStatus =
@@ -38,7 +39,52 @@ export interface Order {
   paymentStatus: OrderPaymentStatus;
   paymentReceiptUrl?: string;
   source?: string;
+  marketingContactId?: string;
+  checkoutSessionId?: string;
+  expectedShipDate?: string;
+  lastCustomerContactAt?: unknown;
+  lastCustomerContactMethod?: string;
   createdAt?: unknown;
+}
+
+export interface OrderContactTemplate {
+  name: string;
+  languageCode: string;
+  category?: string;
+}
+
+export interface OrderContactContext {
+  orderId: string;
+  sourceLabel: string;
+  customerName: string;
+  rawWhatsApp: string;
+  normalizedWhatsApp?: string;
+  whatsappDraftUrl?: string;
+  contactId?: string;
+  conversationId?: string;
+  conversationUrl?: string;
+  windowIsOpen: boolean;
+  windowExpiresAt?: string;
+  backendSendMethod?: 'free_text' | 'template';
+  approvedTemplates: OrderContactTemplate[];
+}
+
+export interface SendOrderWhatsAppNotificationInput {
+  expectedShipDate: string;
+  message: string;
+  templateName?: string;
+  languageCode?: string;
+  bodyVariables?: string[];
+}
+
+export interface SendOrderWhatsAppNotificationResult {
+  status: 'sent';
+  method: 'free_text' | 'template';
+  orderId: string;
+  expectedShipDate: string;
+  conversationId: string;
+  providerMessageId?: string;
+  messageId?: string;
 }
 
 export interface CreateCheckoutOrderInput {
@@ -215,6 +261,41 @@ export const updateOrderPaymentStatus = async (
   }
 };
 
+export const getOrderContactContext = async (
+  orderId: string,
+): Promise<OrderContactContext> => {
+  const payload = await apiClient.get<RawRecord>(
+    `/api/v1/orders/${orderId}/contact-context`,
+  );
+  return normalizeOrderContactContext(payload);
+};
+
+export const sendOrderWhatsAppNotification = async (
+  orderId: string,
+  input: SendOrderWhatsAppNotificationInput,
+): Promise<SendOrderWhatsAppNotificationResult> => {
+  const payload = await apiClient.post<RawRecord>(
+    `/api/v1/orders/${orderId}/whatsapp-notifications`,
+    {
+      expected_ship_date: input.expectedShipDate,
+      message: input.message,
+      template_name: input.templateName,
+      language_code: input.languageCode || 'en_US',
+      body_variables: input.bodyVariables || [],
+    },
+  );
+
+  return {
+    status: 'sent',
+    method: payload.method === 'template' ? 'template' : 'free_text',
+    orderId: String(payload.order_id || orderId),
+    expectedShipDate: String(payload.expected_ship_date || input.expectedShipDate),
+    conversationId: String(payload.conversation_id || ''),
+    providerMessageId: stringOrUndefined(payload.provider_message_id),
+    messageId: stringOrUndefined(payload.message_id),
+  };
+};
+
 type RawRecord = Record<string, unknown>;
 
 function normalizeOrder(id: string, data: RawRecord): Order {
@@ -248,7 +329,46 @@ function normalizeOrder(id: string, data: RawRecord): Order {
     paymentReceiptUrl:
       stringOrUndefined(data.payment_receipt_url) ?? stringOrUndefined(data.screenshot_url),
     source: stringOrUndefined(data.source) ?? 'landing_page',
+    marketingContactId: stringOrUndefined(data.marketing_contact_id),
+    checkoutSessionId: stringOrUndefined(data.checkout_session_id),
+    expectedShipDate: stringOrUndefined(data.expected_ship_date),
+    lastCustomerContactAt: data.last_customer_contact_at,
+    lastCustomerContactMethod: stringOrUndefined(data.last_customer_contact_method),
     createdAt: data.createdAt || data.created_at,
+  };
+}
+
+function normalizeOrderContactContext(data: RawRecord): OrderContactContext {
+  const templates = Array.isArray(data.approved_templates)
+    ? data.approved_templates
+        .map((rawTemplate) => {
+          const template = isRecord(rawTemplate) ? rawTemplate : {};
+          return {
+            name: String(template.name || ''),
+            languageCode: String(template.language_code || 'en_US'),
+            category: stringOrUndefined(template.category),
+          };
+        })
+        .filter((template) => template.name.length > 0)
+    : [];
+
+  const sendMethod = String(data.backend_send_method || '');
+
+  return {
+    orderId: String(data.order_id || ''),
+    sourceLabel: String(data.source_label || 'Landing checkout'),
+    customerName: String(data.customer_name || ''),
+    rawWhatsApp: String(data.raw_whatsapp || ''),
+    normalizedWhatsApp: stringOrUndefined(data.normalized_whatsapp),
+    whatsappDraftUrl: stringOrUndefined(data.whatsapp_draft_url),
+    contactId: stringOrUndefined(data.contact_id),
+    conversationId: stringOrUndefined(data.conversation_id),
+    conversationUrl: stringOrUndefined(data.conversation_url),
+    windowIsOpen: Boolean(data.window_is_open),
+    windowExpiresAt: stringOrUndefined(data.window_expires_at),
+    backendSendMethod:
+      sendMethod === 'free_text' || sendMethod === 'template' ? sendMethod : undefined,
+    approvedTemplates: templates,
   };
 }
 
