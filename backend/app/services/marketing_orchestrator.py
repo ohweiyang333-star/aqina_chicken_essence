@@ -548,6 +548,7 @@ class MarketingAutomationOrchestrator:
         runtime_settings = self.settings_service.get_settings()
         conversation_id = event["conversation_id"]
         messages = self.contact_service.get_recent_messages(conversation_id)
+        customer_locale = _detect_customer_locale(incoming_text, contact)
         turn = self._normalize_turn(
             self.gemini_service.generate_chat_reply(
                 contact=contact,
@@ -567,6 +568,7 @@ class MarketingAutomationOrchestrator:
             "order_fields": merged_order_fields,
             "missing_order_fields": turn.missing_order_fields,
             "future_contact_opt_in": bool(turn.opt_in_granted),
+            "chatbot_locale": customer_locale,
         }
         self.contact_service.update_contact_profile(contact_id, update_fields)
         if turn.opt_in_granted:
@@ -652,6 +654,7 @@ class MarketingAutomationOrchestrator:
             conversation_id=conversation_id,
             turn=turn,
             runtime_settings=runtime_settings,
+            customer_locale=customer_locale,
         )
         if checkout_session:
             qr_result = self._send_checkout_qr_image(
@@ -870,6 +873,7 @@ class MarketingAutomationOrchestrator:
         conversation_id: str,
         turn: SalesConversationTurn,
         runtime_settings: dict[str, Any],
+        customer_locale: str,
     ) -> None:
         media_assets = runtime_settings.get("media_assets", {}) or {}
         if not media_assets:
@@ -877,28 +881,38 @@ class MarketingAutomationOrchestrator:
 
         contact = self.contact_service.get_contact(contact_id)
         sent_media = deepcopy(contact.get("sent_media") or {})
+        if isinstance(sent_media.get("brand_intro"), bool) and sent_media.get("brand_intro"):
+            sent_media.setdefault("brand_intro_languages", {})["zh"] = True
+        sent_media.setdefault("brand_intro_languages", {})
         sent_media.setdefault("package_images", {})
         media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
 
-        brand_intro = str(media_assets.get("brand_intro") or "").strip()
-        if brand_intro and not sent_media.get("brand_intro"):
+        brand_intro = _localized_media_value(
+            media_assets.get("brand_intro_images") or media_assets.get("brand_intro"),
+            customer_locale,
+        )
+        if brand_intro and not sent_media.get("brand_intro_languages", {}).get(customer_locale):
             try:
                 result = media_service.send_chatbot_image(
                     channel=channel,
                     contact=contact,
                     source_url=brand_intro,
-                    cache_key="brand_intro",
-                    caption=(media_assets.get("captions", {}) or {}).get("brand_intro"),
+                    cache_key=f"brand_intro_{customer_locale}",
+                    caption=_localized_media_value(
+                        (media_assets.get("captions", {}) or {}).get("brand_intro"),
+                        customer_locale,
+                    ),
                 )
                 self._append_outbound_media_message(
                     contact_id=contact_id,
                     conversation_id=conversation_id,
                     channel=channel,
-                    text="Brand intro image sent",
+                    text=f"Brand intro image sent: {customer_locale}",
                     source="chatbot_brand_intro_media",
                     provider_message_id=self._extract_provider_message_id(channel, result),
                 )
                 sent_media["brand_intro"] = True
+                sent_media.setdefault("brand_intro_languages", {})[customer_locale] = True
                 self.contact_service.update_contact_profile(contact_id, {"sent_media": sent_media})
                 contact = self.contact_service.get_contact(contact_id)
             except Exception as exc:  # noqa: BLE001 - media failures should not block chatbot text.
@@ -906,15 +920,18 @@ class MarketingAutomationOrchestrator:
 
         package_code = turn.selected_package_code or turn.recommended_package_code
         package_images = media_assets.get("package_images", {}) or {}
-        package_image = str(package_images.get(package_code or "") or "").strip()
+        package_image = _localized_media_value(package_images.get(package_code or ""), customer_locale)
         if package_code and package_image and not sent_media.get("package_images", {}).get(package_code):
             try:
                 result = media_service.send_chatbot_image(
                     channel=channel,
                     contact=contact,
                     source_url=package_image,
-                    cache_key=f"package_{package_code}",
-                    caption=(media_assets.get("captions", {}) or {}).get(package_code),
+                    cache_key=f"package_{package_code}_{customer_locale}",
+                    caption=_localized_media_value(
+                        (media_assets.get("captions", {}) or {}).get(package_code),
+                        customer_locale,
+                    ),
                 )
                 self._append_outbound_media_message(
                     contact_id=contact_id,
@@ -1358,3 +1375,31 @@ class MarketingAutomationOrchestrator:
             }
         )
         return True
+
+
+def _detect_customer_locale(incoming_text: str, contact: dict[str, Any]) -> str:
+    text = str(incoming_text or "")
+    chinese_count = sum(1 for char in text if "\u4e00" <= char <= "\u9fff")
+    ascii_letter_count = sum(1 for char in text if ("a" <= char.lower() <= "z"))
+    if chinese_count:
+        return "zh"
+    if ascii_letter_count >= 3:
+        return "en"
+    previous_locale = str(contact.get("chatbot_locale") or "").strip().lower()
+    if previous_locale in {"zh", "en"}:
+        return previous_locale
+    return "zh"
+
+
+def _localized_media_value(value: Any, locale: str) -> str:
+    normalized_locale = locale if locale in {"zh", "en"} else "zh"
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        localized = value.get(normalized_locale) or value.get("zh") or value.get("en")
+        if localized:
+            return str(localized).strip()
+        for candidate in value.values():
+            if candidate:
+                return str(candidate).strip()
+    return ""

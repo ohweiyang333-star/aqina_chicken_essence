@@ -117,6 +117,10 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("ice_breaking", payload["chatbot_skills"])
         self.assertIn("media_assets", payload)
         self.assertIn("brand_intro", payload["media_assets"])
+        self.assertEqual(payload["media_assets"]["brand_intro_images"]["zh"], "/chatbot/aqina-brand-intro-zh.jpg")
+        self.assertEqual(payload["media_assets"]["brand_intro_images"]["en"], "/chatbot/aqina-brand-intro-en.jpg")
+        self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["zh"], "/chatbot/aqina-pack2-chatbot-zh.jpg")
+        self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["en"], "/chatbot/aqina-pack2-chatbot-en.jpg")
 
     def test_facebook_comment_webhook_processes_keyword_comment_to_private_reply(self) -> None:
         self._seed_runtime_settings()
@@ -793,7 +797,65 @@ class MarketingApiTests(unittest.TestCase):
         )
         contact = self.db.collection("marketing_contacts").document("contact-media").get().to_dict()
         self.assertTrue(contact["sent_media"]["brand_intro"])
+        self.assertTrue(contact["sent_media"]["brand_intro_languages"]["zh"])
         self.assertTrue(contact["sent_media"]["package_images"]["pack2"])
+        brand_media = self.db.collection("meta_media_assets").document("brand_intro_zh_whatsapp").get().to_dict()
+        pack_media = self.db.collection("meta_media_assets").document("package_pack2_zh_whatsapp").get().to_dict()
+        self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-brand-intro-zh.jpg")
+        self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-pack2-chatbot-zh.jpg")
+
+    def test_process_inbound_message_sends_english_chatbot_images_for_english_customer(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "I recommend the 2-box pack because it includes free delivery.",
+                "next_tag": "qualified_warm",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": "pack6",
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-media-en",
+            conversation_id="conv-media-en",
+            event_id="event-media-en",
+            channel="whatsapp",
+            incoming_text="How much is it?",
+            identifier_key="wa_id",
+            identifier_value="6592220101",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-media-en"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertNotIn("http", message_calls[0][1]["text"])
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(image_calls), 2)
+        self.assertIn("free delivery", image_calls[1][1]["caption"].lower())
+
+        contact = self.db.collection("marketing_contacts").document("contact-media-en").get().to_dict()
+        self.assertEqual(contact["chatbot_locale"], "en")
+        self.assertTrue(contact["sent_media"]["brand_intro_languages"]["en"])
+        self.assertTrue(contact["sent_media"]["package_images"]["pack2"])
+        brand_media = self.db.collection("meta_media_assets").document("brand_intro_en_whatsapp").get().to_dict()
+        pack_media = self.db.collection("meta_media_assets").document("package_pack2_en_whatsapp").get().to_dict()
+        self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-brand-intro-en.jpg")
+        self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-pack2-chatbot-en.jpg")
 
     def test_process_inbound_message_does_not_resend_seen_chatbot_images(self) -> None:
         self.gemini_service = FakeGeminiService(

@@ -49,6 +49,13 @@ export interface FacebookCommentAutomationSettings {
   ignore_page_self_comments: boolean;
 }
 
+export interface ChatbotMediaAssets {
+  brand_intro: string;
+  brand_intro_images: Record<"zh" | "en", string>;
+  package_images: Record<string, string | Record<"zh" | "en", string>>;
+  captions: Record<string, string | Record<"zh" | "en", string>>;
+}
+
 export interface ChatbotSettings {
   system_prompt: string;
   handoff_message: string;
@@ -72,6 +79,7 @@ export interface ChatbotSettings {
     whatsapp_template_name: string;
     pause_automation_on_handoff: boolean;
   };
+  media_assets: ChatbotMediaAssets;
   faq: FAQItem[];
 }
 

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Any
 from urllib.parse import urlparse
 
@@ -92,7 +93,7 @@ class MetaMediaAssetService:
         if current.get("source_url") == source_url and current.get("whatsapp_media_id"):
             return current["whatsapp_media_id"]
 
-        media = self._download_media(source_url)
+        media = _ensure_whatsapp_supported_image(self._download_media(source_url))
         response = self.meta_client.upload_whatsapp_media(
             filename=media.filename,
             content_type=media.content_type,
@@ -174,3 +175,43 @@ def _filename_from_url(source_url: str) -> str:
 def _cache_doc_id(cache_key: str, channel: str) -> str:
     normalized = "".join(char if char.isalnum() or char in {"_", "-"} else "_" for char in cache_key)
     return f"{normalized or 'chatbot_image'}_{channel}"
+
+
+def _ensure_whatsapp_supported_image(media: MediaBytes) -> MediaBytes:
+    content_type = (media.content_type or "image/jpeg").lower()
+    if content_type == "image/jpg":
+        return MediaBytes(
+            data=media.data,
+            content_type="image/jpeg",
+            filename=_replace_extension(media.filename, "jpg"),
+            source_url=media.source_url,
+        )
+    if content_type in {"image/jpeg", "image/png"}:
+        return media
+    if content_type == "image/webp":
+        try:
+            from PIL import Image
+        except ImportError as exc:  # pragma: no cover - dependency is installed in production image.
+            raise ValueError("Pillow is required to convert WebP images before WhatsApp upload") from exc
+
+        with Image.open(BytesIO(media.data)) as image:
+            rgb = Image.new("RGB", image.size, (255, 255, 255))
+            if image.mode in {"RGBA", "LA"}:
+                alpha = image.convert("RGBA").getchannel("A")
+                rgb.paste(image.convert("RGB"), mask=alpha)
+            else:
+                rgb = image.convert("RGB")
+            output = BytesIO()
+            rgb.save(output, format="JPEG", quality=90, optimize=True)
+        return MediaBytes(
+            data=output.getvalue(),
+            content_type="image/jpeg",
+            filename=_replace_extension(media.filename, "jpg"),
+            source_url=media.source_url,
+        )
+    return media
+
+
+def _replace_extension(filename: str, extension: str) -> str:
+    stem = filename.rsplit(".", 1)[0] if "." in filename else filename
+    return f"{stem}.{extension}"

@@ -18,11 +18,16 @@ FOLLOW_UP_STAGE_DELAYS = {
 
 DEFAULT_PAYNOW_QR_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa"
 LEGACY_PAYNOW_QR_IMAGE = "/paynow/bp-paynow-qr.png"
-DEFAULT_BRAND_INTRO_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/create-a-high-impact-e-commerce-hero-product-image.jpg?alt=media&token=503ab227-91ad-41c9-a750-dadc9c3d86f0"
-DEFAULT_PACK1_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/V2%2Fclean-product-photography-for-a-landing-page--exac%20(3).webp?alt=media&token=c3d2d10d-80a5-4cf8-8cf0-f48cbd5cd567"
-DEFAULT_PACK2_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/V2%2Fclean-product-photography-for-a-landing-page--exac%20(2).webp?alt=media&token=9ebc16e0-a47b-48bf-8f21-e876612687bb"
-DEFAULT_PACK4_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/V2%2Fclean-product-photography-for-a-landing-page--exac.webp?alt=media&token=5b9bbf35-9a73-424f-93a8-a47061e481fa"
-DEFAULT_PACK6_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/V2%2Fclean-product-photography-for-a-landing-page--exac%20(1).webp?alt=media&token=088626b9-6409-406e-b7fe-ad466a02449a"
+DEFAULT_BRAND_INTRO_IMAGE_ZH = "/chatbot/aqina-brand-intro-zh.jpg"
+DEFAULT_BRAND_INTRO_IMAGE_EN = "/chatbot/aqina-brand-intro-en.jpg"
+DEFAULT_PACK1_IMAGE_ZH = "/chatbot/aqina-pack1-chatbot-zh.jpg"
+DEFAULT_PACK1_IMAGE_EN = "/chatbot/aqina-pack1-chatbot-en.jpg"
+DEFAULT_PACK2_IMAGE_ZH = "/chatbot/aqina-pack2-chatbot-zh.jpg"
+DEFAULT_PACK2_IMAGE_EN = "/chatbot/aqina-pack2-chatbot-en.jpg"
+DEFAULT_PACK4_IMAGE_ZH = "/chatbot/aqina-pack4-chatbot-zh.jpg"
+DEFAULT_PACK4_IMAGE_EN = "/chatbot/aqina-pack4-chatbot-en.jpg"
+DEFAULT_PACK6_IMAGE_ZH = "/chatbot/aqina-pack6-chatbot-zh.jpg"
+DEFAULT_PACK6_IMAGE_EN = "/chatbot/aqina-pack6-chatbot-en.jpg"
 
 DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
     "pm",
@@ -46,21 +51,43 @@ DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
 ]
 
 DEFAULT_MEDIA_ASSETS = {
-    "brand_intro": DEFAULT_BRAND_INTRO_IMAGE,
+    "brand_intro": DEFAULT_BRAND_INTRO_IMAGE_ZH,
+    "brand_intro_images": {
+        "zh": DEFAULT_BRAND_INTRO_IMAGE_ZH,
+        "en": DEFAULT_BRAND_INTRO_IMAGE_EN,
+    },
     "package_images": {
-        "trial_3": DEFAULT_PACK1_IMAGE,
-        "pack1": DEFAULT_PACK1_IMAGE,
-        "pack2": DEFAULT_PACK2_IMAGE,
-        "pack4": DEFAULT_PACK4_IMAGE,
-        "pack6": DEFAULT_PACK6_IMAGE,
+        "trial_3": {"zh": DEFAULT_PACK1_IMAGE_ZH, "en": DEFAULT_PACK1_IMAGE_EN},
+        "pack1": {"zh": DEFAULT_PACK1_IMAGE_ZH, "en": DEFAULT_PACK1_IMAGE_EN},
+        "pack2": {"zh": DEFAULT_PACK2_IMAGE_ZH, "en": DEFAULT_PACK2_IMAGE_EN},
+        "pack4": {"zh": DEFAULT_PACK4_IMAGE_ZH, "en": DEFAULT_PACK4_IMAGE_EN},
+        "pack6": {"zh": DEFAULT_PACK6_IMAGE_ZH, "en": DEFAULT_PACK6_IMAGE_EN},
     },
     "captions": {
-        "brand_intro": "Aqina 农场到上架，全程可追溯。",
-        "trial_3": "新手体验装：3 包先试口感。",
-        "pack1": "日常滋养装：1 盒 7 包。",
-        "pack2": "活力升级装：2 盒 14 包，满足免运费。",
-        "pack4": "孕产妇30天调理套餐：4 盒 28 包。",
-        "pack6": "家庭月度订阅包：6 盒 42 包。",
+        "brand_intro": {
+            "zh": "Aqina 农场到上架，全程可追溯。",
+            "en": "Aqina: raised on MD2 golden pineapples, traceable from farm to shelf.",
+        },
+        "trial_3": {
+            "zh": "新手体验装：3 包先试口感。",
+            "en": "Trial pack: 3 packs to try the taste first.",
+        },
+        "pack1": {
+            "zh": "1盒体验装：7 天入门滋养，适合先试口感。",
+            "en": "1-box starter pack: 7 days of nourishment, great for first-time trial.",
+        },
+        "pack2": {
+            "zh": "2盒14天疗程：满 SGD 70 包邮，日常提神抗疲劳首选。",
+            "en": "2-box 14-day pack: free delivery included, best for daily energy support.",
+        },
+        "pack4": {
+            "zh": "4盒28天调理：孕产/月子补养推荐，包邮。",
+            "en": "4-box 28-day care pack: recommended for maternity care, free delivery.",
+        },
+        "pack6": {
+            "zh": "6盒42天家庭装：长辈、送礼、家庭补养，包邮更划算。",
+            "en": "6-box 42-day family pack: for elders, gifting and family care.",
+        },
     },
 }
 
@@ -441,6 +468,7 @@ class ChatbotSettingsService:
             normalized["payment"]["paynow"]["account_name"] = defaults["payment"]["paynow"]["account_name"]
         if not paynow.get("payment_qr_alt"):
             normalized["payment"]["paynow"]["payment_qr_alt"] = defaults["payment"]["paynow"]["payment_qr_alt"]
+        normalized["media_assets"] = _normalize_media_assets(normalized.get("media_assets", {}), defaults["media_assets"])
         validated = ChatbotSettingsResponse.model_validate(normalized)
         return validated.model_dump()
 
@@ -484,3 +512,55 @@ def _deep_merge(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any
         else:
             result[key] = deepcopy(value)
     return result
+
+
+def _normalize_media_assets(media_assets: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:
+    normalized = _deep_merge(defaults, media_assets or {})
+
+    brand_intro = str(normalized.get("brand_intro") or "").strip()
+    brand_intro_images = normalized.get("brand_intro_images") if isinstance(normalized.get("brand_intro_images"), dict) else {}
+    if brand_intro and not brand_intro_images.get("zh"):
+        brand_intro_images["zh"] = brand_intro
+    if not brand_intro_images.get("zh"):
+        brand_intro_images["zh"] = defaults["brand_intro_images"]["zh"]
+    if not brand_intro_images.get("en"):
+        brand_intro_images["en"] = defaults["brand_intro_images"]["en"]
+    normalized["brand_intro"] = brand_intro_images["zh"]
+    normalized["brand_intro_images"] = brand_intro_images
+
+    package_images = normalized.get("package_images") if isinstance(normalized.get("package_images"), dict) else {}
+    default_package_images = defaults.get("package_images", {})
+    for code, default_value in default_package_images.items():
+        value = package_images.get(code)
+        if isinstance(value, str):
+            package_images[code] = {"zh": value, "en": value}
+        elif isinstance(value, dict):
+            if not value.get("zh"):
+                value["zh"] = default_value.get("zh") if isinstance(default_value, dict) else default_value
+            if not value.get("en"):
+                value["en"] = default_value.get("en") if isinstance(default_value, dict) else value.get("zh")
+            package_images[code] = value
+        elif isinstance(default_value, dict):
+            package_images[code] = deepcopy(default_value)
+        else:
+            package_images[code] = {"zh": default_value, "en": default_value}
+    normalized["package_images"] = package_images
+
+    captions = normalized.get("captions") if isinstance(normalized.get("captions"), dict) else {}
+    default_captions = defaults.get("captions", {})
+    for key, default_value in default_captions.items():
+        value = captions.get(key)
+        if isinstance(value, str):
+            captions[key] = {"zh": value, "en": value}
+        elif isinstance(value, dict):
+            if not value.get("zh"):
+                value["zh"] = default_value.get("zh") if isinstance(default_value, dict) else default_value
+            if not value.get("en"):
+                value["en"] = default_value.get("en") if isinstance(default_value, dict) else value.get("zh")
+            captions[key] = value
+        elif isinstance(default_value, dict):
+            captions[key] = deepcopy(default_value)
+        else:
+            captions[key] = {"zh": default_value, "en": default_value}
+    normalized["captions"] = captions
+    return normalized

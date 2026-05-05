@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "./node_modules/.bin/next dev",
     "check:images": "node ./scripts/check-image-assets.mjs",
+    "generate:chatbot-media": "node ./scripts/generate-chatbot-media.mjs",
     "prebuild": "npm run check:images",
     "build": "node ./scripts/run-next-build-with-timeout.mjs",
     "start": "./node_modules/.bin/next start",

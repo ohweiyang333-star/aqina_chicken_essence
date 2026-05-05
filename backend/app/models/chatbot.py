@@ -109,8 +109,9 @@ class ChatbotMediaAssets(BaseModel):
     """Reusable media assets the chatbot may send as files."""
 
     brand_intro: str = ""
-    package_images: dict[str, str] = Field(default_factory=dict)
-    captions: dict[str, str] = Field(default_factory=dict)
+    brand_intro_images: dict[str, str] = Field(default_factory=dict)
+    package_images: dict[str, Any] = Field(default_factory=dict)
+    captions: dict[str, Any] = Field(default_factory=dict)
 
 
 class ChatbotSettingsResponse(BaseModel):
