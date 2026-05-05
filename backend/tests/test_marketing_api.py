@@ -289,6 +289,48 @@ class MarketingApiTests(unittest.TestCase):
         events = self.db.collection("marketing_events").stream()
         self.assertEqual(events[0].to_dict()["status"], "processed_opt_out")
 
+    def test_whatsapp_webhook_accepts_unix_timestamp_string(self) -> None:
+        client = self._build_client()
+        payload = {
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "field": "messages",
+                            "value": {
+                                "messages": [
+                                    {
+                                        "from": "6591112222",
+                                        "id": "wamid.test.1",
+                                        "timestamp": "1777957353",
+                                        "type": "text",
+                                        "text": {"body": "你好"},
+                                    }
+                                ]
+                            },
+                        }
+                    ]
+                }
+            ]
+        }
+
+        response = client.post(
+            "/api/v1/marketing/webhooks/whatsapp",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["accepted_events"], 1)
+        events = self.db.collection("marketing_events").stream()
+        self.assertEqual(len(events), 1)
+        self.assertEqual(events[0].to_dict()["channel"], "whatsapp")
+        self.assertEqual(self.task_queue.created_tasks[0]["type"], "event")
+        self.assertEqual(self.task_queue.created_tasks[0]["processor"], "process-inbound-message")
+
     def test_process_inbound_message_creates_paynow_checkout_session_without_email(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={

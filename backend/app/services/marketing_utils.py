@@ -24,7 +24,13 @@ def ensure_datetime(value: Any) -> datetime | None:
             timestamp /= 1000.0
         return datetime.fromtimestamp(timestamp, tz=timezone.utc)
     if isinstance(value, str):
-        normalized = value.replace("Z", "+00:00")
+        stripped = value.strip()
+        if stripped.replace(".", "", 1).isdigit():
+            timestamp = float(stripped)
+            if timestamp > 10_000_000_000:
+                timestamp /= 1000.0
+            return datetime.fromtimestamp(timestamp, tz=timezone.utc)
+        normalized = stripped.replace("Z", "+00:00")
         return datetime.fromisoformat(normalized)
     raise TypeError(f"Unsupported datetime value: {value!r}")
 
