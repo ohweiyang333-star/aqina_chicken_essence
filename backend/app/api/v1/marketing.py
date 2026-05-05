@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 
 from fastapi import APIRouter, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import PlainTextResponse
@@ -31,6 +32,7 @@ from app.services.task_queue import get_task_queue_service
 from app.services.whatsapp_console import WhatsAppConsoleService
 
 router = APIRouter(prefix="/marketing", tags=["Marketing"])
+logger = logging.getLogger(__name__)
 
 
 @router.api_route("/webhooks/facebook", methods=["GET", "HEAD"], response_class=PlainTextResponse)
@@ -88,6 +90,7 @@ async def receive_whatsapp_webhook(
     payload = await _parse_and_verify_request(request, x_hub_signature_256)
     orchestrator = _build_orchestrator(db)
     accepted = orchestrator.ingest_whatsapp_webhook(payload)
+    logger.info("whatsapp_webhook_received accepted_events=%s", accepted)
     return {"status": "accepted", "accepted_events": accepted}
 
 

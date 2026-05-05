@@ -234,9 +234,21 @@ class MarketingAutomationOrchestrator:
         for entry in payload.get("entry", []):
             for change in entry.get("changes", []):
                 value = change.get("value", {})
-                for message in value.get("messages", []):
+                messages = value.get("messages", [])
+                statuses = value.get("statuses", [])
+                logger.info(
+                    "whatsapp_webhook_change_received field=%s message_count=%s status_count=%s",
+                    change.get("field"),
+                    len(messages),
+                    len(statuses),
+                )
+                for message in messages:
                     message_type = message.get("type")
                     if message_type not in {"text", "image"}:
+                        logger.info(
+                            "whatsapp_webhook_message_skipped reason=unsupported_type type=%s",
+                            message_type,
+                        )
                         continue
 
                     occurred_at = ensure_datetime(message.get("timestamp")) or utcnow()
@@ -300,9 +312,15 @@ class MarketingAutomationOrchestrator:
                             current_tag="lead_cold",
                         )
                         accepted += 1
+                        logger.info(
+                            "whatsapp_webhook_message_recorded message_type=%s queued=true",
+                            message_type,
+                        )
+                    else:
+                        logger.info("whatsapp_webhook_message_skipped reason=duplicate")
 
-                for status in value.get("statuses", []):
-                    WhatsAppConsoleService(
+                for status in statuses:
+                    delivery_update = WhatsAppConsoleService(
                         db=self.db,
                         meta_client=self.meta_client,
                         task_queue=self.task_queue,
@@ -318,6 +336,11 @@ class MarketingAutomationOrchestrator:
                         payload=status,
                     )
                     self._record_event(normalized)
+                    logger.info(
+                        "whatsapp_webhook_status_recorded status=%s delivery_updated=%s",
+                        status.get("status"),
+                        delivery_update.get("updated"),
+                    )
         return accepted
 
     def process_comment_event(self, event_id: str) -> dict[str, Any]:
@@ -482,10 +505,12 @@ class MarketingAutomationOrchestrator:
             if is_marketing_opt_out_text(incoming_text):
                 self.contact_service.mark_marketing_opt_out(contact_id, source=f"{event['channel']}_inbound_keyword")
             ref.set({"status": "skipped_opt_out", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+            logger.info("inbound_message_processing_skipped reason=opt_out channel=%s", event["channel"])
             return {"status": "skipped_opt_out"}
 
         if not self.gemini_service.is_ready():
             ref.set({"status": "blocked_configuration", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+            logger.info("inbound_message_processing_blocked reason=gemini_not_ready channel=%s", event["channel"])
             return {"status": "blocked_configuration"}
 
         runtime_settings = self.settings_service.get_settings()
@@ -525,6 +550,7 @@ class MarketingAutomationOrchestrator:
                 runtime_settings=runtime_settings,
             )
             ref.set({"status": "escalated", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+            logger.info("inbound_message_processing_escalated channel=%s", event["channel"])
             return {"status": "escalated", "escalation_id": escalation_id}
 
         checkout_session = None
@@ -597,6 +623,11 @@ class MarketingAutomationOrchestrator:
                 },
             )
         ref.set({"status": "processed", "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+        logger.info(
+            "inbound_message_processed channel=%s checkout_created=%s",
+            event["channel"],
+            bool(checkout_session),
+        )
         return {"status": "processed", "checkout_session_id": checkout_session["session_id"] if checkout_session else None}
 
     def _create_checkout_session(
