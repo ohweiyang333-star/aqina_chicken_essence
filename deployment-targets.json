@@ -3,15 +3,11 @@
     "platform": "cloud_run",
     "projectId": "aqina-chicken-essence",
     "region": "asia-southeast1",
-    "service": "aqina-frontend",
-    "image": "asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/frontend"
-  },
-  "frontendV2": {
-    "platform": "cloud_run",
-    "projectId": "aqina-chicken-essence",
-    "region": "asia-southeast1",
     "service": "aqina-frontend-v2",
-    "image": "asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/frontend-v2"
+    "image": "asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/frontend-v2",
+    "hostingTarget": "aqina-v2",
+    "hostingSite": "aqina-sg",
+    "hostingChannel": "live"
   },
   "backend": {
     "platform": "cloud_run",
@@ -21,10 +17,6 @@
     "image": "asia-southeast1-docker.pkg.dev/aqina-chicken-essence/aqina-repo/backend"
   },
   "firebaseHosting": {
-    "projectId": "aqina-chicken-essence",
-    "channel": "live"
-  },
-  "firebaseHostingV2": {
     "projectId": "aqina-chicken-essence",
     "target": "aqina-v2",
     "site": "aqina-sg",
