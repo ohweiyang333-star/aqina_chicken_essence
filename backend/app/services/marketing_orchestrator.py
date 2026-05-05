@@ -1,6 +1,7 @@
 """Orchestration logic for webhook ingestion and internal marketing tasks."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 import requests
 
@@ -21,6 +22,8 @@ FACEBOOK_PRIVATE_REPLY_QUICK_REPLIES = [
     {"content_type": "text", "title": "孕期/月子", "payload": "AQINA_MATERNITY"},
     {"content_type": "text", "title": "送长辈", "payload": "AQINA_GIFT_ELDER"},
 ]
+
+logger = logging.getLogger(__name__)
 
 FINAL_COMMENT_EVENT_STATUSES = {
     "processed",
@@ -139,24 +142,52 @@ class MarketingAutomationOrchestrator:
             for change in entry.get("changes", []):
                 value = change.get("value", {})
                 if change.get("field") != "feed" or value.get("item") != "comment":
+                    logger.info(
+                        "facebook_webhook_change_skipped reason=unsupported_change field=%s item=%s verb=%s",
+                        change.get("field"),
+                        value.get("item"),
+                        value.get("verb"),
+                    )
                     continue
                 if value.get("verb") and value.get("verb") != "add":
+                    logger.info(
+                        "facebook_webhook_change_skipped reason=unsupported_verb item=%s verb=%s has_comment_id=%s",
+                        value.get("item"),
+                        value.get("verb"),
+                        bool(value.get("comment_id")),
+                    )
                     continue
 
                 runtime_settings = self.settings_service.get_settings(persist_migration=False)
                 automation = self._facebook_comment_automation_settings(runtime_settings)
                 if not automation["enabled"]:
+                    logger.info("facebook_webhook_change_skipped reason=automation_disabled")
                     continue
                 if self._is_page_self_comment(value=value, entry=entry, automation=automation):
+                    logger.info(
+                        "facebook_webhook_change_skipped reason=page_self_comment has_comment_id=%s has_message=%s",
+                        bool(value.get("comment_id")),
+                        bool(value.get("message")),
+                    )
                     continue
 
                 comment_text = str(value.get("message", ""))
                 matched_keyword = self._matched_comment_keyword(comment_text, automation["keywords"])
                 if not matched_keyword:
+                    logger.info(
+                        "facebook_webhook_change_skipped reason=no_keyword has_comment_id=%s message_chars=%s",
+                        bool(value.get("comment_id")),
+                        len(comment_text),
+                    )
                     continue
 
                 comment_id = str(value.get("comment_id") or "")
                 if not comment_id:
+                    logger.info(
+                        "facebook_webhook_change_skipped reason=missing_comment_id matched_keyword=%s message_chars=%s",
+                        matched_keyword,
+                        len(comment_text),
+                    )
                     continue
 
                 occurred_at = ensure_datetime(value.get("created_time")) or utcnow()
@@ -183,7 +214,18 @@ class MarketingAutomationOrchestrator:
                 if self._record_event(normalized):
                     event_id = stable_id("event", normalized.dedupe_key)
                     self.task_queue.enqueue_marketing_event(event_id, "process-comment-event")
+                    logger.info(
+                        "facebook_webhook_comment_recorded matched_keyword=%s public_reply_enabled=%s private_reply_enabled=%s",
+                        matched_keyword,
+                        automation["public_reply_enabled"],
+                        automation["private_reply_enabled"],
+                    )
                     accepted += 1
+                else:
+                    logger.info(
+                        "facebook_webhook_change_skipped reason=duplicate_comment_event matched_keyword=%s",
+                        matched_keyword,
+                    )
 
         return accepted
 
