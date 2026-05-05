@@ -133,6 +133,18 @@ class MarketingContactService:
             contact_update["last_outbound_time"] = created_dt
         self.db.collection("marketing_contacts").document(contact_id).set(contact_update, merge=True)
 
+        if provider_message_id:
+            self.db.collection("whatsapp_message_index").document(stable_id("wamid", provider_message_id)).set(
+                {
+                    "provider_message_id": provider_message_id,
+                    "conversation_id": conversation_id,
+                    "message_id": message_id,
+                    "channel": channel,
+                    "updated_at": utcnow(),
+                },
+                merge=True,
+            )
+
         return conversation_id, message_id
 
     def update_contact_tag(

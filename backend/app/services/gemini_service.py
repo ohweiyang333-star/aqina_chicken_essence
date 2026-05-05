@@ -9,6 +9,10 @@ from app.core.config import settings
 from app.models.chatbot import FollowUpTurnResult, SalesConversationTurn
 
 
+VALID_LEAD_GOALS = {"self_care", "pregnancy", "postpartum", "gift_elder", "unknown"}
+VALID_MARKETING_TAGS = {"lead_cold", "qualified_warm", "cart_hot", "handoff_pending"}
+
+
 class GeminiConversationService:
     """Generate structured chatbot output with Google Gemini."""
 
@@ -41,7 +45,7 @@ class GeminiConversationService:
                 reply_text="明白，我先帮您了解一下需求。请问这次是自己日常保养、孕期调理，还是想送给长辈呢？🎈",
                 next_tag="lead_cold",
             )
-        return SalesConversationTurn.model_validate(payload)
+        return self._normalize_sales_turn_payload(payload)
 
     def generate_follow_up_reply(
         self,
@@ -96,6 +100,58 @@ class GeminiConversationService:
             return None
 
     @staticmethod
+    def _normalize_sales_turn_payload(payload: dict[str, Any]) -> SalesConversationTurn:
+        normalized = dict(payload)
+        normalized["reply_text"] = str(normalized.get("reply_text") or "").strip()
+        if not normalized["reply_text"]:
+            normalized["reply_text"] = "明白，我先帮您了解一下需求。请问这次是自己日常保养、孕期调理，还是想送给长辈呢？"
+
+        normalized["next_tag"] = GeminiConversationService._normalize_marketing_tag(
+            normalized.get("next_tag"),
+            normalized,
+        )
+        normalized["lead_goal"] = GeminiConversationService._normalize_lead_goal(normalized.get("lead_goal"))
+        if not isinstance(normalized.get("order_fields"), dict):
+            normalized["order_fields"] = {}
+        if not isinstance(normalized.get("missing_order_fields"), list):
+            normalized["missing_order_fields"] = []
+        for key in ["checkout_ready", "escalate", "opt_in_granted"]:
+            normalized[key] = bool(normalized.get(key))
+
+        try:
+            return SalesConversationTurn.model_validate(normalized)
+        except Exception:
+            return SalesConversationTurn(reply_text=normalized["reply_text"], next_tag="lead_cold")
+
+    @staticmethod
+    def _normalize_marketing_tag(value: Any, payload: dict[str, Any]) -> str:
+        tag = str(value or "").strip().lower()
+        if tag in VALID_MARKETING_TAGS:
+            return tag
+        if bool(payload.get("escalate")) or "handoff" in tag or "human" in tag:
+            return "handoff_pending"
+        if bool(payload.get("checkout_ready")) or payload.get("selected_package_code") or "cart" in tag or "hot" in tag:
+            return "cart_hot"
+        if payload.get("recommended_package_code") or "warm" in tag or "qualified" in tag:
+            return "qualified_warm"
+        return "lead_cold"
+
+    @staticmethod
+    def _normalize_lead_goal(value: Any) -> str:
+        goal = str(value or "").strip().lower()
+        if goal in VALID_LEAD_GOALS:
+            return goal
+        if any(term in goal for term in ["pregnan", "maternity", "孕"]):
+            return "pregnancy"
+        if any(term in goal for term in ["postpartum", "confinement", "月子", "产后"]):
+            return "postpartum"
+        if any(term in goal for term in ["elder", "parent", "gift", "长辈", "父母", "送"]):
+            return "gift_elder"
+        if any(term in goal for term in ["self", "daily", "自己", "日常"]):
+            return "self_care"
+        return "unknown"
+
+    @staticmethod
     def _extract_json(raw_text: str) -> str:
         fenced = re.search(r"```json\s*(\{.*\})\s*```", raw_text, re.DOTALL)
         if fenced:
@@ -125,7 +181,12 @@ class GeminiConversationService:
             f"Available packages: {packages}\n"
             f"Knowledge base: {knowledge_base}\n"
             f"Incoming message: {incoming_text}\n"
-            f"Conversation history:\n{history}"
+            f"Conversation history:\n{history}\n\n"
+            "输出 JSON，字段固定为：reply_text, next_tag, lead_goal, recommended_package_code, "
+            "upgrade_package_code, selected_package_code, order_fields, missing_order_fields, "
+            "checkout_ready, escalate, escalation_reason, faq_topic, opt_in_granted。\n"
+            "next_tag 只能是 lead_cold, qualified_warm, cart_hot, handoff_pending。\n"
+            "lead_goal 只能是 self_care, pregnancy, postpartum, gift_elder, unknown。"
         )
 
     @staticmethod

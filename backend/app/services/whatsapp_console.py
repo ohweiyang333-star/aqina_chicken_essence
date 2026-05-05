@@ -1,6 +1,7 @@
 """Admin WhatsApp inbox, template, and campaign operations."""
 from __future__ import annotations
 
+import logging
 from datetime import timedelta
 from typing import Any
 
@@ -11,6 +12,8 @@ from app.services.marketing_utils import ensure_datetime, stable_id, utcnow
 from app.services.meta_client import get_meta_client
 from app.services.task_queue import get_task_queue_service
 
+
+logger = logging.getLogger(__name__)
 
 OPT_OUT_KEYWORDS = {
     "stop",
@@ -474,8 +477,33 @@ class WhatsAppConsoleService:
             update["error_code"] = first_error.get("code")
             update["error_message"] = first_error.get("message") or first_error.get("title")
 
+        indexed = self._find_indexed_message_by_provider_id(provider_message_id)
+        if indexed:
+            message_ref = self.db.collection("marketing_conversations").document(indexed["conversation_id"]).collection("messages").document(indexed["message_id"])
+            message_ref.set(update, merge=True)
+            campaign_id = indexed.get("campaign_id")
+            recipient_id = indexed.get("campaign_recipient_id")
+            if campaign_id and recipient_id:
+                self._update_campaign_recipient_status(
+                    campaign_id=campaign_id,
+                    recipient_id=recipient_id,
+                    delivery_status=delivery_status,
+                    error_code=update.get("error_code"),
+                    error_message=update.get("error_message"),
+                )
+            return {"updated": 1, "source": "message_index"}
+
         updated = 0
-        for message_snapshot in self._find_messages_by_provider_id(provider_message_id):
+        try:
+            message_snapshots = self._find_messages_by_provider_id(provider_message_id)
+        except Exception as exc:  # pragma: no cover - production index lag path
+            logger.warning(
+                "whatsapp_status_update_lookup_skipped reason=message_index_unavailable error_type=%s",
+                type(exc).__name__,
+            )
+            return {"updated": 0, "deferred": True}
+
+        for message_snapshot in message_snapshots:
             message_snapshot.reference.set(update, merge=True)
             message = message_snapshot.to_dict()
             campaign_id = message.get("campaign_id")
@@ -491,7 +519,15 @@ class WhatsAppConsoleService:
             updated += 1
 
         if updated == 0:
-            for recipient_snapshot in self._find_recipients_by_provider_id(provider_message_id):
+            try:
+                recipient_snapshots = self._find_recipients_by_provider_id(provider_message_id)
+            except Exception as exc:  # pragma: no cover - production index lag path
+                logger.warning(
+                    "whatsapp_status_update_lookup_skipped reason=recipient_index_unavailable error_type=%s",
+                    type(exc).__name__,
+                )
+                return {"updated": 0, "deferred": True}
+            for recipient_snapshot in recipient_snapshots:
                 path_ref = recipient_snapshot.reference
                 recipient = recipient_snapshot.to_dict()
                 campaign_id = recipient.get("campaign_id")
@@ -657,6 +693,15 @@ class WhatsAppConsoleService:
                 .stream()
             )
         return []
+
+    def _find_indexed_message_by_provider_id(self, provider_message_id: str) -> dict[str, Any] | None:
+        snapshot = self.db.collection("whatsapp_message_index").document(stable_id("wamid", provider_message_id)).get()
+        if not snapshot.exists:
+            return None
+        payload = snapshot.to_dict()
+        if not payload.get("conversation_id") or not payload.get("message_id"):
+            return None
+        return payload
 
     def _find_recipients_by_provider_id(self, provider_message_id: str) -> list[Any]:
         if hasattr(self.db, "collection_group"):

@@ -331,6 +331,35 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(self.task_queue.created_tasks[0]["type"], "event")
         self.assertEqual(self.task_queue.created_tasks[0]["processor"], "process-inbound-message")
 
+    def test_gemini_sales_turn_normalizes_unexpected_schema_values(self) -> None:
+        from app.services.gemini_service import GeminiConversationService
+
+        service = GeminiConversationService()
+        with patch.object(
+            service,
+            "_generate_json",
+            return_value={
+                "reply_text": "可以的，请问您是自己喝还是送人？",
+                "next_tag": "warm",
+                "lead_goal": "general",
+                "order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+            },
+        ):
+            result = service.generate_chat_reply(
+                contact={},
+                messages=[],
+                incoming_text="请问多少钱？",
+                channel="whatsapp",
+                runtime_settings={"system_prompt": "Aqina advisor"},
+            )
+
+        self.assertEqual(result.reply_text, "可以的，请问您是自己喝还是送人？")
+        self.assertEqual(result.next_tag, "qualified_warm")
+        self.assertEqual(result.lead_goal, "unknown")
+        self.assertEqual(result.order_fields.name, None)
+
     def test_process_inbound_message_creates_paynow_checkout_session_without_email(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
