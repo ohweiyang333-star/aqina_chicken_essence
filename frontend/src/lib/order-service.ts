@@ -49,6 +49,26 @@ export interface CreateCheckoutOrderInput {
   receiptFile: File;
 }
 
+export type CheckoutOrderErrorCode =
+  | 'nameRequired'
+  | 'phoneInvalid'
+  | 'addressInvalid'
+  | 'receiptRequired'
+  | 'receiptInvalidType'
+  | 'receiptTooLarge'
+  | 'unknownPackage'
+  | 'submitError';
+
+export class CheckoutOrderError extends Error {
+  code: CheckoutOrderErrorCode;
+
+  constructor(message: string, code: CheckoutOrderErrorCode = 'submitError') {
+    super(message);
+    this.name = 'CheckoutOrderError';
+    this.code = code;
+  }
+}
+
 const ORDERS_COLLECTION = 'orders';
 const PAYMENTS_COLLECTION = 'payments';
 
@@ -75,12 +95,69 @@ export const createOrder = async (order: CreateCheckoutOrderInput) => {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    throw new Error(payload?.detail || 'Order submission failed');
+    throw parseCheckoutOrderError(payload);
   }
 
   const payload = await response.json();
   return payload.order_id as string;
 };
+
+function parseCheckoutOrderError(payload: unknown): CheckoutOrderError {
+  const detail = isRecord(payload) ? payload.detail : undefined;
+
+  if (typeof detail === 'string') {
+    return checkoutOrderErrorFromMessage(detail);
+  }
+
+  if (Array.isArray(detail)) {
+    const firstDetail = detail.find(isRecord);
+    const loc = Array.isArray(firstDetail?.loc)
+      ? firstDetail.loc.map((part) => String(part))
+      : [];
+    const field = loc[loc.length - 1];
+
+    if (field === 'customer_name') {
+      return new CheckoutOrderError('Customer name is required', 'nameRequired');
+    }
+    if (field === 'customer_phone') {
+      return new CheckoutOrderError('WhatsApp phone must contain 8 to 20 digits', 'phoneInvalid');
+    }
+    if (field === 'customer_address') {
+      return new CheckoutOrderError('Delivery address must be 10 to 500 characters', 'addressInvalid');
+    }
+    if (field === 'payment_receipt') {
+      return new CheckoutOrderError('Please upload your PayNow payment receipt before submitting.', 'receiptRequired');
+    }
+  }
+
+  return new CheckoutOrderError('Order submission failed');
+}
+
+function checkoutOrderErrorFromMessage(message: string): CheckoutOrderError {
+  if (message.includes('Customer name is required')) {
+    return new CheckoutOrderError(message, 'nameRequired');
+  }
+  if (message.includes('WhatsApp phone')) {
+    return new CheckoutOrderError(message, 'phoneInvalid');
+  }
+  if (message.includes('Delivery address')) {
+    return new CheckoutOrderError(message, 'addressInvalid');
+  }
+  if (message.includes('Receipt must be JPG, PNG, or WebP')) {
+    return new CheckoutOrderError(message, 'receiptInvalidType');
+  }
+  if (message.includes('Receipt file is too large')) {
+    return new CheckoutOrderError(message, 'receiptTooLarge');
+  }
+  if (message.includes('Receipt file is empty')) {
+    return new CheckoutOrderError(message, 'receiptRequired');
+  }
+  if (message.includes('Unknown package')) {
+    return new CheckoutOrderError(message, 'unknownPackage');
+  }
+
+  return new CheckoutOrderError(message || 'Order submission failed');
+}
 
 export const getOrders = async () => {
   try {

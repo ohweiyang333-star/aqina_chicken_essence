@@ -476,6 +476,65 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["total_amount"], 75.0)
         self.assertEqual(payload["box_count"], 2)
 
+    def test_landing_order_with_receipt_normalizes_formatted_phone(self) -> None:
+        client = self._build_client()
+
+        with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Kelvin Tan",
+                    "customer_phone": "+65 9123 4567",
+                    "customer_address": "1 Orchard Road, Singapore 238823",
+                    "product_id": "pack2",
+                },
+                files={"payment_receipt": ("receipt.png", b"fake-image", "image/png")},
+            )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertEqual(payload["customer"]["whatsapp"], "6591234567")
+        order = self.db.collection("orders").stream()[0].to_dict()
+        self.assertEqual(order["customer"]["whatsapp"], "6591234567")
+        customer = self.db.collection("customers").document("customer_6591234567").get()
+        self.assertTrue(customer.exists)
+
+    def test_landing_order_rejects_invalid_phone_with_clear_error(self) -> None:
+        client = self._build_client()
+
+        with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Kelvin Tan",
+                    "customer_phone": "123",
+                    "customer_address": "1 Orchard Road, Singapore 238823",
+                    "product_id": "pack2",
+                },
+                files={"payment_receipt": ("receipt.png", b"fake-image", "image/png")},
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "WhatsApp phone must contain 8 to 20 digits")
+
+    def test_landing_order_rejects_short_address_with_clear_error(self) -> None:
+        client = self._build_client()
+
+        with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Kelvin Tan",
+                    "customer_phone": "6591234567",
+                    "customer_address": "SG",
+                    "product_id": "pack2",
+                },
+                files={"payment_receipt": ("receipt.png", b"fake-image", "image/png")},
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "Delivery address must be 10 to 500 characters")
+
     def test_landing_order_rejects_missing_receipt(self) -> None:
         client = self._build_client()
         response = client.post(

@@ -138,6 +138,13 @@
         "receipt": "PayNow 收据截图",
         "receiptHelp": "完成 PayNow 付款后，请上传 JPG、PNG 或 WebP 截图。",
         "receiptRequired": "请先上传 PayNow 付款收据截图，才可以提交订单。",
+        "errorTitle": "请检查订单资料",
+        "nameRequired": "请填写姓名。",
+        "phoneInvalid": "请输入 8 到 20 位数字的 WhatsApp 电话号码。",
+        "addressInvalid": "请输入 10 到 500 个字符的新加坡收货地址。",
+        "receiptInvalidType": "请上传 JPG、PNG 或 WebP 格式的付款截图。",
+        "receiptTooLarge": "请上传小于 8MB 的付款截图。",
+        "unknownPackage": "当前选择的配套暂时无法下单，请重新选择配套。",
         "submitError": "订单提交失败，请重试或通过 WhatsApp 联系客服。",
         "submit": "提交订单与收据",
         "terms": "提交前请先完成 PayNow 并上传付款截图。付款会由团队人工核对后安排发货。"

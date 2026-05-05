@@ -38,6 +38,26 @@ def _money(value: float) -> float:
     return round(value + 1e-8, 2)
 
 
+def _normalize_customer_phone(customer_phone: str) -> str:
+    normalized_phone = "".join(char for char in customer_phone if char.isdigit())
+    if not 8 <= len(normalized_phone) <= 20:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="WhatsApp phone must contain 8 to 20 digits",
+        )
+    return normalized_phone
+
+
+def _normalize_customer_address(customer_address: str) -> str:
+    normalized_address = customer_address.strip()
+    if not 10 <= len(normalized_address) <= 500:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Delivery address must be 10 to 500 characters",
+        )
+    return normalized_address
+
+
 @router.get("", response_model=ListOrdersResponse)
 async def list_orders(
     db: DB,
@@ -133,8 +153,8 @@ async def get_order(order_id: str, db: DB, admin: Admin):
 async def create_landing_order_with_receipt(
     db: DB,
     customer_name: str = Form(..., min_length=1, max_length=100),
-    customer_phone: str = Form(..., min_length=8, max_length=20),
-    customer_address: str = Form(..., min_length=10, max_length=500),
+    customer_phone: str = Form(...),
+    customer_address: str = Form(...),
     product_id: str = Form(..., min_length=1, max_length=100),
     payment_receipt: UploadFile = File(...),
 ):
@@ -147,6 +167,12 @@ async def create_landing_order_with_receipt(
     package = LANDING_PACKAGES.get(product_id)
     if not package:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown package")
+
+    normalized_name = customer_name.strip()
+    if not normalized_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Customer name is required")
+    normalized_phone = _normalize_customer_phone(customer_phone)
+    normalized_address = _normalize_customer_address(customer_address)
 
     content_type = (payment_receipt.content_type or "").lower()
     if content_type not in ALLOWED_RECEIPT_TYPES:
@@ -176,10 +202,10 @@ async def create_landing_order_with_receipt(
     total_amount = _money(subtotal_amount + shipping_fee)
     now = datetime.now()
     customer = {
-        "name": customer_name,
+        "name": normalized_name,
         "email": None,
-        "whatsapp": customer_phone,
-        "address": customer_address,
+        "whatsapp": normalized_phone,
+        "address": normalized_address,
     }
     item = {
         "product_id": product_id,
@@ -223,7 +249,7 @@ async def create_landing_order_with_receipt(
         }
     )
 
-    customer_id = f"customer_{customer_phone}"
+    customer_id = f"customer_{normalized_phone}"
     customer_ref = db.collection("customers").document(customer_id)
     customer_doc = customer_ref.get()
     if customer_doc.exists:
@@ -237,10 +263,10 @@ async def create_landing_order_with_receipt(
         customer_ref.set(
             {
                 "customer_id": customer_id,
-                "name": customer_name,
+                "name": normalized_name,
                 "email": None,
-                "whatsapp": customer_phone,
-                "address": customer_address,
+                "whatsapp": normalized_phone,
+                "address": normalized_address,
                 "total_spent": total_amount,
                 "purchase_count": 1,
                 "last_purchase_date": SERVER_TIMESTAMP,

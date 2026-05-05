@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { X, CheckCircle, Loader2, QrCode, UploadCloud } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { createOrder } from '@/lib/order-service';
+import {
+  CheckoutOrderError,
+  createOrder,
+  type CheckoutOrderErrorCode,
+} from '@/lib/order-service';
 import { aqinaSiteConfig } from '@/lib/site-config';
 
 interface CheckoutModalProps {
@@ -31,12 +35,22 @@ function resolvePackage(product: NonNullable<CheckoutModalProps['product']>) {
   return { productId: 'pack1', boxCount: 1 };
 }
 
+const checkoutTextInputClassName =
+  'w-full rounded-xl border border-charcoal/10 bg-white px-5 py-4 text-charcoal caret-charcoal outline-none transition-all placeholder:text-charcoal/45 selection:bg-primary/25 focus:border-primary focus:ring-4 focus:ring-primary/10';
+const ALLOWED_RECEIPT_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+const MAX_RECEIPT_BYTES = 8 * 1024 * 1024;
+
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, '');
+}
+
 export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModalProps) {
   const ct = useTranslations('Index.Checkout');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+  const [formError, setFormError] = useState('');
   const [formData, setFormData] = useState({
     customerName: '',
     customerPhone: '',
@@ -54,29 +68,107 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
     setIsSuccess(false);
     setOrderId('');
     setPaymentReceipt(null);
+    setFormError('');
     setFormData({ customerName: '', customerPhone: '', address: '' });
     onClose();
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!paymentReceipt) {
-      alert(ct('form.receiptRequired') || 'Please upload your PayNow payment receipt before submitting.');
+  const errorMessageForCode = (code: CheckoutOrderErrorCode) => {
+    const messages: Record<CheckoutOrderErrorCode, string> = {
+      nameRequired: ct('form.nameRequired') || 'Please enter your full name.',
+      phoneInvalid:
+        ct('form.phoneInvalid') || 'Enter a valid WhatsApp number with 8 to 20 digits.',
+      addressInvalid:
+        ct('form.addressInvalid') || 'Enter a Singapore delivery address with 10 to 500 characters.',
+      receiptRequired:
+        ct('form.receiptRequired') || 'Please upload your PayNow payment receipt before submitting.',
+      receiptInvalidType:
+        ct('form.receiptInvalidType') || 'Upload a JPG, PNG, or WebP receipt screenshot.',
+      receiptTooLarge:
+        ct('form.receiptTooLarge') || 'Upload a receipt screenshot smaller than 8MB.',
+      unknownPackage:
+        ct('form.unknownPackage') || 'This selected package is unavailable. Please choose a plan again.',
+      submitError:
+        ct('form.submitError') || 'Order submission failed. Please try again or contact via WhatsApp.',
+    };
+
+    return messages[code];
+  };
+
+  const validateReceiptFile = (file: File | null) => {
+    if (!file) return errorMessageForCode('receiptRequired');
+    if (!ALLOWED_RECEIPT_TYPES.has(file.type)) return errorMessageForCode('receiptInvalidType');
+    if (file.size > MAX_RECEIPT_BYTES) return errorMessageForCode('receiptTooLarge');
+    return '';
+  };
+
+  const resolveSubmissionError = (error: unknown) => {
+    if (error instanceof CheckoutOrderError) {
+      if (error.code === 'submitError' && error.message) return error.message;
+      return errorMessageForCode(error.code);
+    }
+
+    return error instanceof Error && error.message
+      ? error.message
+      : errorMessageForCode('submitError');
+  };
+
+  const handleReceiptChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] || null;
+    const fileError = validateReceiptFile(file);
+    if (fileError) {
+      setPaymentReceipt(null);
+      setFormError(fileError);
+      event.target.value = '';
       return;
     }
+
+    setPaymentReceipt(file);
+    setFormError('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError('');
+
+    const normalizedName = formData.customerName.trim();
+    const normalizedPhone = normalizePhone(formData.customerPhone);
+    const normalizedAddress = formData.address.trim();
+
+    if (!normalizedName) {
+      setFormError(errorMessageForCode('nameRequired'));
+      return;
+    }
+    if (normalizedPhone.length < 8 || normalizedPhone.length > 20) {
+      setFormError(errorMessageForCode('phoneInvalid'));
+      return;
+    }
+    if (normalizedAddress.length < 10 || normalizedAddress.length > 500) {
+      setFormError(errorMessageForCode('addressInvalid'));
+      return;
+    }
+
+    const receiptFile = paymentReceipt;
+    const fileError = validateReceiptFile(receiptFile);
+    if (fileError) {
+      setFormError(fileError);
+      return;
+    }
+    if (!receiptFile) return;
+
     setIsSubmitting(true);
     try {
       const result = await createOrder({
-        customerName: formData.customerName,
-        customerPhone: formData.customerPhone,
-        address: formData.address,
+        customerName: normalizedName,
+        customerPhone: normalizedPhone,
+        address: normalizedAddress,
         productId: selectedPackage.productId,
-        receiptFile: paymentReceipt,
+        receiptFile,
       });
       setOrderId(result || '');
       setIsSuccess(true);
-    } catch {
-      alert(ct('form.submitError') || 'Order submission failed. Please try again or contact via WhatsApp.');
+    } catch (error) {
+      setFormError(resolveSubmissionError(error));
     } finally {
       setIsSubmitting(false);
     }
@@ -145,6 +237,17 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto">
+          {formError && (
+            <div
+              id="checkout-form-error"
+              role="alert"
+              className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800"
+            >
+              <p className="font-bold">{ct('form.errorTitle') || 'Please check your order details'}</p>
+              <p>{formError}</p>
+            </div>
+          )}
+
           <div className="space-y-2">
             <label className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
               {ct('form.name') || 'Full Name'}
@@ -153,9 +256,13 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               required
               type="text"
               placeholder={ct('form.namePlaceholder') || 'Your full name'}
-              className="w-full px-5 py-4 rounded-xl border border-charcoal/10 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+              className={checkoutTextInputClassName}
               value={formData.customerName}
-              onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              onChange={(e) => {
+                setFormError('');
+                setFormData({ ...formData, customerName: e.target.value });
+              }}
             />
           </div>
 
@@ -167,9 +274,13 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               required
               type="tel"
               placeholder="+65 ..."
-              className="w-full px-5 py-4 rounded-xl border border-charcoal/10 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all"
+              className={checkoutTextInputClassName}
               value={formData.customerPhone}
-              onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              onChange={(e) => {
+                setFormError('');
+                setFormData({ ...formData, customerPhone: e.target.value });
+              }}
             />
           </div>
 
@@ -181,9 +292,13 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               required
               rows={3}
               placeholder={ct('form.addressPlaceholder') || 'Singapore delivery address'}
-              className="w-full px-5 py-4 rounded-xl border border-charcoal/10 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all resize-none"
+              className={`${checkoutTextInputClassName} resize-none`}
               value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              onChange={(e) => {
+                setFormError('');
+                setFormData({ ...formData, address: e.target.value });
+              }}
             />
           </div>
 
@@ -251,7 +366,8 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               type="file"
               accept="image/png,image/jpeg,image/webp"
               className="block w-full text-sm text-charcoal/70 file:mr-4 file:rounded-lg file:border-0 file:bg-charcoal file:px-4 file:py-2 file:text-sm file:font-bold file:text-ivory"
-              onChange={(event) => setPaymentReceipt(event.target.files?.[0] || null)}
+              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              onChange={handleReceiptChange}
             />
             <span className="mt-3 block text-xs leading-5 text-charcoal/45">
               {paymentReceipt

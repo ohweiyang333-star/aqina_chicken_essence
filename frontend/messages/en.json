@@ -138,6 +138,13 @@
         "receipt": "PayNow Receipt Screenshot",
         "receiptHelp": "Upload JPG, PNG, or WebP after successful PayNow payment.",
         "receiptRequired": "Please upload your PayNow payment receipt before submitting.",
+        "errorTitle": "Please check your order details",
+        "nameRequired": "Please enter your full name.",
+        "phoneInvalid": "Enter a valid WhatsApp number with 8 to 20 digits.",
+        "addressInvalid": "Enter a Singapore delivery address with 10 to 500 characters.",
+        "receiptInvalidType": "Upload a JPG, PNG, or WebP receipt screenshot.",
+        "receiptTooLarge": "Upload a receipt screenshot smaller than 8MB.",
+        "unknownPackage": "This selected package is unavailable. Please choose a plan again.",
         "submitError": "Order submission failed. Please try again or contact via WhatsApp.",
         "submit": "Submit Order & Receipt",
         "terms": "Please complete PayNow and upload your payment screenshot before submitting. Payment will be verified manually before delivery."
