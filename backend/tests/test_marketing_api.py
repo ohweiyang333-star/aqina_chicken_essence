@@ -1648,7 +1648,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(len(template_calls), 1)
         self.assertEqual(template_calls[0][1]["template_name"], "aqina_follow_up")
 
-    def test_order_contact_context_links_phone_to_whatsapp_thread(self) -> None:
+    def test_order_contact_context_keeps_landing_page_on_manual_draft(self) -> None:
         self._seed_contact_and_event(
             contact_id="contact-order-context",
             conversation_id="conv-order-context",
@@ -1685,12 +1685,59 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["source_label"], "Landing checkout")
+        self.assertEqual(payload["source_label"], "Landing Checkout")
+        self.assertEqual(payload["source_channel"], "whatsapp")
         self.assertEqual(payload["normalized_whatsapp"], "6591112222")
-        self.assertEqual(payload["conversation_id"], "conv-order-context")
-        self.assertEqual(payload["backend_send_method"], "free_text")
+        self.assertIsNone(payload["conversation_id"])
+        self.assertIsNone(payload["backend_send_method"])
         self.assertEqual(payload["whatsapp_draft_url"], "https://wa.me/6591112222")
-        self.assertEqual(payload["conversation_url"], "/admin/whatsapp?conversation=conv-order-context")
+        self.assertIsNone(payload["conversation_url"])
+
+    def test_order_contact_context_keeps_messenger_chatbot_on_manual_draft(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-order-messenger",
+            conversation_id="conv-order-messenger",
+            event_id="event-order-messenger",
+            channel="messenger",
+            incoming_text="I want to buy",
+            identifier_key="psid",
+            identifier_value="psid-123",
+        )
+        self.db.seed(
+            "orders/order_messenger_context",
+            {
+                "customer": {
+                    "name": "Megan Ong",
+                    "email": None,
+                    "whatsapp": "80099008",
+                    "address": "317 Bukit Batok, Singapore 660066",
+                },
+                "items": [],
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "payment_status": "payment_submitted",
+                "order_status": "pending",
+                "source": "marketing_chatbot",
+                "marketing_contact_id": "contact-order-messenger",
+                "created_at": "2026-05-05T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/orders/order_messenger_context/contact-context",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["source_label"], "Messenger Chatbot")
+        self.assertEqual(payload["source_channel"], "messenger")
+        self.assertEqual(payload["normalized_whatsapp"], "6580099008")
+        self.assertIsNone(payload["conversation_id"])
+        self.assertIsNone(payload["backend_send_method"])
+        self.assertEqual(payload["whatsapp_draft_url"], "https://wa.me/6580099008")
+        self.assertIsNone(payload["conversation_url"])
 
     def test_order_whatsapp_notification_sends_free_text_inside_customer_window(self) -> None:
         self._seed_contact_and_event(
@@ -1723,6 +1770,17 @@ class MarketingApiTests(unittest.TestCase):
         )
 
         client = self._build_client()
+        context_response = client.get(
+            "/api/v1/orders/order_send/contact-context",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        self.assertEqual(context_response.status_code, 200)
+        context_payload = context_response.json()
+        self.assertEqual(context_payload["source_label"], "WhatsApp Chatbot")
+        self.assertEqual(context_payload["source_channel"], "whatsapp")
+        self.assertEqual(context_payload["conversation_id"], "conv-order-send")
+        self.assertEqual(context_payload["backend_send_method"], "free_text")
+
         response = client.post(
             "/api/v1/orders/order_send/whatsapp-notifications",
             json={

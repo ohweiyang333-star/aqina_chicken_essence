@@ -705,7 +705,8 @@ class MarketingAutomationOrchestrator:
         if not package:
             raise KeyError(f"Unknown package code: {selected_package_code}")
 
-        existing_id = self.contact_service.get_contact(contact_id).get("checkout_session_id")
+        contact = self.contact_service.get_contact(contact_id)
+        existing_id = contact.get("checkout_session_id")
         if existing_id:
             existing = self.db.collection("marketing_checkout_sessions").document(existing_id).get()
             if existing.exists:
@@ -745,6 +746,7 @@ class MarketingAutomationOrchestrator:
             "order_status": "pending",
             "payment_receipt_url": None,
             "source": "marketing_chatbot",
+            "source_channel": contact.get("channel"),
             "marketing_contact_id": contact_id,
             "checkout_session_id": None,
             "created_at": now,

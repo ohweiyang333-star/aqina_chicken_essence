@@ -104,7 +104,10 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const handleOpenContactPanel = async (orderId: string) => {
+  const handleOpenContactPanel = async (
+    orderId: string,
+    preloadedContext?: OrderContactContext,
+  ) => {
     const order = orders.find((item) => item.id === orderId);
     if (!order) return;
 
@@ -119,7 +122,7 @@ export default function AdminOrdersPage() {
     setContactStatus(null);
 
     try {
-      const context = await getOrderContactContext(orderId);
+      const context = preloadedContext ?? await getOrderContactContext(orderId);
       setContactContext(context);
       const firstTemplate = context.approvedTemplates[0];
       setSelectedTemplateKey(firstTemplate ? templateKey(firstTemplate) : "");
@@ -129,6 +132,21 @@ export default function AdminOrdersPage() {
       );
     } finally {
       setIsContactLoading(false);
+    }
+  };
+
+  const handleOpenWhatsAppThread = async (orderId: string) => {
+    try {
+      const context = await getOrderContactContext(orderId);
+      if (context.conversationUrl) {
+        router.push(context.conversationUrl);
+        return;
+      }
+
+      await handleOpenContactPanel(orderId, context);
+    } catch (error) {
+      console.error("Failed to open WhatsApp thread", error);
+      await handleOpenContactPanel(orderId);
     }
   };
 
@@ -337,7 +355,11 @@ export default function AdminOrdersPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredOrders.map((order) => (
+            {filteredOrders.map((order) => {
+              const manualDraftHref = buildManualWhatsAppDraftHref(order);
+              const apiThreadAvailable = canUseWhatsAppApiForOrder(order);
+
+              return (
               <div
                 key={order.id}
                 className="bg-white rounded-2xl p-6 shadow-sm border border-charcoal/5 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:shadow-md transition-shadow"
@@ -360,7 +382,7 @@ export default function AdminOrdersPage() {
                     </div>
                     {(order.marketingContactId || order.checkoutSessionId) && (
                       <div className="px-3 py-1 rounded-full bg-green-50 text-[10px] font-bold uppercase tracking-tighter text-green-700">
-                        Thread linked
+                        {orderThreadBadgeLabel(order)}
                       </div>
                     )}
                     <span className="text-xs font-mono text-charcoal/30">
@@ -423,14 +445,37 @@ export default function AdminOrdersPage() {
                         View PayNow receipt
                       </a>
                     )}
-                    <button
-                      id={`order-contact-inline-${order.id}`}
-                      onClick={() => order.id && void handleOpenContactPanel(order.id)}
-                      className="inline-flex w-fit items-center gap-2 rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100"
-                    >
-                      <MessageCircle size={14} />
-                      Contact customer
-                    </button>
+                    {manualDraftHref ? (
+                      <a
+                        id={`order-open-whatsapp-draft-inline-${order.id}`}
+                        href={manualDraftHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex w-fit items-center gap-2 rounded-lg border border-green-100 bg-green-50 px-3 py-2 text-xs font-bold text-green-700 hover:bg-green-100"
+                      >
+                        <MessageCircle size={14} />
+                        Open WhatsApp Draft
+                      </a>
+                    ) : (
+                      <button
+                        id={`order-open-whatsapp-draft-inline-${order.id}`}
+                        disabled
+                        className="inline-flex w-fit items-center gap-2 rounded-lg border border-charcoal/10 bg-charcoal/5 px-3 py-2 text-xs font-bold text-charcoal/30"
+                      >
+                        <MessageCircle size={14} />
+                        Open WhatsApp Draft
+                      </button>
+                    )}
+                    {apiThreadAvailable && (
+                      <button
+                        id={`order-api-thread-inline-${order.id}`}
+                        onClick={() => order.id && void handleOpenWhatsAppThread(order.id)}
+                        className="inline-flex w-fit items-center gap-2 rounded-lg border border-charcoal/10 bg-white px-3 py-2 text-xs font-bold text-charcoal/60 hover:text-charcoal"
+                      >
+                        <ExternalLink size={14} />
+                        API Thread
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -454,14 +499,37 @@ export default function AdminOrdersPage() {
                   </div>
 
                   <div className="flex flex-wrap justify-end gap-2">
-                    <button
-                      id={`order-contact-button-${order.id}`}
-                      onClick={() => order.id && void handleOpenContactPanel(order.id)}
-                      className="px-4 py-2 rounded-lg border border-green-200 bg-white text-green-700 text-xs font-bold hover:bg-green-50 transition-all flex items-center gap-2"
-                    >
-                      <MessageCircle size={14} />
-                      Contact
-                    </button>
+                    {manualDraftHref ? (
+                      <a
+                        id={`order-open-whatsapp-draft-${order.id}`}
+                        href={manualDraftHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-lg border border-green-200 bg-white text-green-700 text-xs font-bold hover:bg-green-50 transition-all flex items-center gap-2"
+                      >
+                        <MessageCircle size={14} />
+                        Open Draft
+                      </a>
+                    ) : (
+                      <button
+                        id={`order-open-whatsapp-draft-${order.id}`}
+                        disabled
+                        className="px-4 py-2 rounded-lg border border-charcoal/10 bg-charcoal/5 text-charcoal/30 text-xs font-bold transition-all flex items-center gap-2"
+                      >
+                        <MessageCircle size={14} />
+                        Open Draft
+                      </button>
+                    )}
+                    {apiThreadAvailable && (
+                      <button
+                        id={`order-api-thread-${order.id}`}
+                        onClick={() => order.id && void handleOpenWhatsAppThread(order.id)}
+                        className="px-4 py-2 rounded-lg border border-charcoal/10 bg-white text-charcoal/60 text-xs font-bold hover:text-charcoal transition-all flex items-center gap-2"
+                      >
+                        <ExternalLink size={14} />
+                        API Thread
+                      </button>
+                    )}
                     {order.paymentStatus !== "paid" && (
                       <button
                         onClick={() => handlePaymentStatusUpdate(order.id!, "paid")}
@@ -495,7 +563,8 @@ export default function AdminOrdersPage() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
@@ -566,7 +635,7 @@ function OrderContactDrawer({
     context?.normalizedWhatsApp && message.trim()
       ? buildCustomerWhatsAppHref(context.normalizedWhatsApp, message.trim())
       : undefined;
-  const canOpenDraft = Boolean(draftHref && expectedShipDate);
+  const canOpenDraft = Boolean(draftHref);
   const canSendViaBackend = Boolean(
     context?.backendSendMethod &&
       expectedShipDate &&
@@ -629,7 +698,7 @@ function OrderContactDrawer({
                     className="mt-3 inline-flex items-center gap-2 text-xs font-bold text-green-700 hover:text-green-800"
                   >
                     <ExternalLink size={14} />
-                    Open WhatsApp thread
+                    Open WhatsApp API thread
                   </a>
                 )}
               </section>
@@ -661,7 +730,7 @@ function OrderContactDrawer({
                   onChange={(event) => onMessageChange(event.target.value)}
                   rows={7}
                   className="mt-2 w-full resize-none rounded-lg border border-charcoal/10 bg-[#fbfbfa] p-3 text-sm leading-6 text-charcoal outline-none focus:border-green-600"
-                  placeholder="Select an expected ship date to generate the message."
+                  placeholder="Message will be generated from the order status."
                 />
               </section>
 
@@ -767,9 +836,35 @@ function InfoTile({
 }
 
 function sourceLabelForOrder(order: Order) {
-  if (order.source === "marketing_chatbot") return "WhatsApp Chatbot";
-  if (order.source === "landing_page") return "Landing checkout";
-  return order.source || "Landing checkout";
+  const sourceChannel = normalizeSourceChannel(order.sourceChannel);
+  if (order.source === "marketing_chatbot" && sourceChannel === "whatsapp") {
+    return "WhatsApp Chatbot";
+  }
+  if (order.source === "marketing_chatbot" && sourceChannel === "messenger") {
+    return "Messenger Chatbot";
+  }
+  if (order.source === "marketing_chatbot") return "Chatbot";
+  if (order.source === "landing_page") return "Landing Checkout";
+  return order.source || "Landing Checkout";
+}
+
+function orderThreadBadgeLabel(order: Order) {
+  const sourceChannel = normalizeSourceChannel(order.sourceChannel);
+  if (sourceChannel === "whatsapp") return "WhatsApp thread";
+  if (sourceChannel === "messenger") return "Messenger thread";
+  return "Thread linked";
+}
+
+function canUseWhatsAppApiForOrder(order: Order) {
+  return Boolean(
+    order.source === "marketing_chatbot" &&
+      normalizeSourceChannel(order.sourceChannel) === "whatsapp" &&
+      (order.marketingContactId || order.checkoutSessionId),
+  );
+}
+
+function normalizeSourceChannel(value: string | undefined) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function formatContactMethod(method: string) {
@@ -779,7 +874,7 @@ function formatContactMethod(method: string) {
 }
 
 function backendSendLabel(context: OrderContactContext | null) {
-  if (!context?.conversationId) return "Draft only";
+  if (!context?.conversationId) return "Manual draft only";
   if (context.backendSendMethod === "free_text") return "API text ready";
   if (context.backendSendMethod === "template") return "Template required";
   return "No template saved";
@@ -805,13 +900,49 @@ function buildOrderNotificationMessage(
   context: OrderContactContext,
   expectedShipDate: string,
 ) {
-  if (!expectedShipDate) return "";
-  const customerName = context.customerName || order.customerName || "there";
+  return buildManualOrderMessage({
+    ...order,
+    customerName: context.customerName || order.customerName,
+    expectedShipDate: expectedShipDate || undefined,
+  });
+}
+
+function buildManualWhatsAppDraftHref(order: Order) {
+  const phone = normalizeCustomerWhatsAppForLink(order.customerPhone);
+  if (!phone) return undefined;
+  return buildCustomerWhatsAppHref(phone, buildManualOrderMessage(order));
+}
+
+function buildManualOrderMessage(order: Order) {
+  const customerName = order.customerName || "there";
   const orderRef = order.id ? `#${order.id.slice(-8)}` : "your order";
+
+  if (order.expectedShipDate) {
+    return [
+      `Hi ${customerName}, Aqina SG here.`,
+      `Your order ${orderRef} is arranged for shipment on ${formatShipDate(order.expectedShipDate)}.`,
+      "We will update you again if there are any delivery changes. Thank you.",
+    ].join("\n");
+  }
+
+  if (order.status === "SHIPPED") {
+    return [
+      `Hi ${customerName}, Aqina SG here.`,
+      `Your order ${orderRef} has been arranged for shipment.`,
+      "Thank you for your patience.",
+    ].join("\n");
+  }
+
+  if (order.paymentStatus === "paid") {
+    return [
+      `Hi ${customerName}, Aqina SG has verified your PayNow payment for order ${orderRef}.`,
+      "We are arranging your shipment and will update you once delivery is ready. Thank you.",
+    ].join("\n");
+  }
+
   return [
-    `Hi ${customerName}, Aqina SG has verified your PayNow payment for order ${orderRef}.`,
-    `We will arrange your shipment on ${formatShipDate(expectedShipDate)}.`,
-    "We will update you again once it is shipped. Thank you.",
+    `Hi ${customerName}, Aqina SG has received your order ${orderRef} and PayNow receipt.`,
+    "We are checking the payment and will update you about delivery soon. Thank you.",
   ].join("\n");
 }
 
@@ -829,6 +960,21 @@ function buildTemplateVariables(
 
 function buildCustomerWhatsAppHref(phone: string, message: string) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+}
+
+function normalizeCustomerWhatsAppForLink(value: string | undefined) {
+  const digits = String(value || "").replace(/\D/g, "");
+  if (!digits) return undefined;
+
+  const normalized =
+    digits.length === 8
+      ? `65${digits}`
+      : digits.startsWith("0065") && digits.length > 4
+        ? digits.slice(2)
+        : digits;
+
+  if (normalized.length < 8 || normalized.length > 20) return undefined;
+  return normalized;
 }
 
 function formatShipDate(value: string) {

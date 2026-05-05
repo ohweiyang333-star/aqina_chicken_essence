@@ -53,6 +53,7 @@ class OrderResponse(BaseModel):
     payment_receipt_url: Optional[str] = None
     notes: Optional[str] = None
     source: Optional[str] = None
+    source_channel: Optional[str] = None
     marketing_contact_id: Optional[str] = None
     checkout_session_id: Optional[str] = None
     created_at: datetime
@@ -79,6 +80,7 @@ class OrderContactContextResponse(BaseModel):
 
     order_id: str
     source_label: str
+    source_channel: Optional[str] = None
     customer_name: str
     raw_whatsapp: str
     normalized_whatsapp: Optional[str] = None

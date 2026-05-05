@@ -72,9 +72,13 @@ class WhatsAppConsoleService:
         raw_whatsapp = str(customer.get("whatsapp") or order.get("customerPhone") or "")
         normalized_whatsapp = normalize_singapore_whatsapp(raw_whatsapp)
         contact_id, contact = self._contact_for_order(order, normalized_whatsapp)
+        source_channel = self._order_source_channel(order, contact)
+        can_use_whatsapp_api = (
+            order.get("source") == "marketing_chatbot" and source_channel == "whatsapp"
+        )
         conversation_id = None
         window = {"is_open": False, "expires_at": None}
-        if contact:
+        if contact and can_use_whatsapp_api:
             conversation_id = contact.get("latest_conversation_id")
             window = self._window_payload(contact)
 
@@ -87,7 +91,8 @@ class WhatsAppConsoleService:
 
         return {
             "order_id": order_id,
-            "source_label": self._order_source_label(order.get("source")),
+            "source_label": self._order_source_label(order.get("source"), source_channel),
+            "source_channel": source_channel,
             "customer_name": str(customer.get("name") or order.get("customerName") or ""),
             "raw_whatsapp": raw_whatsapp,
             "normalized_whatsapp": normalized_whatsapp,
@@ -791,12 +796,27 @@ class WhatsAppConsoleService:
         return templates
 
     @staticmethod
-    def _order_source_label(source: Any) -> str:
-        if source == "marketing_chatbot":
+    def _order_source_label(source: Any, source_channel: str | None = None) -> str:
+        if source == "marketing_chatbot" and source_channel == "whatsapp":
             return "WhatsApp Chatbot"
+        if source == "marketing_chatbot" and source_channel == "messenger":
+            return "Messenger Chatbot"
+        if source == "marketing_chatbot":
+            return "Chatbot"
         if source == "landing_page":
-            return "Landing checkout"
-        return str(source or "Landing checkout")
+            return "Landing Checkout"
+        return str(source or "Landing Checkout")
+
+    @staticmethod
+    def _order_source_channel(
+        order: dict[str, Any],
+        contact: dict[str, Any] | None,
+    ) -> str | None:
+        contact_channel = str((contact or {}).get("channel") or "").strip().lower()
+        if contact_channel:
+            return contact_channel
+        stored_channel = str(order.get("source_channel") or "").strip().lower()
+        return stored_channel or None
 
     def _window_payload(self, contact: dict[str, Any]) -> dict[str, Any]:
         expires_at = ensure_datetime(contact.get("window_expires_at"))

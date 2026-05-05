@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
@@ -39,6 +40,7 @@ export interface Order {
   paymentStatus: OrderPaymentStatus;
   paymentReceiptUrl?: string;
   source?: string;
+  sourceChannel?: string;
   marketingContactId?: string;
   checkoutSessionId?: string;
   expectedShipDate?: string;
@@ -56,6 +58,7 @@ export interface OrderContactTemplate {
 export interface OrderContactContext {
   orderId: string;
   sourceLabel: string;
+  sourceChannel?: string;
   customerName: string;
   rawWhatsApp: string;
   normalizedWhatsApp?: string;
@@ -116,6 +119,7 @@ export class CheckoutOrderError extends Error {
 }
 
 const ORDERS_COLLECTION = 'orders';
+const MARKETING_CONTACTS_COLLECTION = 'marketing_contacts';
 const PAYMENTS_COLLECTION = 'payments';
 
 const orderStatusToBackend: Record<OrderStatus, string> = {
@@ -208,9 +212,10 @@ function checkoutOrderErrorFromMessage(message: string): CheckoutOrderError {
 export const getOrders = async () => {
   try {
     const querySnapshot = await getDocs(collection(db, ORDERS_COLLECTION));
-    return querySnapshot.docs
+    const orders = querySnapshot.docs
       .map((snapshot) => normalizeOrder(snapshot.id, snapshot.data()))
       .sort((a, b) => timestampMillis(b.createdAt) - timestampMillis(a.createdAt));
+    return attachOrderSourceChannels(orders);
   } catch (error) {
     console.error('Error fetching orders:', error);
     throw error;
@@ -329,6 +334,7 @@ function normalizeOrder(id: string, data: RawRecord): Order {
     paymentReceiptUrl:
       stringOrUndefined(data.payment_receipt_url) ?? stringOrUndefined(data.screenshot_url),
     source: stringOrUndefined(data.source) ?? 'landing_page',
+    sourceChannel: stringOrUndefined(data.source_channel),
     marketingContactId: stringOrUndefined(data.marketing_contact_id),
     checkoutSessionId: stringOrUndefined(data.checkout_session_id),
     expectedShipDate: stringOrUndefined(data.expected_ship_date),
@@ -356,7 +362,8 @@ function normalizeOrderContactContext(data: RawRecord): OrderContactContext {
 
   return {
     orderId: String(data.order_id || ''),
-    sourceLabel: String(data.source_label || 'Landing checkout'),
+    sourceLabel: String(data.source_label || 'Landing Checkout'),
+    sourceChannel: stringOrUndefined(data.source_channel),
     customerName: String(data.customer_name || ''),
     rawWhatsApp: String(data.raw_whatsapp || ''),
     normalizedWhatsApp: stringOrUndefined(data.normalized_whatsapp),
@@ -370,6 +377,41 @@ function normalizeOrderContactContext(data: RawRecord): OrderContactContext {
       sendMethod === 'free_text' || sendMethod === 'template' ? sendMethod : undefined,
     approvedTemplates: templates,
   };
+}
+
+async function attachOrderSourceChannels(orders: Order[]) {
+  const contactIds = Array.from(
+    new Set(
+      orders
+        .filter((order) => order.source === 'marketing_chatbot' && !order.sourceChannel)
+        .map((order) => order.marketingContactId)
+        .filter((contactId): contactId is string => Boolean(contactId)),
+    ),
+  );
+
+  if (contactIds.length === 0) return orders;
+
+  const entries = await Promise.all(
+    contactIds.map(async (contactId) => {
+      try {
+        const snapshot = await getDoc(
+          doc(db, MARKETING_CONTACTS_COLLECTION, contactId),
+        );
+        const data = snapshot.exists() ? snapshot.data() : null;
+        return [contactId, stringOrUndefined(data?.channel)] as const;
+      } catch (error) {
+        console.warn('Failed to fetch order source channel:', contactId, error);
+        return [contactId, undefined] as const;
+      }
+    }),
+  );
+  const channelByContactId = new Map(entries);
+
+  return orders.map((order) => {
+    if (order.sourceChannel || !order.marketingContactId) return order;
+    const sourceChannel = channelByContactId.get(order.marketingContactId);
+    return sourceChannel ? { ...order, sourceChannel } : order;
+  });
 }
 
 function isRecord(value: unknown): value is RawRecord {
