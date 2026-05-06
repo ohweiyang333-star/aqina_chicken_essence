@@ -4,6 +4,8 @@ export const MARKETING_CONSENT_STORAGE_KEY = 'aqina_marketing_consent_v1';
 export const MARKETING_CONSENT_CHANGE_EVENT = 'aqina-marketing-consent-change';
 
 export type MarketingConsent = 'accepted' | 'declined';
+export type MarketingLandingVersion = 'home' | 'v2' | 'v3' | 'v4';
+export type MarketingLanguage = 'en' | 'zh';
 
 type GtagValue = string | Date | Record<string, unknown> | boolean | number | undefined;
 type GtagFunction = (...args: GtagValue[]) => void;
@@ -34,6 +36,12 @@ export interface MarketingProductEvent {
   quantity?: number;
   packageLabel?: string;
   orderId?: string;
+}
+
+export interface MarketingPageContext {
+  page_path: string;
+  landing_version?: MarketingLandingVersion;
+  language?: MarketingLanguage;
 }
 
 let initializedGaMeasurementId = '';
@@ -132,34 +140,42 @@ export function initializeMarketingAnalytics() {
 export function trackPageView(pathname: string) {
   if (!canTrackMarketingEvent(pathname)) return;
 
+  const pageContext = getMarketingPageContext(pathname);
   initializeMarketingAnalytics();
   trackGaEvent('page_view', {
-    page_path: pathname,
+    ...pageContext,
     page_location: window.location.href,
     page_title: document.title,
   });
-  trackMetaEvent('PageView');
+  trackMetaEvent('PageView', { ...pageContext });
 }
 
 export function trackBeginCheckout(product: MarketingProductEvent) {
   if (!canTrackMarketingEvent()) return;
 
+  const pageContext = getMarketingPageContext();
   const params = productEventParams(product);
   initializeMarketingAnalytics();
   trackGaEvent('begin_checkout', {
+    ...pageContext,
     currency: params.currency,
     value: params.value,
     items: [params.gaItem],
   });
-  trackMetaEvent('InitiateCheckout', params.meta);
+  trackMetaEvent('InitiateCheckout', {
+    ...params.meta,
+    ...pageContext,
+  });
 }
 
 export function trackReceiptSubmittedAsAddToCart(product: MarketingProductEvent) {
   if (!canTrackMarketingEvent()) return;
 
+  const pageContext = getMarketingPageContext();
   const params = productEventParams(product);
   initializeMarketingAnalytics();
   trackGaEvent('add_to_cart', {
+    ...pageContext,
     currency: params.currency,
     value: params.value,
     items: [params.gaItem],
@@ -167,6 +183,7 @@ export function trackReceiptSubmittedAsAddToCart(product: MarketingProductEvent)
   });
   trackMetaEvent('AddToCart', {
     ...params.meta,
+    ...pageContext,
     order_id: product.orderId,
   });
 }
@@ -174,15 +191,45 @@ export function trackReceiptSubmittedAsAddToCart(product: MarketingProductEvent)
 export function trackWhatsAppContact(source = 'whatsapp_link') {
   if (!canTrackMarketingEvent()) return;
 
+  const pageContext = getMarketingPageContext();
   initializeMarketingAnalytics();
   trackGaEvent('generate_lead', {
+    ...pageContext,
     method: 'whatsapp',
     source,
   });
   trackMetaEvent('Contact', {
+    ...pageContext,
     content_name: 'WhatsApp',
     source,
   });
+}
+
+export function getMarketingPageContext(pathname?: string): MarketingPageContext {
+  const pagePath = normalizeMarketingPath(
+    pathname ?? (typeof window === 'undefined' ? '/' : window.location.pathname),
+  );
+  const segments = pagePath.split('/').filter(Boolean);
+  const firstSegment = segments[0];
+  const secondSegment = segments[1];
+
+  if (isMarketingLanguage(firstSegment) && segments.length === 1) {
+    return {
+      page_path: pagePath,
+      landing_version: 'home',
+      language: firstSegment,
+    };
+  }
+
+  if (isMarketingLandingVersion(firstSegment) && isMarketingLanguage(secondSegment)) {
+    return {
+      page_path: pagePath,
+      landing_version: firstSegment,
+      language: secondSegment,
+    };
+  }
+
+  return { page_path: pagePath };
 }
 
 export function isWhatsAppHref(href: string) {
@@ -229,4 +276,29 @@ function trackGaEvent(eventName: string, params: Record<string, unknown>) {
 function trackMetaEvent(eventName: string, params?: Record<string, unknown>) {
   if (!getMetaPixelId() || !window.fbq) return;
   window.fbq('track', eventName, params);
+}
+
+function normalizeMarketingPath(pathname: string) {
+  const trimmedPath = pathname.trim() || '/';
+
+  if (trimmedPath.startsWith('http://') || trimmedPath.startsWith('https://')) {
+    try {
+      return new URL(trimmedPath).pathname || '/';
+    } catch {
+      return '/';
+    }
+  }
+
+  const [pathWithoutQuery] = trimmedPath.split(/[?#]/);
+  if (!pathWithoutQuery) return '/';
+
+  return pathWithoutQuery.startsWith('/') ? pathWithoutQuery : `/${pathWithoutQuery}`;
+}
+
+function isMarketingLandingVersion(value: string | undefined): value is MarketingLandingVersion {
+  return value === 'v2' || value === 'v3' || value === 'v4';
+}
+
+function isMarketingLanguage(value: string | undefined): value is MarketingLanguage {
+  return value === 'en' || value === 'zh';
 }
