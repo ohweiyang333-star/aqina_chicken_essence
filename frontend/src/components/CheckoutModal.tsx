@@ -9,6 +9,7 @@ import {
   type CheckoutOrderErrorCode,
 } from '@/lib/order-service';
 import { aqinaSiteConfig } from '@/lib/site-config';
+import { trackReceiptSubmittedAsAddToCart } from '@/lib/marketing-analytics';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -166,6 +167,13 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
         receiptFile,
       });
       setOrderId(result || '');
+      trackReceiptSubmittedAsAddToCart({
+        productId: selectedPackage.productId,
+        productName: product.name,
+        value: total,
+        packageLabel: product.label,
+        orderId: result || undefined,
+      });
       setIsSuccess(true);
     } catch (error) {
       setFormError(resolveSubmissionError(error));

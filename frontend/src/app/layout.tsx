@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
+import MarketingAnalytics from "@/components/MarketingAnalytics";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -34,7 +35,10 @@ export default function RootLayout({
 }) {
   return (
     <html className="h-full antialiased">
-      <body className="min-h-full font-sans">{children}</body>
+      <body className="min-h-full font-sans">
+        {children}
+        <MarketingAnalytics />
+      </body>
     </html>
   );
 }

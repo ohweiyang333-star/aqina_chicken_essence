@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { IMAGES } from '@/lib/image-utils';
+import { trackBeginCheckout } from '@/lib/marketing-analytics';
 import {
   getProducts,
   resolveFixedPackKeyByMeta,
@@ -109,6 +110,12 @@ export default function useLandingProducts() {
   }, [locale, t]);
 
   const handleBuyNow = (product: DisplayProduct) => {
+    trackBeginCheckout({
+      productId: product.id,
+      productName: product.name,
+      value: Number(product.price),
+      packageLabel: product.label,
+    });
     setSelectedProduct(product);
     setIsCheckoutOpen(true);
   };
