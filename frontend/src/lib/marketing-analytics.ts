@@ -36,12 +36,21 @@ export interface MarketingProductEvent {
   quantity?: number;
   packageLabel?: string;
   orderId?: string;
+  eventId?: string;
 }
 
 export interface MarketingPageContext {
   page_path: string;
   landing_version?: MarketingLandingVersion;
   language?: MarketingLanguage;
+}
+
+export interface MarketingServerEventContext extends MarketingPageContext {
+  marketing_consent: MarketingConsent;
+  marketing_event_id: string;
+  event_source_url: string;
+  marketing_fbp?: string;
+  marketing_fbc?: string;
 }
 
 let initializedGaMeasurementId = '';
@@ -179,13 +188,14 @@ export function trackReceiptSubmittedAsAddToCart(product: MarketingProductEvent)
     currency: params.currency,
     value: params.value,
     items: [params.gaItem],
+    event_id: product.eventId,
     order_id: product.orderId,
   });
   trackMetaEvent('AddToCart', {
     ...params.meta,
     ...pageContext,
     order_id: product.orderId,
-  });
+  }, product.eventId);
 }
 
 export function trackWhatsAppContact(source = 'whatsapp_link') {
@@ -232,6 +242,35 @@ export function getMarketingPageContext(pathname?: string): MarketingPageContext
   return { page_path: pagePath };
 }
 
+export function createMarketingEventId(prefix: string) {
+  const safePrefix = prefix.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 48) || 'event';
+  const randomPart =
+    typeof window !== 'undefined' && window.crypto?.randomUUID
+      ? window.crypto.randomUUID()
+      : `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+  return `${safePrefix}_${randomPart}`;
+}
+
+export function getMarketingServerEventContext(
+  eventId: string,
+): MarketingServerEventContext | null {
+  if (!canTrackMarketingEvent()) return null;
+
+  const pageContext = getMarketingPageContext();
+  const fbp = readCookieValue('_fbp');
+  const fbc = readCookieValue('_fbc') || buildFbcFromUrl();
+
+  return {
+    ...pageContext,
+    marketing_consent: 'accepted',
+    marketing_event_id: eventId,
+    event_source_url: window.location.href,
+    marketing_fbp: fbp,
+    marketing_fbc: fbc,
+  };
+}
+
 export function isWhatsAppHref(href: string) {
   try {
     const url = new URL(href);
@@ -273,8 +312,14 @@ function trackGaEvent(eventName: string, params: Record<string, unknown>) {
   window.gtag('event', eventName, params);
 }
 
-function trackMetaEvent(eventName: string, params?: Record<string, unknown>) {
+function trackMetaEvent(eventName: string, params?: Record<string, unknown>, eventId?: string) {
   if (!getMetaPixelId() || !window.fbq) return;
+
+  if (eventId) {
+    window.fbq('track', eventName, params, { eventID: eventId });
+    return;
+  }
+
   window.fbq('track', eventName, params);
 }
 
@@ -301,4 +346,26 @@ function isMarketingLandingVersion(value: string | undefined): value is Marketin
 
 function isMarketingLanguage(value: string | undefined): value is MarketingLanguage {
   return value === 'en' || value === 'zh';
+}
+
+function readCookieValue(name: string) {
+  if (typeof document === 'undefined') return undefined;
+
+  const encodedName = `${encodeURIComponent(name)}=`;
+  const cookie = document.cookie
+    .split('; ')
+    .find((part) => part.startsWith(encodedName));
+  if (!cookie) return undefined;
+
+  const value = cookie.slice(encodedName.length);
+  return value ? decodeURIComponent(value) : undefined;
+}
+
+function buildFbcFromUrl() {
+  if (typeof window === 'undefined') return undefined;
+
+  const fbclid = new URLSearchParams(window.location.search).get('fbclid');
+  if (!fbclid) return undefined;
+
+  return `fb.1.${Date.now()}.${fbclid}`;
 }

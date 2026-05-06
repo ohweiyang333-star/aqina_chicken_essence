@@ -223,6 +223,25 @@ class MetaMessagingClient:
             params={"access_token": settings.meta_whatsapp_access_token},
         )
 
+    def send_conversion_event(
+        self,
+        *,
+        pixel_id: str,
+        access_token: str,
+        events: list[dict[str, Any]],
+        test_event_code: str | None = None,
+    ) -> dict[str, Any]:
+        """Send website events to Meta Conversions API."""
+        payload: dict[str, Any] = {"data": events}
+        if test_event_code:
+            payload["test_event_code"] = test_event_code
+
+        return self._post(
+            f"/{pixel_id}/events",
+            json=payload,
+            params={"access_token": access_token},
+        )
+
     def list_whatsapp_templates(self) -> dict[str, Any]:
         """Fetch approved and pending templates from the configured WABA."""
         return self._get(

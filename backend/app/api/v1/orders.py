@@ -1,5 +1,7 @@
 """Orders API endpoints."""
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+import logging
+
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile, status
 from datetime import datetime
 from typing import Optional
 from google.cloud.firestore import SERVER_TIMESTAMP
@@ -19,12 +21,14 @@ from app.models.order import (
     CustomerInfo,
 )
 from app.services.marketing_contacts import MarketingContactService
+from app.services.meta_conversions import MetaAddToCartEventInput, MetaConversionsService
 from app.services.meta_client import get_meta_client
 from app.services.storage_uploads import upload_public_file_to_firebase
 from app.services.task_queue import get_task_queue_service
 from app.services.whatsapp_console import WhatsAppConsoleService
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
+logger = logging.getLogger(__name__)
 
 LANDING_PACKAGES = {
     "pack1": {"name": "7天启动装", "name_en": "7-Day Starter Pack", "price": 39.9, "box_count": 1, "pack_count": 7},
@@ -212,12 +216,22 @@ def _build_whatsapp_console(db) -> WhatsAppConsoleService:
 
 @router.post("/with-receipt", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def create_landing_order_with_receipt(
+    request: Request,
+    background_tasks: BackgroundTasks,
     db: DB,
     customer_name: str = Form(..., min_length=1, max_length=100),
     customer_phone: str = Form(...),
     customer_address: str = Form(...),
     product_id: str = Form(..., min_length=1, max_length=100),
     payment_receipt: UploadFile = File(...),
+    marketing_consent: Optional[str] = Form(default=None, max_length=20),
+    marketing_event_id: Optional[str] = Form(default=None, max_length=160),
+    event_source_url: Optional[str] = Form(default=None, max_length=1000),
+    page_path: Optional[str] = Form(default=None, max_length=200),
+    landing_version: Optional[str] = Form(default=None, max_length=20),
+    language: Optional[str] = Form(default=None, max_length=10),
+    marketing_fbp: Optional[str] = Form(default=None, max_length=250),
+    marketing_fbc: Optional[str] = Form(default=None, max_length=500),
 ):
     """
     Create a landing-page PayNow order after receipt upload.
@@ -336,6 +350,31 @@ async def create_landing_order_with_receipt(
                 "updated_at": SERVER_TIMESTAMP,
             }
         )
+
+    background_tasks.add_task(
+        _send_meta_receipt_add_to_cart_event,
+        db=db,
+        order_id=order_id,
+        event_input=MetaAddToCartEventInput(
+            order_id=order_id,
+            product_id=product_id,
+            product_name=str(package["name_en"]),
+            value=total_amount,
+            customer_name=normalized_name,
+            customer_phone=normalized_phone,
+            quantity=1,
+            marketing_consent=marketing_consent,
+            event_id=marketing_event_id,
+            event_source_url=event_source_url,
+            page_path=page_path,
+            landing_version=landing_version,
+            language=language,
+            fbp=marketing_fbp,
+            fbc=marketing_fbc,
+            client_ip_address=_client_ip_address(request),
+            client_user_agent=request.headers.get("user-agent"),
+        ),
+    )
 
     return OrderResponse(
         order_id=order_id,
@@ -486,3 +525,39 @@ async def update_order_status(
     )
 
     return OrderResponse(**order_data)
+
+
+def _send_meta_receipt_add_to_cart_event(
+    *,
+    db,
+    order_id: str,
+    event_input: MetaAddToCartEventInput,
+) -> None:
+    result = MetaConversionsService(meta_client=get_meta_client()).send_add_to_cart(event_input)
+    if result.get("status") == "skipped":
+        return
+
+    try:
+        db.collection("orders").document(order_id).set(
+            {
+                "meta_capi": {
+                    "add_to_cart": result,
+                },
+                "updated_at": SERVER_TIMESTAMP,
+            },
+            merge=True,
+        )
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        logger.warning("meta_capi_status_write_failed order_id=%s error=%s", order_id, exc)
+
+
+def _client_ip_address(request: Request) -> str | None:
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",", 1)[0].strip()
+
+    real_ip = request.headers.get("x-real-ip")
+    if real_ip:
+        return real_ip.strip()
+
+    return request.client.host if request.client else None

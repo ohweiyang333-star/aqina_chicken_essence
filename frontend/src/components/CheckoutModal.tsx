@@ -9,7 +9,11 @@ import {
   type CheckoutOrderErrorCode,
 } from '@/lib/order-service';
 import { aqinaSiteConfig } from '@/lib/site-config';
-import { trackReceiptSubmittedAsAddToCart } from '@/lib/marketing-analytics';
+import {
+  createMarketingEventId,
+  getMarketingServerEventContext,
+  trackReceiptSubmittedAsAddToCart,
+} from '@/lib/marketing-analytics';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -158,6 +162,9 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
     if (!receiptFile) return;
 
     setIsSubmitting(true);
+    const marketingEventId = createMarketingEventId('receipt_add_to_cart');
+    const marketing = getMarketingServerEventContext(marketingEventId);
+
     try {
       const result = await createOrder({
         customerName: normalizedName,
@@ -165,6 +172,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
         address: normalizedAddress,
         productId: selectedPackage.productId,
         receiptFile,
+        marketing,
       });
       setOrderId(result || '');
       trackReceiptSubmittedAsAddToCart({
@@ -173,6 +181,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
         value: total,
         packageLabel: product.label,
         orderId: result || undefined,
+        eventId: marketingEventId,
       });
       setIsSuccess(true);
     } catch (error) {

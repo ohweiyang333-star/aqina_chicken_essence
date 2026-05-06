@@ -299,6 +299,10 @@ class FakeMetaClient:
         self.calls.append(("send_whatsapp_template", kwargs))
         return {"messages": [{"id": "template-id"}]}
 
+    def send_conversion_event(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("send_conversion_event", kwargs))
+        return {"events_received": len(kwargs.get("events", [])), "fbtrace_id": "fake-fbtrace-id"}
+
     def list_whatsapp_templates(self) -> dict[str, Any]:
         self.calls.append(("list_whatsapp_templates", {}))
         return {

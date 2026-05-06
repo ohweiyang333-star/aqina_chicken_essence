@@ -145,10 +145,12 @@ const policySections: PolicySection[] = [
     zhTitle: "Cookie 与分析",
     body: [
       "Our website may use cookies, pixels, analytics tags, and similar technologies to keep the site working, understand page performance, improve user experience, measure advertising effectiveness, and protect against misuse.",
+      "If you consent to marketing analytics and submit an order, we may send limited conversion data such as hashed contact identifiers, browser identifiers, page path, IP address, and user agent to advertising platforms including Meta to measure ad effectiveness.",
       "You can manage cookies through your browser settings. Disabling cookies may affect some website functions.",
     ],
     zhBody: [
       "我们的网站可能使用 cookie、像素、分析标签和类似技术，以维持网站运作、了解页面表现、改善用户体验、衡量广告效果，并防止滥用。",
+      "如果您同意营销分析并提交订单，我们可能会把有限的转化资料，例如加密后的联系识别资料、浏览器识别码、页面路径、IP 地址和 user agent，发送给包括 Meta 在内的广告平台，用于衡量广告效果。",
       "您可以通过浏览器设置管理 cookie。停用 cookie 可能影响部分网站功能。",
     ],
   },

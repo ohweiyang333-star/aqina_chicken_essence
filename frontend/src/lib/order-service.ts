@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from './firebase';
 import { apiClient } from './api-client';
+import type { MarketingServerEventContext } from './marketing-analytics';
 
 export type OrderStatus = 'PENDING' | 'SHIPPED' | 'COMPLETED' | 'CANCELLED';
 export type OrderPaymentStatus =
@@ -96,6 +97,7 @@ export interface CreateCheckoutOrderInput {
   address: string;
   productId: string;
   receiptFile: File;
+  marketing?: MarketingServerEventContext | null;
 }
 
 export type CheckoutOrderErrorCode =
@@ -137,6 +139,7 @@ export const createOrder = async (order: CreateCheckoutOrderInput) => {
   formData.append('customer_address', order.address);
   formData.append('product_id', order.productId);
   formData.append('payment_receipt', order.receiptFile);
+  appendMarketingEventContext(formData, order.marketing);
 
   const response = await fetch(`${baseUrl.replace(/\/$/, '')}/api/v1/orders/with-receipt`, {
     method: 'POST',
@@ -151,6 +154,31 @@ export const createOrder = async (order: CreateCheckoutOrderInput) => {
   const payload = await response.json();
   return payload.order_id as string;
 };
+
+function appendMarketingEventContext(
+  formData: FormData,
+  marketing: MarketingServerEventContext | null | undefined,
+) {
+  if (!marketing) return;
+
+  formData.append('marketing_consent', marketing.marketing_consent);
+  formData.append('marketing_event_id', marketing.marketing_event_id);
+  formData.append('event_source_url', marketing.event_source_url);
+  formData.append('page_path', marketing.page_path);
+
+  if (marketing.landing_version) {
+    formData.append('landing_version', marketing.landing_version);
+  }
+  if (marketing.language) {
+    formData.append('language', marketing.language);
+  }
+  if (marketing.marketing_fbp) {
+    formData.append('marketing_fbp', marketing.marketing_fbp);
+  }
+  if (marketing.marketing_fbc) {
+    formData.append('marketing_fbc', marketing.marketing_fbc);
+  }
+}
 
 function parseCheckoutOrderError(payload: unknown): CheckoutOrderError {
   const detail = isRecord(payload) ? payload.detail : undefined;

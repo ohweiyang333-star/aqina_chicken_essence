@@ -930,6 +930,90 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["payment_status"], "payment_submitted")
         self.assertEqual(payload["payment_receipt_url"], "https://storage.example.com/receipt.png")
 
+    def test_landing_order_with_receipt_sends_meta_capi_add_to_cart_after_consent(self) -> None:
+        client = self._build_client()
+
+        with (
+            patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"),
+            patch("app.services.meta_conversions.settings.meta_pixel_id", "pixel-123"),
+            patch("app.services.meta_conversions.settings.meta_conversions_access_token", "capi-token"),
+            patch("app.services.meta_conversions.settings.meta_conversions_test_event_code", ""),
+        ):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Janice Lee",
+                    "customer_phone": "6598765432",
+                    "customer_address": "20 Tanjong Pagar Road, Singapore 088443",
+                    "product_id": "pack1",
+                    "marketing_consent": "accepted",
+                    "marketing_event_id": "receipt_add_to_cart_test_123",
+                    "event_source_url": "https://aqina-sg.web.app/v3/zh?fbclid=test-click",
+                    "page_path": "/v3/zh",
+                    "landing_version": "v3",
+                    "language": "zh",
+                    "marketing_fbp": "fb.1.1710000000.browser",
+                    "marketing_fbc": "fb.1.1710000001.click",
+                },
+                files={"payment_receipt": ("receipt.png", b"fake-image", "image/png")},
+                headers={
+                    "user-agent": "pytest-browser",
+                    "x-forwarded-for": "203.0.113.8, 10.0.0.1",
+                },
+            )
+
+        self.assertEqual(response.status_code, 201)
+        calls = [call for call in self.meta_client.calls if call[0] == "send_conversion_event"]
+        self.assertEqual(len(calls), 1)
+        call = calls[0][1]
+        self.assertEqual(call["pixel_id"], "pixel-123")
+
+        event = call["events"][0]
+        self.assertEqual(event["event_name"], "AddToCart")
+        self.assertEqual(event["event_id"], "receipt_add_to_cart_test_123")
+        self.assertEqual(event["action_source"], "website")
+        self.assertEqual(event["event_source_url"], "https://aqina-sg.web.app/v3/zh?fbclid=test-click")
+        self.assertEqual(event["custom_data"]["value"], 47.9)
+        self.assertEqual(event["custom_data"]["currency"], "SGD")
+        self.assertEqual(event["custom_data"]["content_ids"], ["pack1"])
+        self.assertEqual(event["custom_data"]["landing_version"], "v3")
+        self.assertEqual(event["custom_data"]["language"], "zh")
+        self.assertEqual(event["custom_data"]["page_path"], "/v3/zh")
+        self.assertEqual(event["user_data"]["fbp"], "fb.1.1710000000.browser")
+        self.assertEqual(event["user_data"]["fbc"], "fb.1.1710000001.click")
+        self.assertEqual(event["user_data"]["client_ip_address"], "203.0.113.8")
+        self.assertEqual(event["user_data"]["client_user_agent"], "pytest-browser")
+        self.assertEqual(
+            event["user_data"]["ph"],
+            [hashlib.sha256("6598765432".encode("utf-8")).hexdigest()],
+        )
+
+        order = self.db.collection("orders").stream()[0].to_dict()
+        self.assertEqual(order["meta_capi"]["add_to_cart"]["status"], "sent")
+        self.assertEqual(order["meta_capi"]["add_to_cart"]["event_id"], "receipt_add_to_cart_test_123")
+
+    def test_landing_order_with_receipt_does_not_send_meta_capi_without_consent(self) -> None:
+        client = self._build_client()
+
+        with (
+            patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"),
+            patch("app.services.meta_conversions.settings.meta_pixel_id", "pixel-123"),
+            patch("app.services.meta_conversions.settings.meta_conversions_access_token", "capi-token"),
+        ):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Janice Lee",
+                    "customer_phone": "6598765432",
+                    "customer_address": "20 Tanjong Pagar Road, Singapore 088443",
+                    "product_id": "pack1",
+                },
+                files={"payment_receipt": ("receipt.png", b"fake-image", "image/png")},
+            )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_conversion_event"])
+
     def test_landing_order_with_receipt_has_free_shipping_for_two_boxes(self) -> None:
         client = self._build_client()
 
