@@ -18,8 +18,8 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { label: 'Inbox', href: '/admin/inbox', icon: Inbox },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
+  { label: 'Inbox', href: '/admin/inbox', icon: Inbox },
   { label: 'WhatsApp', href: '/admin/whatsapp', icon: MessageCircle },
   { label: 'CRM & AI', href: '/admin/crm', icon: BrainCircuit },
   { label: 'Customers', href: '/admin/customers', icon: Users },
