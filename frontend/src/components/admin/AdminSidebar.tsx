@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   BrainCircuit,
+  Inbox,
   Users,
   LogOut,
   MessageCircle,
@@ -17,6 +18,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { label: 'Inbox', href: '/admin/inbox', icon: Inbox },
   { label: 'Orders', href: '/admin/orders', icon: ShoppingBag },
   { label: 'WhatsApp', href: '/admin/whatsapp', icon: MessageCircle },
   { label: 'CRM & AI', href: '/admin/crm', icon: BrainCircuit },

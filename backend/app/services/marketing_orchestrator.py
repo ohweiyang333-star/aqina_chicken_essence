@@ -62,49 +62,32 @@ class MarketingAutomationOrchestrator:
         accepted = 0
         for entry in payload.get("entry", []):
             for message_event in entry.get("messaging", []):
-                message = message_event.get("message", {})
-                attachments = message.get("attachments", [])
-                image_attachment = next(
-                    (item for item in attachments if item.get("type") == "image"),
-                    None,
-                )
-                audio_attachment = next(
-                    (item for item in attachments if item.get("type") == "audio"),
-                    None,
-                )
-                if "text" not in message and not image_attachment and not audio_attachment:
+                messenger_event = self._normalize_messenger_event(message_event)
+                if messenger_event is None:
                     continue
 
-                occurred_at = ensure_datetime(message_event.get("timestamp")) or utcnow()
-                identifiers = {"psid": str(message_event.get("sender", {}).get("id", ""))}
-                if audio_attachment:
-                    message_type = "audio"
-                    message_text = "[audio]"
-                elif image_attachment:
-                    message_type = "image"
-                    message_text = "[image]"
-                else:
-                    message_type = "text"
-                    message_text = message.get("text", "")
+                occurred_at = messenger_event["occurred_at"]
+                identifiers = {"psid": messenger_event["sender_psid"]}
                 contact_id, conversation_id = self.contact_service.upsert_contact_from_event(
                     channel="messenger",
                     identifiers=identifiers,
                     current_tag="lead_cold",
                     status="active",
                     interaction_time=occurred_at,
+                    acquisition=messenger_event["acquisition"],
                 )
                 self.contact_service.append_message(
                     contact_id=contact_id,
                     channel="messenger",
                     direction="inbound",
                     role="user",
-                    text=message_text,
-                    source="messenger_webhook",
-                    provider_message_id=message.get("mid"),
-                    message_type=message_type,
+                    text=messenger_event["text"],
+                    source=messenger_event["source"],
+                    provider_message_id=messenger_event["provider_message_id"],
+                    message_type=messenger_event["message_type"],
                     created_at=occurred_at,
                 )
-                is_opt_out = message_type == "text" and is_marketing_opt_out_text(message_text)
+                is_opt_out = messenger_event["message_type"] == "text" and is_marketing_opt_out_text(messenger_event["text"])
                 if is_opt_out:
                     self.contact_service.mark_marketing_opt_out(
                         contact_id,
@@ -113,19 +96,26 @@ class MarketingAutomationOrchestrator:
                 normalized = NormalizedMarketingEvent(
                     provider="meta",
                     channel="messenger",
-                    event_type="messenger_opt_out_received" if is_opt_out else "messenger_message_received",
-                    dedupe_key=f"messenger:{message.get('mid')}",
+                    event_type=(
+                        "messenger_opt_out_received"
+                        if is_opt_out
+                        else messenger_event["event_type"]
+                    ),
+                    dedupe_key=messenger_event["dedupe_key"],
                     occurred_at=occurred_at,
                     contact_id=contact_id,
                     conversation_id=conversation_id,
                     identifiers=identifiers,
                     payload={
                         "channel": "messenger",
-                        "text": message_text,
-                        "message_type": message_type,
-                        "attachment_url": (image_attachment or audio_attachment or {}).get("payload", {}).get("url"),
-                        "mime_type": (image_attachment or audio_attachment or {}).get("payload", {}).get("mime_type"),
-                        "provider_message_id": message.get("mid"),
+                        "text": messenger_event["text"],
+                        "message_type": messenger_event["message_type"],
+                        "attachment_url": messenger_event.get("attachment_url"),
+                        "mime_type": messenger_event.get("mime_type"),
+                        "provider_message_id": messenger_event["provider_message_id"],
+                        "postback_payload": messenger_event.get("postback_payload"),
+                        "quick_reply_payload": messenger_event.get("quick_reply_payload"),
+                        "acquisition": messenger_event["acquisition"],
                         "sender_psid": identifiers["psid"],
                     },
                 )
@@ -241,6 +231,85 @@ class MarketingAutomationOrchestrator:
                     )
 
         return accepted
+
+    def _normalize_messenger_event(self, message_event: dict[str, Any]) -> dict[str, Any] | None:
+        sender_psid = str(message_event.get("sender", {}).get("id") or "")
+        if not sender_psid:
+            return None
+
+        message = message_event.get("message") or {}
+        postback = message_event.get("postback") or {}
+        occurred_at = ensure_datetime(message_event.get("timestamp")) or utcnow()
+
+        attachments = message.get("attachments") or []
+        image_attachment = next((item for item in attachments if item.get("type") == "image"), None)
+        audio_attachment = next((item for item in attachments if item.get("type") == "audio"), None)
+        attachment = image_attachment or audio_attachment
+
+        provider_message_id = message.get("mid")
+        postback_payload = None
+        quick_reply_payload = (message.get("quick_reply") or {}).get("payload")
+        source = "messenger_webhook"
+        event_type = "messenger_message_received"
+
+        if postback:
+            message_type = "postback"
+            postback_payload = postback.get("payload")
+            message_text = str(postback.get("title") or postback_payload or "[postback]")
+            source = "messenger_postback"
+            event_type = "messenger_postback_received"
+        elif audio_attachment:
+            message_type = "audio"
+            message_text = "[audio]"
+        elif image_attachment:
+            message_type = "image"
+            message_text = "[image]"
+        elif "text" in message:
+            message_type = "text"
+            message_text = str(message.get("text") or "")
+        else:
+            return None
+
+        dedupe_seed = (
+            provider_message_id
+            or f"{sender_psid}:{occurred_at.isoformat()}:{postback_payload or quick_reply_payload or message_text}"
+        )
+        return {
+            "sender_psid": sender_psid,
+            "occurred_at": occurred_at,
+            "text": message_text,
+            "source": source,
+            "event_type": event_type,
+            "dedupe_key": f"messenger:{message_type}:{dedupe_seed}",
+            "message_type": message_type,
+            "provider_message_id": provider_message_id,
+            "postback_payload": postback_payload,
+            "quick_reply_payload": quick_reply_payload,
+            "attachment_url": (attachment or {}).get("payload", {}).get("url"),
+            "mime_type": (attachment or {}).get("payload", {}).get("mime_type"),
+            "acquisition": self._messenger_acquisition(message_event),
+        }
+
+    @staticmethod
+    def _messenger_acquisition(message_event: dict[str, Any]) -> dict[str, Any]:
+        postback = message_event.get("postback") or {}
+        message = message_event.get("message") or {}
+        referral = (
+            postback.get("referral")
+            or message.get("referral")
+            or message_event.get("referral")
+            or {}
+        )
+        if not isinstance(referral, dict):
+            referral = {}
+        source = referral.get("source") or "unknown/direct"
+        return {
+            "source": source,
+            "ref": referral.get("ref"),
+            "ad_id": referral.get("ad_id"),
+            "post_id": referral.get("post_id"),
+            "raw_referral": deepcopy(referral) if referral else None,
+        }
 
     def ingest_whatsapp_webhook(self, payload: dict[str, Any]) -> int:
         accepted = 0

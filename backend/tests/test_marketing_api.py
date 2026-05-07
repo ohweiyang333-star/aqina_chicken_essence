@@ -303,6 +303,92 @@ class MarketingApiTests(unittest.TestCase):
         events = self.db.collection("marketing_events").stream()
         self.assertEqual(events[0].to_dict()["status"], "processed_opt_out")
 
+    def test_messenger_webhook_records_referral_acquisition(self) -> None:
+        client = self._build_client()
+        payload = {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "messaging": [
+                        {
+                            "sender": {"id": "psid-ad-1"},
+                            "recipient": {"id": "page-1"},
+                            "timestamp": 1770000000000,
+                            "referral": {
+                                "source": "ADS",
+                                "type": "OPEN_THREAD",
+                                "ref": "may-offer",
+                                "ad_id": "ad-123",
+                                "referer_uri": "https://facebook.com/ads/example",
+                            },
+                            "message": {"mid": "mid-ad-1", "text": "请问优惠配套？"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["accepted_events"], 1)
+        contact = self.db.collection("marketing_contacts").stream()[0].to_dict()
+        self.assertEqual(contact["acquisition"]["source"], "ADS")
+        self.assertEqual(contact["acquisition"]["ref"], "may-offer")
+        self.assertEqual(contact["acquisition"]["ad_id"], "ad-123")
+        event = self.db.collection("marketing_events").stream()[0].to_dict()
+        self.assertEqual(event["payload"]["acquisition"]["ad_id"], "ad-123")
+        self.assertEqual(event["payload"]["sender_psid"], "psid-ad-1")
+        self.assertEqual(self.task_queue.created_tasks[0]["processor"], "process-inbound-message")
+
+    def test_messenger_postback_is_recorded_as_inbound_conversation_event(self) -> None:
+        client = self._build_client()
+        payload = {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "messaging": [
+                        {
+                            "sender": {"id": "psid-postback-1"},
+                            "recipient": {"id": "page-1"},
+                            "timestamp": 1770000005000,
+                            "postback": {
+                                "title": "了解配套",
+                                "payload": "VIEW_PACKAGES",
+                                "referral": {"source": "SHORTLINK", "ref": "menu-button"},
+                            },
+                        }
+                    ],
+                }
+            ]
+        }
+
+        response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        self.assertEqual(response.json()["accepted_events"], 1)
+        event = self.db.collection("marketing_events").stream()[0].to_dict()
+        self.assertEqual(event["event_type"], "messenger_postback_received")
+        self.assertEqual(event["payload"]["postback_payload"], "VIEW_PACKAGES")
+        messages = self.db.collection("marketing_conversations").stream()[0].reference.collection("messages").stream()
+        self.assertEqual(messages[0].to_dict()["message_type"], "postback")
+        self.assertEqual(messages[0].to_dict()["text"], "了解配套")
+        self.assertEqual(self.task_queue.created_tasks[0]["processor"], "process-inbound-message")
+
     def test_whatsapp_webhook_accepts_unix_timestamp_string(self) -> None:
         client = self._build_client()
         payload = {
@@ -1686,6 +1772,174 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("Customer service window", response.json()["detail"])
         self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"])
+
+    def test_unified_conversations_api_lists_and_filters_marketing_inbox(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-unified-msgr",
+            conversation_id="conv-unified-msgr",
+            event_id="event-unified-msgr",
+            channel="messenger",
+            incoming_text="请问多少钱？",
+            identifier_key="psid",
+            identifier_value="psid-unified-1",
+        )
+        self.db.collection("marketing_contacts").document("contact-unified-msgr").set(
+            {
+                "acquisition": {
+                    "source": "ADS",
+                    "ref": "may-offer",
+                    "ad_id": "ad-123",
+                    "post_id": None,
+                    "raw_referral": {"source": "ADS", "ad_id": "ad-123"},
+                }
+            },
+            merge=True,
+        )
+        self._seed_contact_and_event(
+            contact_id="contact-unified-wa",
+            conversation_id="conv-unified-wa",
+            event_id="event-unified-wa",
+            channel="whatsapp",
+            incoming_text="想订两盒",
+            identifier_key="wa_id",
+            identifier_value="6591880000",
+        )
+
+        client = self._build_client()
+        all_response = client.get(
+            "/api/v1/marketing/conversations",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        messenger_response = client.get(
+            "/api/v1/marketing/conversations",
+            params={"channel": "messenger"},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(all_response.status_code, 200)
+        self.assertEqual(len(all_response.json()["items"]), 2)
+        self.assertEqual(messenger_response.status_code, 200)
+        items = messenger_response.json()["items"]
+        self.assertEqual(len(items), 1)
+        self.assertEqual(items[0]["channel"], "messenger")
+        self.assertEqual(items[0]["platform_id"], "psid-unified-1")
+        self.assertEqual(items[0]["acquisition"]["ad_id"], "ad-123")
+        self.assertEqual(items[0]["latest_message"]["text"], "请问多少钱？")
+
+    def test_unified_conversation_detail_returns_messages_contact_and_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-detail-msgr",
+            conversation_id="conv-detail-msgr",
+            event_id="event-detail-msgr",
+            channel="messenger",
+            incoming_text="我要买给妈妈",
+            identifier_key="psid",
+            identifier_value="psid-detail-1",
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/marketing/conversations/conv-detail-msgr",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["conversation"]["channel"], "messenger")
+        self.assertEqual(payload["conversation"]["platform_id"], "psid-detail-1")
+        self.assertTrue(payload["window"]["is_open"])
+        self.assertEqual(payload["messages"][0]["text"], "我要买给妈妈")
+        self.assertEqual(payload["contact"]["contact_id"], "contact-detail-msgr")
+
+    def test_unified_conversations_api_sends_messenger_manual_reply_inside_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-manual-msgr",
+            conversation_id="conv-manual-msgr",
+            event_id="event-manual-msgr",
+            channel="messenger",
+            incoming_text="可以今天送吗？",
+            identifier_key="psid",
+            identifier_value="psid-manual-1",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/conversations/conv-manual-msgr/messages",
+            json={"text": "可以的，我先帮您确认今天发货批次。"},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "sent")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_messenger_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertEqual(message_calls[0][1]["recipient_psid"], "psid-manual-1")
+        outbound_messages = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-manual-msgr")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("direction") == "outbound"
+        ]
+        self.assertEqual(outbound_messages[0]["role"], "admin")
+        self.assertEqual(outbound_messages[0]["source"], "admin_messenger_console")
+
+    def test_unified_conversations_api_blocks_messenger_manual_reply_after_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-manual-closed",
+            conversation_id="conv-manual-closed",
+            event_id="event-manual-closed",
+            channel="messenger",
+            incoming_text="之前问过配套",
+            identifier_key="psid",
+            identifier_value="psid-manual-closed",
+        )
+        self.db.collection("marketing_contacts").document("contact-manual-closed").set(
+            {"window_expires_at": "2026-04-01T00:00:00Z"},
+            merge=True,
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/conversations/conv-manual-closed/messages",
+            json={"text": "现在还有优惠。"},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Customer service window", response.json()["detail"])
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_messenger_text"])
+
+    def test_marketing_contact_tag_update_is_restricted_to_known_tags(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-tag-update",
+            conversation_id="conv-tag-update",
+            event_id="event-tag-update",
+            channel="messenger",
+            incoming_text="我想考虑一下",
+            identifier_key="psid",
+            identifier_value="psid-tag-1",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/contacts/contact-tag-update/tag",
+            json={"current_tag": "cart_hot"},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        invalid_response = client.post(
+            "/api/v1/marketing/contacts/contact-tag-update/tag",
+            json={"current_tag": "not_a_tag"},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        contact = self.db.collection("marketing_contacts").document("contact-tag-update").get().to_dict()
+        self.assertEqual(contact["current_tag"], "cart_hot")
+        tag_events = self.db.collection("marketing_contacts").document("contact-tag-update").collection("tag_events").stream()
+        self.assertEqual(tag_events[0].to_dict()["source"], "admin_unified_inbox")
+        self.assertEqual(invalid_response.status_code, 422)
 
     def test_whatsapp_console_allows_template_after_customer_window(self) -> None:
         self._seed_contact_and_event(

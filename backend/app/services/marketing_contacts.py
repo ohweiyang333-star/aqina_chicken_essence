@@ -22,6 +22,7 @@ class MarketingContactService:
         status: str,
         interaction_time: Any = None,
         comment_time: Any = None,
+        acquisition: dict[str, Any] | None = None,
     ) -> tuple[str, str]:
         now = utcnow()
         interaction_dt = ensure_datetime(interaction_time)
@@ -59,6 +60,9 @@ class MarketingContactService:
 
         if comment_dt is not None:
             update["last_comment_time"] = comment_dt
+
+        if acquisition is not None:
+            update["acquisition"] = self._merge_acquisition(existing.get("acquisition"), acquisition)
 
         conversation_id = existing.get("latest_conversation_id")
         if not conversation_id:
@@ -280,3 +284,22 @@ class MarketingContactService:
                 snapshot = docs[0]
                 return snapshot.id, snapshot.to_dict()
         return None, None
+
+    @staticmethod
+    def _merge_acquisition(existing: Any, incoming: dict[str, Any]) -> dict[str, Any]:
+        current = existing if isinstance(existing, dict) else {}
+        merged = {
+            "source": current.get("source") or "unknown/direct",
+            "ref": current.get("ref"),
+            "ad_id": current.get("ad_id"),
+            "post_id": current.get("post_id"),
+            "raw_referral": current.get("raw_referral"),
+        }
+        for key in ("source", "ref", "ad_id", "post_id", "raw_referral"):
+            value = incoming.get(key)
+            if value in (None, ""):
+                continue
+            if key == "source" and value == "unknown/direct" and current.get("source"):
+                continue
+            merged[key] = value
+        return merged

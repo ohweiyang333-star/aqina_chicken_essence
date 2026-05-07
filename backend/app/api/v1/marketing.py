@@ -16,8 +16,11 @@ from app.models.marketing import (
     ProcessFollowUpJobRequest,
     ProcessMarketingEventRequest,
     ReconcileDueJobsRequest,
+    SendMarketingTextRequest,
     SendWhatsAppTemplateRequest,
     SendWhatsAppTextRequest,
+    UpdateMarketingAutomationRequest,
+    UpdateMarketingContactTagRequest,
     UpdateWhatsAppAutomationRequest,
     UpsertWhatsAppTemplateRequest,
     WhatsAppCampaignRequest,
@@ -25,6 +28,7 @@ from app.models.marketing import (
 from app.services.chatbot_settings import ChatbotSettingsService
 from app.services.follow_up import FollowUpEngine
 from app.services.gemini_service import get_gemini_service
+from app.services.marketing_conversation_console import MarketingConversationConsoleService
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_orchestrator import MarketingAutomationOrchestrator
 from app.services.meta_client import get_meta_client
@@ -189,6 +193,87 @@ async def list_facebook_comment_events(db: DB, admin: Admin, limit: int = Query(
         if len(items) >= limit:
             break
     return {"items": items}
+
+
+@router.get("/conversations")
+async def list_marketing_conversations(
+    db: DB,
+    admin: Admin,
+    channel: str = Query(default="all"),
+    limit: int = Query(default=50, ge=1, le=100),
+):
+    """List Messenger and WhatsApp conversations for the unified admin inbox."""
+    del admin
+    try:
+        return _build_marketing_conversation_console(db).list_conversations(channel=channel, limit=limit)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.get("/conversations/{conversation_id}")
+async def get_marketing_conversation(conversation_id: str, db: DB, admin: Admin):
+    """Return one Messenger or WhatsApp conversation with messages and customer context."""
+    del admin
+    try:
+        return _build_marketing_conversation_console(db).get_conversation(conversation_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/conversations/{conversation_id}/messages")
+async def send_marketing_conversation_message(
+    conversation_id: str,
+    body: SendMarketingTextRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Send a free-form admin reply inside the active channel customer-service window."""
+    try:
+        return _build_marketing_conversation_console(db).send_manual_text(conversation_id, body.text, admin)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/conversations/{conversation_id}/automation")
+async def update_marketing_conversation_automation(
+    conversation_id: str,
+    body: UpdateMarketingAutomationRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Pause or resume chatbot automation for a Messenger or WhatsApp conversation."""
+    del admin
+    try:
+        return _build_marketing_conversation_console(db).update_automation(
+            conversation_id,
+            paused=body.paused,
+            reason=body.reason,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/contacts/{contact_id}/tag")
+async def update_marketing_contact_tag(
+    contact_id: str,
+    body: UpdateMarketingContactTagRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Update the lead tag for a marketing contact from the admin inbox."""
+    del admin
+    try:
+        return _build_marketing_conversation_console(db).update_contact_tag(contact_id, body.current_tag)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.get("/whatsapp/health")
@@ -487,6 +572,14 @@ def _build_whatsapp_console(db) -> WhatsAppConsoleService:
     return WhatsAppConsoleService(
         db=db,
         task_queue=get_task_queue_service(),
+        contact_service=MarketingContactService(db),
+        meta_client=get_meta_client(),
+    )
+
+
+def _build_marketing_conversation_console(db) -> MarketingConversationConsoleService:
+    return MarketingConversationConsoleService(
+        db=db,
         contact_service=MarketingContactService(db),
         meta_client=get_meta_client(),
     )

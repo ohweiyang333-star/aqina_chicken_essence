@@ -31,6 +31,25 @@ class SendWhatsAppTextRequest(BaseModel):
     text: str = Field(..., min_length=1, max_length=4096)
 
 
+class SendMarketingTextRequest(BaseModel):
+    """Admin payload for sending a free-form inbox message."""
+
+    text: str = Field(..., min_length=1, max_length=4096)
+
+
+class UpdateMarketingAutomationRequest(BaseModel):
+    """Admin payload for pausing or resuming inbox automation."""
+
+    paused: bool
+    reason: str | None = Field(default=None, max_length=240)
+
+
+class UpdateMarketingContactTagRequest(BaseModel):
+    """Admin payload for updating a contact's marketing tag."""
+
+    current_tag: Literal["lead_cold", "qualified_warm", "cart_hot", "handoff_pending"]
+
+
 class SendWhatsAppTemplateRequest(BaseModel):
     """Admin payload for sending an approved WhatsApp template."""
 
