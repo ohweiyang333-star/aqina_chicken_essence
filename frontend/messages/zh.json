@@ -69,6 +69,10 @@
       "subtitle": "从轻量体验到家庭常备，按你的节奏安排每一天都容易坚持的温热补给。",
       "recommended": "推荐选择",
       "buyNow": "PayNow 下单",
+      "whatsappFallbackTitle": "不确定该选哪一个？",
+      "whatsappFallbackBody": "付款前可以先问 Aqina 客服。我们会按日常饮用、送礼或家人照护需求协助你选择。",
+      "whatsappFallbackCta": "先 WhatsApp 问配套",
+      "whatsappMessage": "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合我的日常饮用。",
       "featuresLabel": "方案重点",
       "currency": "SGD",
       "detailFallbackOne": "纯萃滴鸡精，不额外加水",
@@ -126,6 +130,7 @@
     "Checkout": {
       "form": {
         "title": "完成订单",
+        "selectedPlan": "已选配套",
         "name": "姓名",
         "namePlaceholder": "请输入姓名",
         "phone": "WhatsApp 电话",
@@ -160,9 +165,20 @@
         "paynow": "PayNow",
         "accountName": "收款户名",
         "amount": "付款金额",
+        "steps": [
+          "完成 PayNow",
+          "上传付款截图",
+          "团队核对后配送"
+        ],
         "beforeSubmit": "请先完成 PayNow 付款，然后在下方上传付款成功截图，才可以提交订单。",
         "referenceBeforeOrder": "付款备注：请填写您的 WhatsApp 电话号码",
         "qrUnavailable": "如需 PayNow QR，请在下单后通过 WhatsApp 获取支付二维码。"
+      },
+      "support": {
+        "title": "付款前想先确认？",
+        "body": "如果不确定这个配套是否适合，可以先 WhatsApp 咨询。",
+        "cta": "询问这个配套",
+        "message": "Hi Aqina SG，我想问 {product} 是否适合我的日常饮用。"
       }
     },
     "mobileCta": {
@@ -666,10 +682,14 @@
     "v2": {
       "hero": {
         "eyebrow": "黄梨酵素滴鸡精",
-        "title": "一袋温热的黄梨酵素滴鸡精，把补养变得更轻、更日常。",
+        "title": "黄梨酵素滴鸡精，更清爽、更日常。",
         "subtitle": "以清爽汤感、即热即饮与暖米金质感，呈现适合现代生活节奏的日常补给体验。",
         "primaryCta": "立即选择配套",
         "secondaryCta": "看真实场景",
+        "whatsappCta": "WhatsApp 咨询",
+        "whatsappMessage": "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合日常饮用。",
+        "priceLabel": "体验配套",
+        "priceLine": "SGD 39.90 起",
         "imageAlt": "Aqina 黄梨酵素滴鸡精外盒、单包和温热饮用场景",
         "badges": [
           "黄梨酵素概念",
@@ -677,11 +697,32 @@
           "新加坡配送"
         ],
         "notes": [
-          "温热即饮",
-          "独立小袋",
-          "送礼自用皆宜"
+          "满 SGD 70 免运费",
+          "可 PayNow 下单或 WhatsApp 先咨询",
+          "团队核对付款后安排配送"
+        ],
+        "trustItems": [
+          "黄梨酵素滴鸡精",
+          "Halal / HACCP / GMP 信任标识",
+          "新加坡配送"
         ],
         "proofLabel": "日常细节"
+      },
+      "quickTrust": {
+        "items": [
+          {
+            "title": "认证信息清楚",
+            "body": "Halal、HACCP、GMP、ISO9001 与兽医局标识清楚展示，方便核对。"
+          },
+          {
+            "title": "适合日常坚持",
+            "body": "清爽汤感与独立小袋，降低每天重复饮用的阻力。"
+          },
+          {
+            "title": "下单路径清楚",
+            "body": "可以直接选择配套 PayNow，也可以先 WhatsApp 咨询适合哪一款。"
+          }
+        ]
       },
       "comparison": {
         "eyebrow": "普通鸡精 vs Aqina",
@@ -891,6 +932,29 @@
       },
       "pricingBand": {
         "ariaLabel": "Aqina 产品配套选择"
+      },
+      "faq": {
+        "eyebrow": "下单前常见问题",
+        "title": "先把最关键的疑虑讲清楚。",
+        "body": "让第一次从广告进来的用户，不需要翻完整页也能快速判断是否适合。",
+        "items": [
+          {
+            "question": "第一次应该选哪一个配套？",
+            "answer": "如果只是想先确认口感，可以从 1 盒体验开始；如果想更接近日常饮用节奏，也想享免运费，建议从 2 盒或以上开始。"
+          },
+          {
+            "question": "要怎么喝？",
+            "answer": "把一袋温热后饮用即可。它的定位是清爽、轻负担、容易坚持的日常滴鸡精，不是厚重的熬汤仪式。"
+          },
+          {
+            "question": "付款前可以先问客服吗？",
+            "answer": "可以。如果是孕产、月子、恢复期、送礼或买给家人，建议先点 WhatsApp 让客服协助选择配套。"
+          },
+          {
+            "question": "PayNow 下单流程是怎样？",
+            "answer": "选择配套后，先完成 PayNow，再上传付款截图；团队会人工核对付款后安排配送。"
+          }
+        ]
       },
       "finalCta": {
         "eyebrow": "最后一步",

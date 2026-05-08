@@ -32,7 +32,7 @@ export default function V2UgcEvidenceWall() {
           className="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
           staggerChildren={0.1}
         >
-          {items.map((item, index) => (
+          {items.map((item) => (
             <MotionItem
               as="article"
               key={`${item.name}-${item.context}`}
@@ -44,7 +44,6 @@ export default function V2UgcEvidenceWall() {
                   src={item.image}
                   alt={item.alt}
                   fill
-                  priority={index < 2}
                   sizes="(max-width: 768px) 92vw, (max-width: 1024px) 44vw, 30vw"
                   className="object-cover"
                 />

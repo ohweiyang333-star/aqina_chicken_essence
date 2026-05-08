@@ -52,6 +52,10 @@ export const v2LandingMedia = [
   ...productImages,
 ];
 
+export const v2CriticalLandingMedia = [
+  '/v2/aqina-v2-hero-product-real.webp',
+];
+
 export const v3MaternityLandingMedia = [
   '/v3/maternity-hero.jpg',
   '/v3/empathy-nausea.jpg',

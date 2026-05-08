@@ -69,6 +69,10 @@
       "subtitle": "From a first box to household reserve, choose a warm routine that stays easy to follow.",
       "recommended": "Recommended",
       "buyNow": "Order with PayNow",
+      "whatsappFallbackTitle": "Not sure which plan fits?",
+      "whatsappFallbackBody": "Ask Aqina support before paying. We can help you choose based on daily drinking, gifting, or family care.",
+      "whatsappFallbackCta": "Ask WhatsApp before choosing",
+      "whatsappMessage": "Hi Aqina SG, I would like to ask which chicken essence plan fits my daily routine.",
       "featuresLabel": "Key Features",
       "currency": "SGD",
       "detailFallbackOne": "Premium extraction with no added water",
@@ -126,6 +130,7 @@
     "Checkout": {
       "form": {
         "title": "Complete Your Order",
+        "selectedPlan": "Selected plan",
         "name": "Full Name",
         "namePlaceholder": "Your full name",
         "phone": "WhatsApp Phone",
@@ -160,9 +165,20 @@
         "paynow": "PayNow",
         "accountName": "Account name",
         "amount": "Amount",
+        "steps": [
+          "Complete PayNow",
+          "Upload receipt",
+          "Team verifies delivery"
+        ],
         "beforeSubmit": "Please complete PayNow payment first, then upload the successful payment screenshot below to submit your order.",
         "referenceBeforeOrder": "Reference: your WhatsApp number",
         "qrUnavailable": "PayNow QR details will be shared after order confirmation."
+      },
+      "support": {
+        "title": "Need help before paying?",
+        "body": "Ask us on WhatsApp if you are unsure about this plan.",
+        "cta": "Ask about this plan",
+        "message": "Hi Aqina SG, I would like to ask if {product} is suitable for my daily routine."
       }
     },
     "mobileCta": {
@@ -666,10 +682,14 @@
     "v2": {
       "hero": {
         "eyebrow": "Pineapple Enzyme Chicken Essence",
-        "title": "Warm pineapple-enzyme chicken essence, made lighter for everyday routines.",
+        "title": "Light pineapple-enzyme chicken essence for everyday routines.",
         "subtitle": "A bright rice-gold experience built around clean soup-like taste, easy warming, and a daily nourishment ritual that feels simple to keep.",
         "primaryCta": "Choose Plan Now",
         "secondaryCta": "See Real Scenes",
+        "whatsappCta": "Ask WhatsApp",
+        "whatsappMessage": "Hi Aqina SG, I would like to know which chicken essence plan fits daily drinking.",
+        "priceLabel": "Starter plan",
+        "priceLine": "From SGD 39.90",
         "imageAlt": "Aqina pineapple enzyme chicken essence box, pouch, and warm serving scene",
         "badges": [
           "Pineapple enzyme concept",
@@ -677,11 +697,32 @@
           "Singapore delivery"
         ],
         "notes": [
-          "Warm and ready",
-          "Single-serve pouches",
-          "For self-care or gifting"
+          "Free shipping SGD 70+",
+          "PayNow checkout or WhatsApp support",
+          "Team verifies payment before delivery"
+        ],
+        "trustItems": [
+          "Pineapple enzyme chicken essence",
+          "Halal / HACCP / GMP signals",
+          "Singapore delivery"
         ],
         "proofLabel": "Daily details"
+      },
+      "quickTrust": {
+        "items": [
+          {
+            "title": "Visible certifications",
+            "body": "Halal, HACCP, GMP, ISO9001, and veterinary marks are shown for easier checking."
+          },
+          {
+            "title": "Made for daily intake",
+            "body": "Clean soup-like taste and single pouches reduce the friction of repeating the routine."
+          },
+          {
+            "title": "Clear purchase path",
+            "body": "Choose a plan with PayNow, or ask WhatsApp support before deciding."
+          }
+        ]
       },
       "comparison": {
         "eyebrow": "Ordinary Chicken Essence vs Aqina",
@@ -891,6 +932,29 @@
       },
       "pricingBand": {
         "ariaLabel": "Aqina product plan selection"
+      },
+      "faq": {
+        "eyebrow": "Before You Order",
+        "title": "Common questions before choosing a plan.",
+        "body": "These answers help cold traffic decide faster without needing to search the whole page.",
+        "items": [
+          {
+            "question": "Which plan should I start with?",
+            "answer": "Start with the 1-box plan if you want to confirm taste first. Choose 2 boxes or above if you want free shipping and a more realistic daily routine."
+          },
+          {
+            "question": "How do I drink it?",
+            "answer": "Warm one pouch and drink it as a small daily ritual. It is positioned as a clean, light chicken essence routine, not a heavy soup session."
+          },
+          {
+            "question": "Can I ask before paying?",
+            "answer": "Yes. Use the WhatsApp buttons if you are buying for pregnancy, confinement, recovery, gifting, or family care and want help choosing a plan."
+          },
+          {
+            "question": "How does PayNow checkout work?",
+            "answer": "Choose a plan, complete PayNow, upload the payment screenshot, and the team will verify payment before arranging delivery."
+          }
+        ]
       },
       "finalCta": {
         "eyebrow": "Final Step",

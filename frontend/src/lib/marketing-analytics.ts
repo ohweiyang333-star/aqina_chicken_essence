@@ -9,6 +9,7 @@ export type MarketingLanguage = 'en' | 'zh';
 
 type GtagValue = string | Date | Record<string, unknown> | boolean | number | undefined;
 type GtagFunction = (...args: GtagValue[]) => void;
+type DataLayerCommand = GtagValue[] | IArguments;
 
 type MetaPixelFunction = {
   (...args: unknown[]): void;
@@ -21,7 +22,7 @@ type MetaPixelFunction = {
 
 declare global {
   interface Window {
-    dataLayer?: GtagValue[][];
+    dataLayer?: DataLayerCommand[];
     gtag?: GtagFunction;
     fbq?: MetaPixelFunction;
     _fbq?: MetaPixelFunction;
@@ -44,6 +45,18 @@ export interface MarketingPageContext {
   landing_version?: MarketingLandingVersion;
   language?: MarketingLanguage;
 }
+
+export type MarketingFunnelEventName =
+  | 'landing_page_view'
+  | 'hero_cta_click'
+  | 'whatsapp_cta_click'
+  | 'product_card_view'
+  | 'product_buy_click'
+  | 'checkout_open'
+  | 'checkout_whatsapp_fallback_click'
+  | 'receipt_upload_start'
+  | 'checkout_submit_success'
+  | 'checkout_submit_error';
 
 export interface MarketingServerEventContext extends MarketingPageContext {
   marketing_consent: MarketingConsent;
@@ -150,13 +163,20 @@ export function trackPageView(pathname: string) {
   if (!canTrackMarketingEvent(pathname)) return;
 
   const pageContext = getMarketingPageContext(pathname);
+  const attributionContext = getMarketingAttributionContext();
   initializeMarketingAnalytics();
   trackGaEvent('page_view', {
     ...pageContext,
+    ...attributionContext,
     page_location: window.location.href,
     page_title: document.title,
   });
-  trackMetaEvent('PageView', { ...pageContext });
+  trackGaEvent('landing_page_view', {
+    ...pageContext,
+    ...attributionContext,
+    page_location: window.location.href,
+  });
+  trackMetaEvent('PageView', { ...pageContext, ...attributionContext });
 }
 
 export function trackBeginCheckout(product: MarketingProductEvent) {
@@ -202,17 +222,39 @@ export function trackWhatsAppContact(source = 'whatsapp_link') {
   if (!canTrackMarketingEvent()) return;
 
   const pageContext = getMarketingPageContext();
+  const attributionContext = getMarketingAttributionContext();
   initializeMarketingAnalytics();
   trackGaEvent('generate_lead', {
     ...pageContext,
+    ...attributionContext,
     method: 'whatsapp',
     source,
   });
   trackMetaEvent('Contact', {
     ...pageContext,
+    ...attributionContext,
     content_name: 'WhatsApp',
     source,
   });
+}
+
+export function trackLandingFunnelEvent(
+  eventName: MarketingFunnelEventName,
+  params: Record<string, unknown> = {},
+) {
+  if (!canTrackMarketingEvent()) return;
+
+  const pageContext = getMarketingPageContext();
+  const attributionContext = getMarketingAttributionContext();
+  const eventParams = {
+    ...pageContext,
+    ...attributionContext,
+    ...params,
+  };
+
+  initializeMarketingAnalytics();
+  trackGaEvent(eventName, eventParams);
+  trackMetaEvent(eventName, eventParams, undefined, 'trackCustom');
 }
 
 export function getMarketingPageContext(pathname?: string): MarketingPageContext {
@@ -312,15 +354,46 @@ function trackGaEvent(eventName: string, params: Record<string, unknown>) {
   window.gtag('event', eventName, params);
 }
 
-function trackMetaEvent(eventName: string, params?: Record<string, unknown>, eventId?: string) {
+function trackMetaEvent(
+  eventName: string,
+  params?: Record<string, unknown>,
+  eventId?: string,
+  command: 'track' | 'trackCustom' = 'track',
+) {
   if (!getMetaPixelId() || !window.fbq) return;
 
   if (eventId) {
-    window.fbq('track', eventName, params, { eventID: eventId });
+    window.fbq(command, eventName, params, { eventID: eventId });
     return;
   }
 
-  window.fbq('track', eventName, params);
+  window.fbq(command, eventName, params);
+}
+
+function getMarketingAttributionContext() {
+  if (typeof window === 'undefined') return {};
+
+  const params = new URLSearchParams(window.location.search);
+  const context: Record<string, string> = {};
+
+  for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term']) {
+    const value = params.get(key);
+    if (value) {
+      context[key] = value;
+    }
+  }
+
+  const fbclid = params.get('fbclid');
+  if (fbclid) {
+    context.fbclid = fbclid;
+  }
+
+  const fbc = readCookieValue('_fbc') || buildFbcFromUrl();
+  if (fbc) {
+    context.fbc = fbc;
+  }
+
+  return context;
 }
 
 function normalizeMarketingPath(pathname: string) {

@@ -34,7 +34,7 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html className="h-full antialiased">
+    <html className="h-full antialiased" data-scroll-behavior="smooth">
       <body className="min-h-full font-sans">
         {children}
         <MarketingAnalytics />

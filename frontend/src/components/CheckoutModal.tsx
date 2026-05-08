@@ -1,17 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { X, CheckCircle, Loader2, QrCode, UploadCloud } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { X, CheckCircle, Loader2, MessageCircle, QrCode, UploadCloud } from 'lucide-react';
+import { useLocale, useTranslations } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import {
   CheckoutOrderError,
   createOrder,
   type CheckoutOrderErrorCode,
 } from '@/lib/order-service';
-import { aqinaSiteConfig } from '@/lib/site-config';
+import { aqinaSiteConfig, getV2WhatsAppHref } from '@/lib/site-config';
 import {
   createMarketingEventId,
   getMarketingServerEventContext,
+  trackLandingFunnelEvent,
   trackReceiptSubmittedAsAddToCart,
 } from '@/lib/marketing-analytics';
 
@@ -51,6 +53,8 @@ function normalizePhone(value: string) {
 
 export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModalProps) {
   const ct = useTranslations('Index.Checkout');
+  const locale = useLocale();
+  const pathname = usePathname();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
@@ -68,6 +72,12 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
   const shippingFee = selectedPackage.boxCount >= 2 ? 0 : 8;
   const subtotal = Number(product.price);
   const total = subtotal + shippingFee;
+  const isV2Landing = pathname?.startsWith('/v2/');
+  const v2CheckoutWhatsAppHref = getV2WhatsAppHref(locale, product.name);
+  const rawPaymentSteps = ct.raw('payment.steps');
+  const paymentSteps = Array.isArray(rawPaymentSteps)
+    ? rawPaymentSteps.filter((step): step is string => typeof step === 'string')
+    : [];
 
   const resetAndClose = () => {
     setIsSuccess(false);
@@ -130,6 +140,23 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
 
     setPaymentReceipt(file);
     setFormError('');
+    trackLandingFunnelEvent('receipt_upload_start', {
+      source: 'checkout_modal',
+      product_id: selectedPackage.productId,
+      product_name: product.name,
+      receipt_type: file?.type,
+      receipt_size: file?.size,
+    });
+  };
+
+  const handleCheckoutWhatsAppClick = () => {
+    trackLandingFunnelEvent('checkout_whatsapp_fallback_click', {
+      source: 'v2_checkout_whatsapp_fallback',
+      destination: 'whatsapp',
+      product_id: selectedPackage.productId,
+      product_name: product.name,
+      product_value: subtotal,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -183,9 +210,24 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
         orderId: result || undefined,
         eventId: marketingEventId,
       });
+      trackLandingFunnelEvent('checkout_submit_success', {
+        source: 'checkout_modal',
+        product_id: selectedPackage.productId,
+        product_name: product.name,
+        order_id: result || undefined,
+        value: total,
+        currency: 'SGD',
+      });
       setIsSuccess(true);
     } catch (error) {
-      setFormError(resolveSubmissionError(error));
+      const submissionError = resolveSubmissionError(error);
+      trackLandingFunnelEvent('checkout_submit_error', {
+        source: 'checkout_modal',
+        product_id: selectedPackage.productId,
+        product_name: product.name,
+        error_message: submissionError,
+      });
+      setFormError(submissionError);
     } finally {
       setIsSubmitting(false);
     }
@@ -265,11 +307,72 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
             </div>
           )}
 
+          <div className="space-y-4 rounded-2xl border border-secondary/12 bg-secondary/5 p-5">
+            <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-start">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-widest text-charcoal/40">
+                  {ct('form.selectedPlan') || 'Selected plan'}
+                </p>
+                <p className="mt-1 text-lg font-black text-charcoal">{product.name}</p>
+                <p className="text-sm text-charcoal/55">{product.label}</p>
+              </div>
+              <div className="rounded-xl bg-white px-4 py-3 sm:min-w-40 sm:text-right">
+                <p className="text-xs font-bold uppercase tracking-widest text-charcoal/40">
+                  {ct('form.total') || 'Total'}
+                </p>
+                <p className="mt-1 text-xl font-black text-charcoal">SGD {total.toFixed(2)}</p>
+                <p className={shippingFee === 0 ? 'text-xs font-bold text-green-600' : 'text-xs text-charcoal/50'}>
+                  {shippingFee === 0
+                    ? (ct('form.free') || 'FREE')
+                    : `${ct('form.delivery') || 'Delivery Fee'} SGD ${shippingFee.toFixed(2)}`}
+                </p>
+              </div>
+            </div>
+
+            {paymentSteps.length > 0 && (
+              <ol className="grid gap-2 rounded-2xl border border-charcoal/10 bg-white p-4 text-sm font-semibold leading-6 text-charcoal/70 sm:grid-cols-3">
+                {paymentSteps.map((step, index) => (
+                  <li key={step} className="flex gap-2">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-charcoal text-xs font-black text-ivory">
+                      {index + 1}
+                    </span>
+                    <span>{step}</span>
+                  </li>
+                ))}
+              </ol>
+            )}
+
+            {isV2Landing && (
+              <div className="rounded-2xl border border-green-200 bg-green-50 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+                <div>
+                  <p className="text-sm font-black text-green-900">
+                    {ct('support.title') || 'Need help before paying?'}
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-green-800/80">
+                    {ct('support.body') || 'Ask us on WhatsApp if you are unsure about this plan.'}
+                  </p>
+                </div>
+                <a
+                  id="v2-checkout-whatsapp-fallback"
+                  href={v2CheckoutWhatsAppHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={handleCheckoutWhatsAppClick}
+                  className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition hover:-translate-y-0.5 sm:mt-0"
+                >
+                  <MessageCircle size={17} />
+                  <span>{ct('support.cta') || 'Ask about this plan'}</span>
+                </a>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-2">
-            <label className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
+            <label htmlFor="checkout-customer-name" className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
               {ct('form.name') || 'Full Name'}
             </label>
             <input
+              id="checkout-customer-name"
               required
               type="text"
               placeholder={ct('form.namePlaceholder') || 'Your full name'}
@@ -284,12 +387,14 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
+            <label htmlFor="checkout-customer-phone" className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
               {ct('form.phone') || 'WhatsApp Phone'}
             </label>
             <input
+              id="checkout-customer-phone"
               required
               type="tel"
+              inputMode="tel"
               placeholder="+65 ..."
               className={checkoutTextInputClassName}
               value={formData.customerPhone}
@@ -302,10 +407,11 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
+            <label htmlFor="checkout-delivery-address" className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
               {ct('form.address') || 'Delivery Address'}
             </label>
             <textarea
+              id="checkout-delivery-address"
               required
               rows={3}
               placeholder={ct('form.addressPlaceholder') || 'Singapore delivery address'}
@@ -317,23 +423,6 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
                 setFormData({ ...formData, address: e.target.value });
               }}
             />
-          </div>
-
-          <div className="p-6 bg-secondary/5 rounded-2xl border border-secondary/10 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-charcoal/60">{ct('form.subtotal') || 'Subtotal'}</span>
-              <span className="font-bold text-charcoal">SGD {subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-charcoal/60">{ct('form.delivery') || 'Delivery Fee'}</span>
-              <span className={shippingFee === 0 ? 'font-bold text-green-600' : 'font-bold text-charcoal'}>
-                {shippingFee === 0 ? (ct('form.free') || 'FREE') : `SGD ${shippingFee.toFixed(2)}`}
-              </span>
-            </div>
-            <div className="flex justify-between border-t border-secondary/15 pt-3 text-base">
-              <span className="font-bold text-charcoal">{ct('form.total') || 'Total'}</span>
-              <span className="font-black text-charcoal">SGD {total.toFixed(2)}</span>
-            </div>
           </div>
 
           <div className="rounded-2xl border border-charcoal/10 bg-ivory/60 p-5">
@@ -379,6 +468,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               {ct('form.receipt') || 'PayNow Receipt Screenshot'}
             </span>
             <input
+              id="checkout-payment-receipt"
               required
               type="file"
               accept="image/png,image/jpeg,image/webp"
@@ -394,6 +484,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
           </label>
 
           <button
+            id="checkout-submit-order"
             type="submit"
             disabled={isSubmitting || !paymentReceipt}
             className="w-full py-5 rounded-xl bg-charcoal text-ivory font-bold hover:bg-primary disabled:opacity-50 disabled:cursor-wait transition-all flex items-center justify-center space-x-3 shadow-xl shadow-charcoal/20"

@@ -6,6 +6,7 @@ interface MediaLoadGateProps {
   children: ReactNode;
   sources: string[];
   cacheKey: string;
+  blocking?: boolean;
   variant?: 'dark' | 'warm';
   loadingLabel?: string;
   minVisibleMs?: number;
@@ -72,12 +73,13 @@ export default function MediaLoadGate({
   children,
   sources,
   cacheKey,
+  blocking = true,
   variant = 'dark',
   loadingLabel = 'Preparing the full experience',
   minVisibleMs = 900,
   maxWaitMs = 7600,
 }: MediaLoadGateProps) {
-  const [isReady, setIsReady] = useState(false);
+  const [isReady, setIsReady] = useState(!blocking);
   const [progress, setProgress] = useState(8);
   const uniqueSources = useMemo(
     () => Array.from(new Set(sources.filter(Boolean))),
@@ -86,6 +88,15 @@ export default function MediaLoadGate({
 
   useEffect(() => {
     if (typeof window === 'undefined') {
+      return;
+    }
+
+    if (!blocking) {
+      if (!hasCompletedMediaGate(cacheKey)) {
+        void Promise.all(uniqueSources.map((src) => preloadImage(src))).then(() => {
+          markCompletedMediaGate(cacheKey);
+        });
+      }
       return;
     }
 
@@ -162,10 +173,14 @@ export default function MediaLoadGate({
         window.clearTimeout(finishTimer);
       }
     };
-  }, [cacheKey, maxWaitMs, minVisibleMs, uniqueSources]);
+  }, [blocking, cacheKey, maxWaitMs, minVisibleMs, uniqueSources]);
 
   useEffect(() => {
     if (typeof document === 'undefined') {
+      return;
+    }
+
+    if (!blocking) {
       return;
     }
 
@@ -179,7 +194,11 @@ export default function MediaLoadGate({
     return () => {
       document.body.style.overflow = previousOverflow;
     };
-  }, [isReady]);
+  }, [blocking, isReady]);
+
+  if (!blocking) {
+    return <>{children}</>;
+  }
 
   const isWarm = variant === 'warm';
 

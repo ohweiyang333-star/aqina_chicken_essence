@@ -3,14 +3,21 @@
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { CheckCircle2, QrCode } from "lucide-react";
-import type { DisplayProduct } from "@/lib/product-service";
-import { resolveFixedPackKeyByMeta, resolveFixedProductImageByMeta } from "@/lib/product-service";
+import { useEffect, useRef } from "react";
 import { IMAGES } from "@/lib/image-utils";
+import { trackLandingFunnelEvent } from "@/lib/marketing-analytics";
+import {
+  resolveFixedPackKeyByMeta,
+  resolveFixedProductImageByMeta,
+  type DisplayProduct,
+} from "@/lib/product-display";
 
 interface ProductCardProps {
   product: DisplayProduct;
   onBuyNow: (product: DisplayProduct) => void;
   priority?: boolean;
+  conversionLayout?: boolean;
+  viewTrackingSource?: string;
 }
 
 const optimizedProductImages: Record<string, string> = {
@@ -24,8 +31,12 @@ export function ProductCard({
   product,
   onBuyNow,
   priority = false,
+  conversionLayout = false,
+  viewTrackingSource,
 }: ProductCardProps) {
   const t = useTranslations("Index");
+  const cardRef = useRef<HTMLElement | null>(null);
+  const hasTrackedViewRef = useRef(false);
   const packKey = resolveFixedPackKeyByMeta({
     id: product.id,
     packSize: product.label,
@@ -48,8 +59,66 @@ export function ProductCard({
       price: product.price,
     });
 
+  useEffect(() => {
+    const element = cardRef.current;
+    if (!element || hasTrackedViewRef.current || !viewTrackingSource) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry?.isIntersecting || hasTrackedViewRef.current) return;
+
+        hasTrackedViewRef.current = true;
+        trackLandingFunnelEvent("product_card_view", {
+          source: viewTrackingSource,
+          product_id: product.id,
+          product_name: product.name,
+          product_value: Number(product.price),
+        });
+        observer.disconnect();
+      },
+      { threshold: 0.5 },
+    );
+
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [product.id, product.name, product.price, viewTrackingSource]);
+
+  const imageFrameClassName = conversionLayout
+    ? "premium-outline relative mb-4 mt-6 h-40 overflow-hidden rounded-[1.2rem] bg-[radial-gradient(circle_at_top,rgba(255,184,0,0.16),transparent_36%),linear-gradient(180deg,rgba(17,43,34,0.6),rgba(9,26,20,0.9))] sm:mb-5 sm:h-52 xl:h-48"
+    : "premium-outline relative mb-5 mt-6 aspect-[4/5] overflow-hidden rounded-[1.2rem] bg-[radial-gradient(circle_at_top,rgba(255,184,0,0.16),transparent_36%),linear-gradient(180deg,rgba(17,43,34,0.6),rgba(9,26,20,0.9))]";
+
+  const buyButton = (
+    <button
+      id={`product-buy-now-${product.id}`}
+      type="button"
+      onClick={() => onBuyNow(product)}
+      className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
+    >
+      <QrCode size={16} />
+      <span>{t("products.buyNow")}</span>
+    </button>
+  );
+
+  const featureList = (
+    <ul
+      className={[
+        "flex-1 space-y-2 border-t border-primary/14 pt-5",
+        conversionLayout ? "mt-5" : "mb-6",
+      ].join(" ")}
+    >
+      {features.slice(0, 3).map((feature) => (
+        <li key={feature} className="flex items-start gap-3 text-sm leading-6 text-text-light/80">
+          <CheckCircle2 size={18} className="mt-1 shrink-0 text-primary" />
+          <span>{feature}</span>
+        </li>
+      ))}
+    </ul>
+  );
+
   return (
     <article
+      ref={cardRef}
       className={[
         "surface-panel relative flex h-full flex-col overflow-hidden rounded-[1.4rem] p-5",
         product.popular
@@ -63,7 +132,7 @@ export function ProductCard({
         </div>
       )}
 
-      <div className="premium-outline relative mb-5 mt-6 aspect-[4/5] overflow-hidden rounded-[1.2rem] bg-[radial-gradient(circle_at_top,rgba(255,184,0,0.16),transparent_36%),linear-gradient(180deg,rgba(17,43,34,0.6),rgba(9,26,20,0.9))]">
+      <div className={imageFrameClassName}>
         <Image
           src={cardImage}
           alt={product.name}
@@ -75,7 +144,7 @@ export function ProductCard({
         />
       </div>
 
-      <div className="mb-5 space-y-3">
+      <div className="mb-4 space-y-3">
         <div className="space-y-1">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-primary">
             {product.badge || product.label}
@@ -101,24 +170,17 @@ export function ProductCard({
         )}
       </div>
 
-      <ul className="mb-6 flex-1 space-y-2 border-t border-primary/14 pt-5">
-        {features.slice(0, 3).map((feature) => (
-          <li key={feature} className="flex items-start gap-3 text-sm leading-6 text-text-light/80">
-            <CheckCircle2 size={18} className="mt-1 shrink-0 text-primary" />
-            <span>{feature}</span>
-          </li>
-        ))}
-      </ul>
-
-      <button
-        id={`product-buy-now-${product.id}`}
-        type="button"
-        onClick={() => onBuyNow(product)}
-        className="gold-button inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-md px-4 text-sm font-bold uppercase tracking-[0.18em]"
-      >
-        <QrCode size={16} />
-        <span>{t("products.buyNow")}</span>
-      </button>
+      {conversionLayout ? (
+        <>
+          {buyButton}
+          {featureList}
+        </>
+      ) : (
+        <>
+          {featureList}
+          {buyButton}
+        </>
+      )}
     </article>
   );
 }

@@ -65,3 +65,21 @@ export function getWhatsAppHref(
   const encodedMessage = encodeURIComponent(message);
   return `https://wa.me/${aqinaSiteConfig.contact.whatsappLinkNumber}?text=${encodedMessage}`;
 }
+
+export function getV2WhatsAppPrefill(locale: string, productName?: string) {
+  const isZh = locale === "zh";
+
+  if (productName) {
+    return isZh
+      ? `Hi Aqina SG，我想问 ${productName} 是否适合我的日常饮用。`
+      : `Hi Aqina SG, I would like to ask if ${productName} is suitable for my daily routine.`;
+  }
+
+  return isZh
+    ? "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合我的日常饮用。"
+    : "Hi Aqina SG, I would like to ask which chicken essence plan fits my daily routine.";
+}
+
+export function getV2WhatsAppHref(locale: string, productName?: string) {
+  return getWhatsAppHref(getV2WhatsAppPrefill(locale, productName));
+}

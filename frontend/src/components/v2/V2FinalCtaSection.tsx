@@ -4,10 +4,25 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { ArrowRight, MessageCircle } from "lucide-react";
 import { getWhatsAppHref } from "@/lib/site-config";
+import { trackLandingFunnelEvent } from "@/lib/marketing-analytics";
 import { Reveal } from "./V2Motion";
 
 export default function V2FinalCtaSection() {
   const t = useTranslations("Index.v2.finalCta");
+
+  const handleProductsClick = () => {
+    trackLandingFunnelEvent("hero_cta_click", {
+      source: "v2_final_products",
+      destination: "products",
+    });
+  };
+
+  const handleWhatsAppClick = () => {
+    trackLandingFunnelEvent("whatsapp_cta_click", {
+      source: "v2_final_whatsapp",
+      destination: "whatsapp",
+    });
+  };
 
   return (
     <section id="v2-final-cta" className="bg-[#fff7e8] py-16 md:py-24">
@@ -38,6 +53,7 @@ export default function V2FinalCtaSection() {
               <a
                 id="v2-final-products-cta"
                 href="#products"
+                onClick={handleProductsClick}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-[#e9c371] px-6 text-sm font-bold text-[#1b130c] hover:-translate-y-0.5 hover:bg-[#f5d88f] hover:shadow-[0_16px_34px_rgba(233,195,113,0.22)]"
               >
                 <span>{t("productsCta")}</span>
@@ -48,6 +64,7 @@ export default function V2FinalCtaSection() {
                 href={getWhatsAppHref(t("whatsappMessage"))}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={handleWhatsAppClick}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-[#e9c371]/42 px-6 text-sm font-bold text-[#fff7e8] hover:-translate-y-0.5 hover:bg-white/10"
               >
                 <MessageCircle size={17} />
