@@ -3,8 +3,9 @@ from __future__ import annotations
 
 import json
 import logging
+from uuid import uuid4
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, File, Form, Header, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import PlainTextResponse
 
 from app.api.deps import Admin, DB
@@ -32,11 +33,20 @@ from app.services.marketing_conversation_console import MarketingConversationCon
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_orchestrator import MarketingAutomationOrchestrator
 from app.services.meta_client import get_meta_client
+from app.services.storage_uploads import upload_public_file_to_firebase
 from app.services.task_queue import get_task_queue_service
 from app.services.whatsapp_console import WhatsAppConsoleService
 
 router = APIRouter(prefix="/marketing", tags=["Marketing"])
 logger = logging.getLogger(__name__)
+
+ALLOWED_MANUAL_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
+MAX_MANUAL_IMAGE_BYTES = 8 * 1024 * 1024
+MANUAL_IMAGE_EXTENSIONS = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+}
 
 
 @router.api_route("/webhooks/facebook", methods=["GET", "HEAD"], response_class=PlainTextResponse)
@@ -232,6 +242,61 @@ async def send_marketing_conversation_message(
     """Send a free-form admin reply inside the active channel customer-service window."""
     try:
         return _build_marketing_conversation_console(db).send_manual_text(conversation_id, body.text, admin)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/conversations/{conversation_id}/images")
+async def send_marketing_conversation_image(
+    conversation_id: str,
+    db: DB,
+    admin: Admin,
+    image: UploadFile = File(...),
+    caption: str | None = Form(default=None, max_length=1024),
+):
+    """Upload and send an admin image reply inside the active customer-service window."""
+    console = _build_marketing_conversation_console(db)
+    try:
+        console.ensure_manual_reply_window_open(conversation_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    content_type = (image.content_type or "").lower()
+    if content_type not in ALLOWED_MANUAL_IMAGE_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Image must be JPG, PNG, or WebP",
+        )
+
+    image_bytes = await image.read()
+    if not image_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is empty")
+    if len(image_bytes) > MAX_MANUAL_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="Image file is too large",
+        )
+
+    extension = MANUAL_IMAGE_EXTENSIONS[content_type]
+    filename = image.filename or f"manual-image.{extension}"
+    media_url = upload_public_file_to_firebase(
+        data=image_bytes,
+        destination_path=f"manual_outbound_images/{conversation_id}/{uuid4().hex}.{extension}",
+        content_type=content_type,
+    )
+    try:
+        return console.send_manual_image(
+            conversation_id,
+            media_url=media_url,
+            media_content_type=content_type,
+            media_filename=filename,
+            caption=caption,
+            admin=admin,
+        )
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:

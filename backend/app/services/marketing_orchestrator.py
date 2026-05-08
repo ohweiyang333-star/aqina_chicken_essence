@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 import logging
+import re
 from typing import Any
 import requests
 
@@ -35,6 +36,8 @@ FINAL_COMMENT_EVENT_STATUSES = {
     "skipped_self_comment",
     "skipped_replies_disabled",
 }
+MIN_PAYMENT_REFERENCE_LENGTH = 6
+DUPLICATE_PAYMENT_REFERENCE_FLAG = "duplicate_payment_reference"
 
 
 class MarketingAutomationOrchestrator:
@@ -582,6 +585,10 @@ class MarketingAutomationOrchestrator:
 
         contact_id = event["contact_id"]
         contact = self.contact_service.get_contact(contact_id)
+        contact, prompt_phone_defaulted = self._contact_with_channel_order_defaults(
+            channel=event["channel"],
+            contact=contact,
+        )
         incoming_text = str(payload.get("text", ""))
         if payload.get("message_type") == "audio":
             if not self.gemini_service.is_ready():
@@ -628,14 +635,33 @@ class MarketingAutomationOrchestrator:
             )
         )
 
-        merged_order_fields = self._merge_order_fields(contact.get("order_fields", {}), turn.order_fields.model_dump())
+        turn_order_fields = turn.order_fields.model_dump()
+        merged_order_fields = self._merge_order_fields(contact.get("order_fields", {}), turn_order_fields)
+        merged_order_fields, runtime_phone_defaulted = self._apply_whatsapp_phone_default(
+            channel=event["channel"],
+            contact=contact,
+            order_fields=merged_order_fields,
+        )
+        missing_order_fields = self._effective_missing_order_fields(
+            turn.missing_order_fields,
+            order_fields=merged_order_fields,
+            require_all_fields=bool(turn.checkout_ready or turn.selected_package_code),
+        )
+        checkout_ready = self._checkout_ready_after_channel_defaults(
+            channel=event["channel"],
+            turn=turn,
+            order_fields=merged_order_fields,
+            missing_order_fields=missing_order_fields,
+            phone_defaulted=prompt_phone_defaulted or runtime_phone_defaulted,
+        )
+        effective_next_tag = "cart_hot" if checkout_ready else turn.next_tag
         update_fields = {
             "lead_goal": turn.lead_goal,
             "recommended_package_code": turn.recommended_package_code,
             "upgrade_package_code": turn.upgrade_package_code,
             "selected_package_code": turn.selected_package_code,
             "order_fields": merged_order_fields,
-            "missing_order_fields": turn.missing_order_fields,
+            "missing_order_fields": missing_order_fields,
             "future_contact_opt_in": bool(turn.opt_in_granted),
             "chatbot_locale": customer_locale,
         }
@@ -677,7 +703,7 @@ class MarketingAutomationOrchestrator:
 
         checkout_session = None
         reply_text = turn.reply_text.strip()
-        if turn.checkout_ready and turn.selected_package_code and not turn.missing_order_fields:
+        if checkout_ready and turn.selected_package_code:
             checkout_session = self._create_checkout_session(
                 contact_id=contact_id,
                 conversation_id=conversation_id,
@@ -685,6 +711,8 @@ class MarketingAutomationOrchestrator:
                 order_fields=merged_order_fields,
                 runtime_settings=runtime_settings,
             )
+            if self._reply_requests_phone(reply_text) and (prompt_phone_defaulted or runtime_phone_defaulted):
+                reply_text = self._checkout_ready_reply(customer_locale)
             reply_text = self._append_paynow_summary(
                 reply_text,
                 order_id=checkout_session["order_id"],
@@ -692,10 +720,10 @@ class MarketingAutomationOrchestrator:
                 paynow_settings=runtime_settings.get("payment", {}).get("paynow", {}),
             )
 
-        if turn.next_tag != contact.get("current_tag"):
+        if effective_next_tag != contact.get("current_tag"):
             self.contact_service.update_contact_tag(
                 contact_id,
-                turn.next_tag,
+                effective_next_tag,
                 source="gemini_chat_turn",
                 metadata={"event_id": event_id},
             )
@@ -1146,39 +1174,78 @@ class MarketingAutomationOrchestrator:
             return {"status": "escalated_unmatched_receipt", "escalation_id": escalation_id}
 
         order_id = session["order_id"]
-        receipt_url = self._store_inbound_receipt(event=event, order_id=order_id)
+        receipt = self._store_inbound_receipt(event=event, order_id=order_id)
+        receipt_url = receipt["url"]
         order_snapshot = self.db.collection("orders").document(order_id).get()
         order = order_snapshot.to_dict() if order_snapshot.exists else {}
         total_amount = float(order.get("total_amount") or session.get("total_amount") or 0)
         payment_id = stable_id("payment", order_id)
         now = utcnow()
+        verification = self._build_payment_verification(
+            order_id=order_id,
+            payment_id=payment_id,
+            expected_amount=total_amount,
+            receipt_bytes=receipt["data"],
+            content_type=receipt["content_type"],
+            now=now,
+        )
+        transaction_id = verification.get("reference_number")
+        risk_flags = []
+        if verification.get("duplicate_detected"):
+            risk_flags = [DUPLICATE_PAYMENT_REFERENCE_FLAG]
+
+        payment_payload = {
+            "order_id": order_id,
+            "method": "paynow",
+            "payment_method": "paynow",
+            "amount": total_amount,
+            "status": "payment_submitted",
+            "transaction_id": transaction_id,
+            "screenshot_url": receipt_url,
+            "source": "marketing_chatbot",
+            "payment_verification": verification,
+            "created_at": now,
+            "updated_at": now,
+        }
+        if risk_flags:
+            payment_payload["risk_flags"] = risk_flags
         self.db.collection("payments").document(payment_id).set(
-            {
-                "order_id": order_id,
-                "method": "paynow",
-                "payment_method": "paynow",
-                "amount": total_amount,
-                "status": "payment_submitted",
-                "transaction_id": None,
-                "screenshot_url": receipt_url,
-                "source": "marketing_chatbot",
-                "created_at": now,
-                "updated_at": now,
-            },
+            payment_payload,
             merge=True,
         )
-        self.db.collection("orders").document(order_id).set(
-            {
-                "payment_status": "payment_submitted",
-                "payment_receipt_url": receipt_url,
-                "updated_at": now,
-            },
-            merge=True,
-        )
+        order_payload = {
+            "payment_status": "payment_submitted",
+            "payment_receipt_url": receipt_url,
+            "transaction_id": transaction_id,
+            "payment_verification": verification,
+            "updated_at": now,
+        }
+        if risk_flags:
+            order_payload["risk_flags"] = self._append_risk_flags(order.get("risk_flags"), risk_flags)
+        self.db.collection("orders").document(order_id).set(order_payload, merge=True)
         self.db.collection("marketing_checkout_sessions").document(session["session_id"]).set(
-            {"status": "receipt_submitted", "payment_receipt_url": receipt_url, "updated_at": now},
+            {
+                "status": "receipt_submitted",
+                "payment_receipt_url": receipt_url,
+                "payment_verification": verification,
+                "updated_at": now,
+            },
             merge=True,
         )
+        duplicate_escalation_id = None
+        if verification.get("duplicate_detected"):
+            duplicate_escalation_id = self._escalate_contact(
+                contact=contact,
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                latest_customer_message=(
+                    "Duplicate payment reference detected: "
+                    f"{verification.get('reference_number') or verification.get('reference_normalized')}"
+                ),
+                reason=DUPLICATE_PAYMENT_REFERENCE_FLAG,
+                runtime_settings=runtime_settings,
+                send_customer_message=False,
+            )
         reply_text = self._payment_ack_text()
         send_result = self._send_channel_reply(channel=event["channel"], contact=contact, text=reply_text)
         provider_message_id = self._extract_provider_message_id(event["channel"], send_result)
@@ -1198,12 +1265,136 @@ class MarketingAutomationOrchestrator:
                 "status": "payment_receipt_processed",
                 "order_id": order_id,
                 "payment_receipt_url": receipt_url,
+                "payment_verification": verification,
+                "duplicate_escalation_id": duplicate_escalation_id,
                 "processed_at": now,
                 "updated_at": now,
             },
             merge=True,
         )
         return {"status": "payment_receipt_processed", "order_id": order_id}
+
+    def _build_payment_verification(
+        self,
+        *,
+        order_id: str,
+        payment_id: str,
+        expected_amount: float,
+        receipt_bytes: bytes,
+        content_type: str,
+        now: Any,
+    ) -> dict[str, Any]:
+        try:
+            analysis = self.gemini_service.analyze_payment_receipt_image(
+                data=receipt_bytes,
+                mime_type=content_type,
+                expected_amount=expected_amount,
+            )
+        except Exception as exc:  # noqa: BLE001 - receipt analysis must not block order processing.
+            logger.warning("payment_receipt_analysis_unavailable order_id=%s error=%s", order_id, exc)
+            return self._unavailable_payment_verification(expected_amount=expected_amount, now=now)
+
+        if not isinstance(analysis, dict) or not analysis:
+            return self._unavailable_payment_verification(expected_amount=expected_amount, now=now)
+
+        extracted_amount = self._extract_receipt_amount(analysis.get("paid_amount"))
+        reference_number = self._clean_receipt_text(analysis.get("bank_transaction_reference"))
+        reference_normalized = self._normalize_payment_reference(reference_number)
+        warnings = self._normalize_receipt_warnings(analysis.get("warnings"))
+
+        amount_match = extracted_amount is not None and abs(self._money(extracted_amount) - self._money(expected_amount)) <= 0.01
+        if extracted_amount is None:
+            warnings.append("Could not read paid amount from receipt")
+        elif not amount_match:
+            warnings.append("Amount does not match expected total")
+
+        if not reference_normalized:
+            warnings.append("Could not read bank transaction reference from receipt")
+
+        duplicate_result = self._find_duplicate_payment_references(
+            reference_number=reference_number,
+            reference_normalized=reference_normalized,
+            current_payment_id=payment_id,
+        )
+        duplicate_detected = bool(duplicate_result["duplicate_payment_ids"])
+        if duplicate_detected:
+            warnings.append("Duplicate payment reference detected")
+
+        status = "ok" if amount_match and reference_normalized and not duplicate_detected and not warnings else "warning"
+        return {
+            "status": status,
+            "expected_amount": self._money(expected_amount),
+            "extracted_amount": self._money(extracted_amount) if extracted_amount is not None else None,
+            "amount_match": amount_match,
+            "reference_number": reference_number,
+            "reference_normalized": reference_normalized,
+            "duplicate_detected": duplicate_detected,
+            "duplicate_order_ids": duplicate_result["duplicate_order_ids"],
+            "duplicate_payment_ids": duplicate_result["duplicate_payment_ids"],
+            "warnings": warnings,
+            "confidence": self._normalize_confidence(analysis.get("confidence")),
+            "currency": self._clean_receipt_text(analysis.get("currency")),
+            "recipient_reference": self._clean_receipt_text(analysis.get("recipient_reference")),
+            "payment_datetime": self._clean_receipt_text(analysis.get("payment_datetime")),
+            "analyzed_at": now,
+        }
+
+    def _unavailable_payment_verification(self, *, expected_amount: float, now: Any) -> dict[str, Any]:
+        return {
+            "status": "unavailable",
+            "expected_amount": self._money(expected_amount),
+            "extracted_amount": None,
+            "amount_match": False,
+            "reference_number": None,
+            "reference_normalized": None,
+            "duplicate_detected": False,
+            "duplicate_order_ids": [],
+            "duplicate_payment_ids": [],
+            "warnings": ["AI receipt analysis unavailable"],
+            "confidence": None,
+            "currency": None,
+            "recipient_reference": None,
+            "payment_datetime": None,
+            "analyzed_at": now,
+        }
+
+    def _find_duplicate_payment_references(
+        self,
+        *,
+        reference_number: str | None,
+        reference_normalized: str | None,
+        current_payment_id: str,
+    ) -> dict[str, list[str]]:
+        if not reference_normalized:
+            return {"duplicate_order_ids": [], "duplicate_payment_ids": []}
+
+        queries = [
+            ("payment_verification.reference_normalized", reference_normalized),
+            ("transaction_id", reference_normalized),
+        ]
+        if reference_number and reference_number != reference_normalized:
+            queries.append(("transaction_id", reference_number))
+
+        matched: dict[str, str] = {}
+        for field, value in queries:
+            try:
+                snapshots = self.db.collection("payments").where(field, "==", value).stream()
+            except Exception as exc:  # noqa: BLE001 - do not block receipt processing on duplicate scan failures.
+                logger.warning("payment_reference_duplicate_scan_failed field=%s error=%s", field, exc)
+                continue
+
+            for snapshot in snapshots:
+                if snapshot.id == current_payment_id:
+                    continue
+                data = snapshot.to_dict()
+                matched[snapshot.id] = str(data.get("order_id") or "")
+
+        duplicate_payment_ids = sorted(matched)
+        duplicate_order_ids = sorted({order_id for order_id in matched.values() if order_id})
+        return {
+            "duplicate_order_ids": duplicate_order_ids,
+            "duplicate_payment_ids": duplicate_payment_ids,
+        }
 
     def _find_active_checkout_session(self, contact_id: str) -> dict[str, Any] | None:
         contact = self.contact_service.get_contact(contact_id)
@@ -1250,7 +1441,7 @@ class MarketingAutomationOrchestrator:
             return ""
         return text
 
-    def _store_inbound_receipt(self, *, event: dict[str, Any], order_id: str) -> str:
+    def _store_inbound_receipt(self, *, event: dict[str, Any], order_id: str) -> dict[str, Any]:
         payload = event.get("payload", {})
         channel = event["channel"]
         if channel == "whatsapp":
@@ -1273,11 +1464,70 @@ class MarketingAutomationOrchestrator:
 
         extension = self._extension_for_content_type(content_type)
         receipt_id = stable_id("receipt", order_id, receipt_seed)
-        return upload_public_file_to_firebase(
+        url = upload_public_file_to_firebase(
             data=data,
             destination_path=f"payment_receipts/{order_id}/{receipt_id}.{extension}",
             content_type=content_type,
         )
+        return {
+            "url": url,
+            "data": data,
+            "content_type": content_type,
+        }
+
+    @staticmethod
+    def _extract_receipt_amount(value: Any) -> float | None:
+        if value is None:
+            return None
+        if isinstance(value, (int, float)):
+            return float(value)
+        match = re.search(r"\d+(?:,\d{3})*(?:\.\d+)?", str(value))
+        if not match:
+            return None
+        return float(match.group(0).replace(",", ""))
+
+    @staticmethod
+    def _clean_receipt_text(value: Any) -> str | None:
+        if value is None:
+            return None
+        text = str(value).strip()
+        if not text or text.lower() in {"null", "none", "n/a", "na"}:
+            return None
+        return text
+
+    @staticmethod
+    def _normalize_payment_reference(value: str | None) -> str | None:
+        normalized = re.sub(r"[^A-Za-z0-9]", "", value or "").upper()
+        if len(normalized) < MIN_PAYMENT_REFERENCE_LENGTH:
+            return None
+        return normalized
+
+    @staticmethod
+    def _normalize_receipt_warnings(value: Any) -> list[str]:
+        if not isinstance(value, list):
+            return []
+        warnings = []
+        for item in value:
+            text = str(item or "").strip()
+            if text and text not in warnings:
+                warnings.append(text)
+        return warnings
+
+    @staticmethod
+    def _normalize_confidence(value: Any) -> float | None:
+        try:
+            confidence = float(value)
+        except (TypeError, ValueError):
+            return None
+        return max(0.0, min(1.0, confidence))
+
+    @staticmethod
+    def _append_risk_flags(existing: Any, additions: list[str]) -> list[str]:
+        flags = [str(item) for item in existing] if isinstance(existing, list) else []
+        for flag in additions:
+            if flag not in flags:
+                flags.append(flag)
+        return flags
 
     @staticmethod
     def _extract_provider_message_id(channel: str, payload: dict[str, Any]) -> str | None:
@@ -1317,7 +1567,7 @@ class MarketingAutomationOrchestrator:
         if package.get("box_count"):
             return int(package["box_count"])
         code = str(package.get("code", ""))
-        if code in {"pack1", "trial_3"}:
+        if code == "pack1":
             return 1
         if code in {"pack2", "energy_14"}:
             return 2
@@ -1359,6 +1609,136 @@ class MarketingAutomationOrchestrator:
             if value:
                 merged[key] = value
         return merged
+
+    @classmethod
+    def _contact_with_channel_order_defaults(
+        cls,
+        *,
+        channel: str,
+        contact: dict[str, Any],
+    ) -> tuple[dict[str, Any], bool]:
+        if channel != "whatsapp":
+            return contact, False
+
+        order_fields = dict(contact.get("order_fields") or {})
+        if cls._valid_order_field("phone", order_fields):
+            return contact, False
+
+        phone = cls._whatsapp_contact_phone(contact)
+        if not phone:
+            return contact, False
+
+        enriched = dict(contact)
+        enriched["order_fields"] = {**order_fields, "phone": phone}
+        return enriched, True
+
+    @classmethod
+    def _apply_whatsapp_phone_default(
+        cls,
+        *,
+        channel: str,
+        contact: dict[str, Any],
+        order_fields: dict[str, Any],
+    ) -> tuple[dict[str, Any], bool]:
+        fields = dict(order_fields or {})
+        current_phone = cls._normalize_chat_phone(fields.get("phone"))
+        if current_phone:
+            fields["phone"] = current_phone
+            return fields, False
+        if channel != "whatsapp":
+            return fields, False
+
+        phone = cls._whatsapp_contact_phone(contact)
+        if not phone:
+            return fields, False
+        fields["phone"] = phone
+        return fields, True
+
+    @classmethod
+    def _checkout_ready_after_channel_defaults(
+        cls,
+        *,
+        channel: str,
+        turn: SalesConversationTurn,
+        order_fields: dict[str, Any],
+        missing_order_fields: list[str],
+        phone_defaulted: bool,
+    ) -> bool:
+        if not turn.selected_package_code or missing_order_fields:
+            return False
+        if not all(cls._valid_order_field(field, order_fields) for field in ("name", "phone", "address")):
+            return False
+        return bool(turn.checkout_ready or (channel == "whatsapp" and phone_defaulted))
+
+    @classmethod
+    def _effective_missing_order_fields(
+        cls,
+        missing_fields: list[str],
+        *,
+        order_fields: dict[str, Any],
+        require_all_fields: bool,
+    ) -> list[str]:
+        normalized_missing: list[str] = []
+        for field in missing_fields or []:
+            normalized = str(field or "").strip()
+            if not normalized:
+                continue
+            if normalized in {"name", "phone", "address"} and cls._valid_order_field(normalized, order_fields):
+                continue
+            if normalized not in normalized_missing:
+                normalized_missing.append(normalized)
+
+        if require_all_fields:
+            for field in ("name", "phone", "address"):
+                if not cls._valid_order_field(field, order_fields) and field not in normalized_missing:
+                    normalized_missing.append(field)
+        return normalized_missing
+
+    @staticmethod
+    def _whatsapp_contact_phone(contact: dict[str, Any]) -> str | None:
+        identifiers = contact.get("identifiers") or {}
+        if not isinstance(identifiers, dict):
+            return None
+        for key in ("wa_id", "phone_e164"):
+            phone = MarketingAutomationOrchestrator._normalize_chat_phone(identifiers.get(key))
+            if phone:
+                return phone
+        return None
+
+    @staticmethod
+    def _normalize_chat_phone(value: Any) -> str | None:
+        digits = "".join(character for character in str(value or "") if character.isdigit())
+        if 8 <= len(digits) <= 20:
+            return digits
+        return None
+
+    @classmethod
+    def _valid_order_field(cls, field: str, order_fields: dict[str, Any]) -> bool:
+        value = order_fields.get(field)
+        if field == "phone":
+            return cls._normalize_chat_phone(value) is not None
+        return bool(str(value or "").strip())
+
+    @staticmethod
+    def _reply_requests_phone(reply_text: str) -> bool:
+        normalized = str(reply_text or "").casefold()
+        phone_terms = [
+            "联系电话",
+            "电话号码",
+            "电话",
+            "手机号码",
+            "phone number",
+            "contact number",
+            "mobile number",
+            "whatsapp number",
+        ]
+        return any(term in normalized for term in phone_terms)
+
+    @staticmethod
+    def _checkout_ready_reply(locale: str) -> str:
+        if locale == "en":
+            return "I have prepared your order details. I will send the PayNow QR image next."
+        return "我已经帮您把订单资料整理好了。接下来我会直接发送 PayNow QR 图片给您。"
 
     @staticmethod
     def _facebook_comment_automation_settings(runtime_settings: dict[str, Any]) -> dict[str, Any]:

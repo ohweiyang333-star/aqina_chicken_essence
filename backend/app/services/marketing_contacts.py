@@ -92,6 +92,9 @@ class MarketingContactService:
         follow_up_stage: str | None = None,
         delivery_status: str = "accepted",
         created_at: Any = None,
+        media_url: str | None = None,
+        media_content_type: str | None = None,
+        media_filename: str | None = None,
     ) -> tuple[str, str]:
         created_dt = ensure_datetime(created_at) or utcnow()
         contact = self.db.collection("marketing_contacts").document(contact_id).get().to_dict()
@@ -102,20 +105,25 @@ class MarketingContactService:
             "message",
             provider_message_id or provider_comment_id or f"{direction}:{created_dt.isoformat()}:{text[:80]}",
         )
-        messages_ref.document(message_id).set(
-            {
-                "direction": direction,
-                "role": role,
-                "text": text,
-                "provider_message_id": provider_message_id,
-                "provider_comment_id": provider_comment_id,
-                "message_type": message_type,
-                "source": source,
-                "follow_up_stage": follow_up_stage,
-                "delivery_status": delivery_status,
-                "created_at": created_dt,
-            }
-        )
+        message_payload = {
+            "direction": direction,
+            "role": role,
+            "text": text,
+            "provider_message_id": provider_message_id,
+            "provider_comment_id": provider_comment_id,
+            "message_type": message_type,
+            "source": source,
+            "follow_up_stage": follow_up_stage,
+            "delivery_status": delivery_status,
+            "created_at": created_dt,
+        }
+        if media_url:
+            message_payload["media_url"] = media_url
+        if media_content_type:
+            message_payload["media_content_type"] = media_content_type
+        if media_filename:
+            message_payload["media_filename"] = media_filename
+        messages_ref.document(message_id).set(message_payload)
 
         all_messages = list(messages_ref.stream())
         self.db.collection("marketing_conversations").document(conversation_id).set(

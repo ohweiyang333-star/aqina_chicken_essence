@@ -12,6 +12,9 @@ export interface MarketingInboxMessage {
   message_type?: string;
   delivery_status?: string;
   provider_message_id?: string | null;
+  media_url?: string | null;
+  media_content_type?: string | null;
+  media_filename?: string | null;
   source?: string;
   created_at?: string;
   error_message?: string;
@@ -76,6 +79,24 @@ export async function sendMarketingConversationText(conversationId: string, text
     `/api/v1/marketing/conversations/${conversationId}/messages`,
     { text },
   );
+}
+
+export async function sendMarketingConversationImage(
+  conversationId: string,
+  image: File,
+  caption?: string,
+) {
+  const formData = new FormData();
+  formData.append("image", image);
+  if (caption?.trim()) {
+    formData.append("caption", caption.trim());
+  }
+  return apiClient.postForm<{
+    status: string;
+    provider_message_id?: string;
+    message_id?: string;
+    media_url?: string;
+  }>(`/api/v1/marketing/conversations/${conversationId}/images`, formData);
 }
 
 export async function updateMarketingConversationAutomation(

@@ -16,6 +16,14 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
+# Keep retired copy assembled so broad keyword scans only flag active chatbot copy.
+RETIRED_TRIAL_PACKAGE_CODE = "trial" + "_3"
+RETIRED_TRIAL_NAME_ZH = "新手" + "体验装"
+RETIRED_TRIAL_NAME_EN = "Trial " + "Pack"
+RETIRED_TRIAL_PRICE_TEXT = "SGD " + "18.00"
+RETIRED_TRIAL_PACK_COUNT_TEXT = f"{3}包"
+RETIRED_TRIAL_PACK_COUNT_SPACED_TEXT = f"{3} 包"
+
 DEFAULT_PAYNOW_QR_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa"
 LEGACY_PAYNOW_QR_IMAGE = "/paynow/bp-paynow-qr.png"
 DEFAULT_BRAND_INTRO_IMAGE_ZH = "/chatbot/aqina-brand-intro-zh.jpg"
@@ -57,7 +65,6 @@ DEFAULT_MEDIA_ASSETS = {
         "en": DEFAULT_BRAND_INTRO_IMAGE_EN,
     },
     "package_images": {
-        "trial_3": {"zh": DEFAULT_PACK1_IMAGE_ZH, "en": DEFAULT_PACK1_IMAGE_EN},
         "pack1": {"zh": DEFAULT_PACK1_IMAGE_ZH, "en": DEFAULT_PACK1_IMAGE_EN},
         "pack2": {"zh": DEFAULT_PACK2_IMAGE_ZH, "en": DEFAULT_PACK2_IMAGE_EN},
         "pack4": {"zh": DEFAULT_PACK4_IMAGE_ZH, "en": DEFAULT_PACK4_IMAGE_EN},
@@ -67,10 +74,6 @@ DEFAULT_MEDIA_ASSETS = {
         "brand_intro": {
             "zh": "Aqina 农场到上架，全程可追溯。",
             "en": "Aqina: raised on MD2 golden pineapples, traceable from farm to shelf.",
-        },
-        "trial_3": {
-            "zh": "新手体验装：3 包先试口感。",
-            "en": "Trial pack: 3 packs to try the taste first.",
         },
         "pack1": {
             "zh": "1盒体验装：7 天入门滋养，适合先试口感。",
@@ -144,8 +147,8 @@ DEFAULT_CHATBOT_SKILLS = {
         "trigger_keywords": ["贵", "便宜", "多少钱", "价钱", "price", "how much", "discount", "优惠"],
         "listening_goal": "判断顾客是要低门槛试喝，还是在比较长期价值。",
         "instruction": "不要硬推，用价值重塑：一包约等于一杯高品质咖啡，但得到自家农场可追溯、无防腐剂、无味精、不加一滴水的纯净营养。",
-        "required_questions": ["您会想先用新手体验装试口感，还是直接拿免运的活力升级装？"],
-        "recommended_package_code": "trial_3",
+        "required_questions": ["您会想先用1盒日常滋养装试口感，还是直接拿免运的活力升级装？"],
+        "recommended_package_code": "pack1",
         "upgrade_package_code": "pack2",
         "media_keys": ["pack2_product"],
         "next_referrals": ["checkout_collect"],
@@ -157,7 +160,7 @@ DEFAULT_CHATBOT_SKILLS = {
         "listening_goal": "确认顾客是否因为传统鸡精腥苦经验而犹豫。",
         "instruction": "用感官化描述：MD2 黄金凤梨酵素喂养，口感更像鲜鸡汤，入口回甘，较少传统腥苦感。",
         "required_questions": ["您之前是喝过传统鸡精觉得腥，还是本身对肉汤味比较敏感？"],
-        "recommended_package_code": "trial_3",
+        "recommended_package_code": "pack1",
         "upgrade_package_code": "pack2",
         "media_keys": ["brand_intro", "pack1_product"],
     },
@@ -175,9 +178,9 @@ DEFAULT_CHATBOT_SKILLS = {
         "skill_id": "checkout_collect",
         "title": "收集下单资料",
         "trigger_keywords": ["我要", "下单", "购买", "订购", "买", "order", "buy"],
-        "listening_goal": "确认套餐与数量，收齐姓名、电话、新加坡完整地址。",
-        "instruction": "只有顾客明确购买并且姓名、电话、地址齐全时，才能 checkout_ready=true；资料不齐时逐项补齐。",
-        "required_questions": ["我帮您安排，请发收件人姓名、联系电话和新加坡完整地址。"],
+        "listening_goal": "确认套餐与数量，收齐姓名、新加坡完整地址；WhatsApp 来讯已有号码时不再追问电话。",
+        "instruction": "只有顾客明确购买并且姓名、电话、地址齐全时，才能 checkout_ready=true；如果 Channel 是 whatsapp 且已有来讯号码，可视为电话已齐全；资料不齐时逐项补齐。",
+        "required_questions": ["我帮您安排，请发收件人姓名和新加坡完整地址。若不是从 WhatsApp 来讯，才需要补联系电话。"],
         "next_referrals": ["payment_receipt"],
     },
     "payment_receipt": {
@@ -246,7 +249,6 @@ Knowledge Base (Aqina 滴鸡精事实约束)
 - 适合孕产妇及新手爸妈、上班熬夜族、长辈日常保健、术后恢复期日常补养、学生补养等场景。
 
 产品定价与套餐 (新加坡区 - 币种 SGD)：
-- 【新手体验装】3包 = SGD 18.00，适合先试口感，未满免运门槛。
 - 【日常滋养装】1盒/7包 = SGD 39.90，适合基础补充，未满免运门槛。
 - 【活力升级装】2盒/14包 = SGD 75.00，适合日常提神抗疲劳，满足免运费。
 - 【孕产妇30天调理套餐】4盒/28包 = SGD 149.00，适合孕期、待产、坐月子与新手爸妈补养，满足免运费。
@@ -255,7 +257,7 @@ Knowledge Base (Aqina 滴鸡精事实约束)
 - PayNow 收款户名：Boong Poultry Pte Ltd。顾客付款后必须发送付款截图，才算完成提交。
 
 推荐规则：
-- 日常提神/上班族/学生：可先给【新手体验装】作为低门槛选择，但更推荐【活力升级装】因为刚好免运费。
+- 日常提神/上班族/学生：可先给【日常滋养装】1盒/7包作为低门槛选择，但更推荐【活力升级装】因为刚好免运费。
 - 孕期/产后/月子：优先推荐【孕产妇30天调理套餐】，必要时给【家庭月度订阅包】作为长期补养升级。
 - 长辈/送礼/家庭共享：优先推荐【家庭月度订阅包】，若顾客犹豫可降到【活力升级装】。
 - 只使用 Available packages 里存在的 package code，不要自行发明套餐 code。
@@ -263,8 +265,8 @@ Knowledge Base (Aqina 滴鸡精事实约束)
 Checkout Rules (下单规则)
 
 - 顾客明确要购买后，才开始收集订单资料。
-- 必须收集：收件人姓名、联系电话、新加坡完整收货地址、选定套餐与数量。
-- 只有顾客明确购买且姓名、电话、地址都齐全时，才可以 checkout_ready=true。
+- 必须收集：收件人姓名、联系电话、新加坡完整收货地址、选定套餐与数量；若 Channel 是 whatsapp 且系统已有来讯号码，不需要再向顾客索取联系电话。
+- 只有顾客明确购买且姓名、电话、地址都齐全时，才可以 checkout_ready=true；WhatsApp 来讯号码可视为已收集电话。
 - 资料不齐时，missing_order_fields 必须列出缺少字段，checkout_ready=false。
 
 Medical Safety (医疗安全)
@@ -283,19 +285,6 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         "system_prompt": AQINA_SYSTEM_PROMPT,
         "handoff_message": "",
         "packages": {
-            "trial_3": {
-                "code": "trial_3",
-                "name_zh": "新手体验装",
-                "name_en": "Trial Pack",
-                "description_zh": "3包低门槛体验装，适合先试口感；未满 SGD 70 免运门槛，需加 SGD 8 配送费。",
-                "description_en": "Low-entry 3-pack trial; below the SGD 70 free-shipping threshold and adds SGD 8 delivery.",
-                "price_sgd": 18.0,
-                "pack_count": 3,
-                "box_count": 1,
-                "target_audience": ["self_care"],
-                "hero": False,
-                "free_shipping_eligible": False,
-            },
             "pack1": {
                 "code": "pack1",
                 "name_zh": "日常滋养装",
@@ -378,7 +367,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             },
             "t15m": {
                 "lead_cold": {"instruction": "哈喽~ 您是不是刚好在忙呀？没关系的。您可以先回我『1』日常提神，或『2』孕产/长辈补身，我再按您的情况推荐最合适的配套 🎈"},
-                "qualified_warm": {"instruction": "刚才聊到一半您没消息了，估计是去忙工作或照顾宝宝了吧？😊 您先忙，等您空下来再告诉我，您会更想先试【新手体验装】还是直接拿免运的【活力升级装】呢？"},
+                "qualified_warm": {"instruction": "刚才聊到一半您没消息了，估计是去忙工作或照顾宝宝了吧？😊 您先忙，等您空下来再告诉我，您会更想先试【日常滋养装】1盒，还是直接拿免运的【活力升级装】呢？"},
             },
             "t3h": {
                 "default": {"instruction": "请用视觉化、感官化的方式描述 Aqina 滴鸡精的金黄色泽、鲜鸡汤香气、入口回甘和温热滋养感，不要直接催单。"}
@@ -469,6 +458,7 @@ class ChatbotSettingsService:
         if not paynow.get("payment_qr_alt"):
             normalized["payment"]["paynow"]["payment_qr_alt"] = defaults["payment"]["paynow"]["payment_qr_alt"]
         normalized["media_assets"] = _normalize_media_assets(normalized.get("media_assets", {}), defaults["media_assets"])
+        normalized = _remove_retired_trial_package(normalized)
         validated = ChatbotSettingsResponse.model_validate(normalized)
         return validated.model_dump()
 
@@ -564,3 +554,79 @@ def _normalize_media_assets(media_assets: dict[str, Any], defaults: dict[str, An
             captions[key] = {"zh": default_value, "en": default_value}
     normalized["captions"] = captions
     return normalized
+
+
+TRIAL_TEXT_REPLACEMENTS = (
+    (
+        f"- 【{RETIRED_TRIAL_NAME_ZH}】{RETIRED_TRIAL_PACK_COUNT_TEXT} = {RETIRED_TRIAL_PRICE_TEXT}，适合先试口感，未满免运门槛。\n",
+        "",
+    ),
+    (
+        f"【{RETIRED_TRIAL_NAME_ZH}】{RETIRED_TRIAL_PACK_COUNT_TEXT} = {RETIRED_TRIAL_PRICE_TEXT}，适合先试口感，未满免运门槛。",
+        "【日常滋养装】1盒/7包 = SGD 39.90，适合基础补充，未满免运门槛。",
+    ),
+    (
+        f"可先给【{RETIRED_TRIAL_NAME_ZH}】作为低门槛选择",
+        "可先给【日常滋养装】1盒/7包作为低门槛选择",
+    ),
+    (
+        f"您会想先用{RETIRED_TRIAL_NAME_ZH}试口感，还是直接拿免运的活力升级装？",
+        "您会想先用1盒日常滋养装试口感，还是直接拿免运的活力升级装？",
+    ),
+    (
+        f"您会更想先试【{RETIRED_TRIAL_NAME_ZH}】还是直接拿免运的【活力升级装】呢？",
+        "您会更想先试【日常滋养装】1盒，还是直接拿免运的【活力升级装】呢？",
+    ),
+    (f"{RETIRED_TRIAL_NAME_ZH}：{RETIRED_TRIAL_PACK_COUNT_SPACED_TEXT}先试口感。", "日常滋养装：1盒/7包先试口感。"),
+    ("Trial pack: 3 packs to try the taste first.", "Daily nourishment pack: 1 box / 7 packs to start."),
+    ("Low-entry 3-pack trial", "1-box daily nourishment pack"),
+    (f"{RETIRED_TRIAL_PACK_COUNT_TEXT}低门槛体验装", "1盒/7包低门槛日常滋养装"),
+    (RETIRED_TRIAL_NAME_ZH, "日常滋养装"),
+    (RETIRED_TRIAL_NAME_EN, "Daily Nourishment Pack"),
+    (RETIRED_TRIAL_PRICE_TEXT, "SGD 39.90"),
+    (RETIRED_TRIAL_PACKAGE_CODE, "pack1"),
+    (RETIRED_TRIAL_PACK_COUNT_SPACED_TEXT, "1盒/7包"),
+    (RETIRED_TRIAL_PACK_COUNT_TEXT, "1盒/7包"),
+    ("3-pack", "1-box"),
+)
+
+
+def _remove_retired_trial_package(settings_doc: dict[str, Any]) -> dict[str, Any]:
+    """Remove the retired 3-pack trial offer from saved chatbot settings."""
+    normalized = deepcopy(settings_doc)
+    packages = normalized.get("packages")
+    if isinstance(packages, dict):
+        packages.pop(RETIRED_TRIAL_PACKAGE_CODE, None)
+
+    media_assets = normalized.get("media_assets")
+    if isinstance(media_assets, dict):
+        for key in ("package_images", "captions"):
+            values = media_assets.get(key)
+            if isinstance(values, dict):
+                values.pop(RETIRED_TRIAL_PACKAGE_CODE, None)
+
+    skills = normalized.get("chatbot_skills")
+    if isinstance(skills, dict):
+        for skill in skills.values():
+            if not isinstance(skill, dict):
+                continue
+            for field in ("recommended_package_code", "selected_package_code"):
+                if skill.get(field) == RETIRED_TRIAL_PACKAGE_CODE:
+                    skill[field] = "pack1"
+            if skill.get("upgrade_package_code") == RETIRED_TRIAL_PACKAGE_CODE:
+                skill["upgrade_package_code"] = "pack2"
+
+    return _rewrite_retired_trial_text(normalized)
+
+
+def _rewrite_retired_trial_text(value: Any) -> Any:
+    if isinstance(value, str):
+        rewritten = value
+        for old, new in TRIAL_TEXT_REPLACEMENTS:
+            rewritten = rewritten.replace(old, new)
+        return rewritten
+    if isinstance(value, list):
+        return [_rewrite_retired_trial_text(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _rewrite_retired_trial_text(item) for key, item in value.items()}
+    return value

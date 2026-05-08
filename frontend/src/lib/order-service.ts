@@ -27,6 +27,23 @@ export interface OrderLineItem {
   price: number;
 }
 
+export interface PaymentVerification {
+  status: 'ok' | 'warning' | 'unavailable';
+  expectedAmount?: number;
+  extractedAmount?: number;
+  amountMatch: boolean;
+  referenceNumber?: string;
+  referenceNormalized?: string;
+  duplicateDetected: boolean;
+  duplicateOrderIds: string[];
+  duplicatePaymentIds: string[];
+  warnings: string[];
+  confidence?: number;
+  currency?: string;
+  recipientReference?: string;
+  paymentDatetime?: string;
+}
+
 export interface Order {
   id?: string;
   customerName: string;
@@ -40,6 +57,9 @@ export interface Order {
   status: OrderStatus;
   paymentStatus: OrderPaymentStatus;
   paymentReceiptUrl?: string;
+  transactionId?: string;
+  paymentVerification?: PaymentVerification;
+  riskFlags: string[];
   source?: string;
   sourceChannel?: string;
   marketingContactId?: string;
@@ -361,6 +381,9 @@ function normalizeOrder(id: string, data: RawRecord): Order {
     paymentStatus: normalizePaymentStatus(data.payment_status),
     paymentReceiptUrl:
       stringOrUndefined(data.payment_receipt_url) ?? stringOrUndefined(data.screenshot_url),
+    transactionId: stringOrUndefined(data.transaction_id),
+    paymentVerification: normalizePaymentVerification(data.payment_verification),
+    riskFlags: normalizeStringArray(data.risk_flags),
     source: stringOrUndefined(data.source) ?? 'landing_page',
     sourceChannel: stringOrUndefined(data.source_channel),
     marketingContactId: stringOrUndefined(data.marketing_contact_id),
@@ -448,6 +471,43 @@ function isRecord(value: unknown): value is RawRecord {
 
 function stringOrUndefined(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function numberOrUndefined(value: unknown): number | undefined {
+  const numberValue = Number(value);
+  return Number.isFinite(numberValue) ? numberValue : undefined;
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+}
+
+function normalizePaymentVerification(value: unknown): PaymentVerification | undefined {
+  if (!isRecord(value)) return undefined;
+  const status = String(value.status || '').toLowerCase();
+  const normalizedStatus: PaymentVerification['status'] =
+    status === 'ok' || status === 'warning' || status === 'unavailable'
+      ? status
+      : 'warning';
+
+  return {
+    status: normalizedStatus,
+    expectedAmount: numberOrUndefined(value.expected_amount),
+    extractedAmount: numberOrUndefined(value.extracted_amount),
+    amountMatch: Boolean(value.amount_match),
+    referenceNumber: stringOrUndefined(value.reference_number),
+    referenceNormalized: stringOrUndefined(value.reference_normalized),
+    duplicateDetected: Boolean(value.duplicate_detected),
+    duplicateOrderIds: normalizeStringArray(value.duplicate_order_ids),
+    duplicatePaymentIds: normalizeStringArray(value.duplicate_payment_ids),
+    warnings: normalizeStringArray(value.warnings),
+    confidence: numberOrUndefined(value.confidence),
+    currency: stringOrUndefined(value.currency),
+    recipientReference: stringOrUndefined(value.recipient_reference),
+    paymentDatetime: stringOrUndefined(value.payment_datetime),
+  };
 }
 
 function normalizeStatus(value: unknown): OrderStatus {

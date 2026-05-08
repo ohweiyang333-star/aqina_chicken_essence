@@ -2,9 +2,11 @@
 
 import type { ReactNode } from "react";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Inbox,
+  ImageIcon,
   Loader2,
   MessageCircle,
   PauseCircle,
@@ -12,6 +14,7 @@ import {
   RefreshCw,
   Send,
   Smartphone,
+  X,
 } from "lucide-react";
 
 import AdminSidebar from "@/components/admin/AdminSidebar";
@@ -23,6 +26,7 @@ import {
   MarketingTag,
   getMarketingConversation,
   listMarketingConversations,
+  sendMarketingConversationImage,
   sendMarketingConversationText,
   updateMarketingContactTag,
   updateMarketingConversationAutomation,
@@ -41,6 +45,9 @@ const TAG_OPTIONS: Array<{ value: MarketingTag; label: string }> = [
   { value: "handoff_pending", label: "Handoff" },
 ];
 
+const ALLOWED_REPLY_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_REPLY_IMAGE_BYTES = 8 * 1024 * 1024;
+
 export default function AdminInboxPage() {
   const router = useRouter();
   const [isAuthLoading, setIsAuthLoading] = useState(true);
@@ -52,6 +59,8 @@ export default function AdminInboxPage() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [conversationDetail, setConversationDetail] = useState<MarketingConversationDetail | null>(null);
   const [replyText, setReplyText] = useState("");
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
+  const [selectedImagePreview, setSelectedImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeToAuthChanges((user) => {
@@ -75,6 +84,14 @@ export default function AdminInboxPage() {
     return () => unsubscribe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [router]);
+
+  useEffect(() => {
+    return () => {
+      if (selectedImagePreview) {
+        URL.revokeObjectURL(selectedImagePreview);
+      }
+    };
+  }, [selectedImagePreview]);
 
   async function loadData(channel: MarketingInboxFilter = activeFilter) {
     setIsLoading(true);
@@ -121,15 +138,57 @@ export default function AdminInboxPage() {
     setActiveFilter(nextFilter);
     setSelectedConversationId(null);
     setConversationDetail(null);
+    setReplyText("");
+    handleClearImage();
     await loadData(nextFilter);
   }
 
-  async function handleSendText() {
-    if (!selectedConversationId || !replyText.trim()) return;
+  function handleSelectConversation(conversationId: string) {
+    setReplyText("");
+    handleClearImage();
+    void loadConversation(conversationId);
+  }
+
+  function handleSelectImage(file: File) {
+    if (!ALLOWED_REPLY_IMAGE_TYPES.has(file.type)) {
+      alert("请上传 JPG、PNG 或 WebP 图片。");
+      return;
+    }
+    if (file.size > MAX_REPLY_IMAGE_BYTES) {
+      alert("图片不能超过 8MB。");
+      return;
+    }
+    setSelectedImageFile(file);
+    const nextPreview = URL.createObjectURL(file);
+    setSelectedImagePreview((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return nextPreview;
+    });
+  }
+
+  function handleClearImage() {
+    setSelectedImageFile(null);
+    setSelectedImagePreview((current) => {
+      if (current) {
+        URL.revokeObjectURL(current);
+      }
+      return null;
+    });
+  }
+
+  async function handleSendReply() {
+    if (!selectedConversationId || (!replyText.trim() && !selectedImageFile)) return;
     setIsSaving(true);
     try {
-      await sendMarketingConversationText(selectedConversationId, replyText.trim());
+      if (selectedImageFile) {
+        await sendMarketingConversationImage(selectedConversationId, selectedImageFile, replyText.trim());
+      } else {
+        await sendMarketingConversationText(selectedConversationId, replyText.trim());
+      }
       setReplyText("");
+      handleClearImage();
       await loadConversation(selectedConversationId);
       setConversations(await listMarketingConversations(activeFilter));
     } catch (error) {
@@ -241,10 +300,14 @@ export default function AdminInboxPage() {
               conversationDetail={conversationDetail}
               selectedConversationId={selectedConversationId}
               replyText={replyText}
+              selectedImageFile={selectedImageFile}
+              selectedImagePreview={selectedImagePreview}
               isSaving={isSaving}
-              onSelectConversation={(id) => void loadConversation(id)}
+              onSelectConversation={handleSelectConversation}
               onReplyTextChange={setReplyText}
-              onSendText={() => void handleSendText()}
+              onSelectImage={handleSelectImage}
+              onClearImage={handleClearImage}
+              onSendReply={() => void handleSendReply()}
               onAutomationToggle={() => void handleAutomationToggle()}
               onTagChange={(tag) => void handleTagChange(tag)}
             />
@@ -260,10 +323,14 @@ function InboxPanel({
   conversationDetail,
   selectedConversationId,
   replyText,
+  selectedImageFile,
+  selectedImagePreview,
   isSaving,
   onSelectConversation,
   onReplyTextChange,
-  onSendText,
+  onSelectImage,
+  onClearImage,
+  onSendReply,
   onAutomationToggle,
   onTagChange,
 }: {
@@ -271,14 +338,19 @@ function InboxPanel({
   conversationDetail: MarketingConversationDetail | null;
   selectedConversationId: string | null;
   replyText: string;
+  selectedImageFile: File | null;
+  selectedImagePreview: string | null;
   isSaving: boolean;
   onSelectConversation: (id: string) => void;
   onReplyTextChange: (value: string) => void;
-  onSendText: () => void;
+  onSelectImage: (file: File) => void;
+  onClearImage: () => void;
+  onSendReply: () => void;
   onAutomationToggle: () => void;
   onTagChange: (tag: MarketingTag) => void;
 }) {
   const windowOpen = conversationDetail?.window.is_open;
+  const canReply = Boolean(conversationDetail && windowOpen);
   return (
     <section className="grid min-h-[720px] gap-4 xl:grid-cols-[330px_minmax(0,1fr)_340px]">
       <div className="overflow-hidden rounded-md border border-[#ddd5ca] bg-white">
@@ -352,7 +424,24 @@ function InboxPanel({
                     : "border border-[#e0d8cd] bg-white text-[#14231d]"
                 }`}
               >
-                <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                {message.message_type === "image" && message.media_url ? (
+                  <div className="space-y-2">
+                    <Image
+                      id={`inbox-message-image-${message.message_id}`}
+                      src={message.media_url}
+                      alt={message.text || "Sent image"}
+                      width={640}
+                      height={420}
+                      unoptimized
+                      className="max-h-80 w-full rounded-md object-cover"
+                    />
+                    {message.text && message.text !== "Manual image sent" && (
+                      <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-wrap break-words">{message.text}</p>
+                )}
                 <div className="mt-2 flex flex-wrap gap-2 text-[11px] opacity-70">
                   <span>{formatTime(message.created_at)}</span>
                   {message.role && <span>{message.role}</span>}
@@ -366,20 +455,73 @@ function InboxPanel({
         </div>
 
         <div className="border-t border-[#ebe5dc] p-4">
+          {selectedImagePreview && selectedImageFile && (
+            <div className="mb-3 flex items-center gap-3 rounded-md border border-[#d8d1c7] bg-[#fbfaf6] p-2">
+              <div
+                id="inbox-selected-image-preview"
+                role="img"
+                aria-label={selectedImageFile.name}
+                style={{ backgroundImage: `url(${selectedImagePreview})` }}
+                className="h-16 w-16 rounded-md bg-cover bg-center bg-no-repeat"
+              />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-[#14231d]">{selectedImageFile.name}</p>
+                <p className="text-xs text-[#6b746f]">{formatFileSize(selectedImageFile.size)}</p>
+              </div>
+              <button
+                id="inbox-clear-image-button"
+                type="button"
+                onClick={onClearImage}
+                disabled={isSaving}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#d8d1c7] bg-white text-[#5d6a64] hover:text-[#10251d] disabled:opacity-50"
+                aria-label="清除已选图片"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          )}
           <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-            <textarea
-              id="inbox-reply-textarea"
-              value={replyText}
-              onChange={(event) => onReplyTextChange(event.target.value)}
-              rows={3}
-              disabled={!conversationDetail || !windowOpen}
-              className="min-h-24 resize-none rounded-md border border-[#d8d1c7] bg-white p-3 text-sm text-[#14231d] outline-none focus:border-[#236b50] disabled:bg-[#f2eee7]"
-              placeholder={windowOpen ? "输入人工回复..." : "窗口已关闭，无法自由回复"}
-            />
+            <div className="grid gap-2">
+              <textarea
+                id="inbox-reply-textarea"
+                value={replyText}
+                onChange={(event) => onReplyTextChange(event.target.value)}
+                rows={3}
+                disabled={!canReply}
+                className="min-h-24 resize-none rounded-md border border-[#d8d1c7] bg-white p-3 text-sm text-[#14231d] outline-none focus:border-[#236b50] disabled:bg-[#f2eee7]"
+                placeholder={windowOpen ? "输入人工回复；选择图片后这里会作为图片说明..." : "窗口已关闭，无法自由回复"}
+              />
+              <div>
+                <input
+                  id="inbox-image-input"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="sr-only"
+                  disabled={!canReply || isSaving}
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    if (file) {
+                      onSelectImage(file);
+                    }
+                    event.currentTarget.value = "";
+                  }}
+                />
+                <label
+                  id="inbox-attach-image-button"
+                  htmlFor="inbox-image-input"
+                  className={`inline-flex items-center gap-2 rounded-md border border-[#cfd8d2] bg-white px-3 py-2 text-sm font-semibold text-[#294239] ${
+                    canReply && !isSaving ? "cursor-pointer hover:border-[#236b50]" : "cursor-not-allowed opacity-50"
+                  }`}
+                >
+                  <ImageIcon size={16} />
+                  图片
+                </label>
+              </div>
+            </div>
             <button
               id="inbox-send-text-button"
-              onClick={onSendText}
-              disabled={isSaving || !conversationDetail || !windowOpen || !replyText.trim()}
+              onClick={onSendReply}
+              disabled={isSaving || !canReply || (!replyText.trim() && !selectedImageFile)}
               className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#123d2f] px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
@@ -529,4 +671,10 @@ function formatTime(value?: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function formatFileSize(value: number) {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+  return `${(value / 1024 / 1024).toFixed(1)} MB`;
 }

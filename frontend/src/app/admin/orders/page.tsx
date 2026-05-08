@@ -23,6 +23,7 @@ import {
   CalendarDays,
   Clock,
   ExternalLink,
+  AlertTriangle,
   Truck,
   CheckCircle2,
   XCircle,
@@ -477,6 +478,8 @@ export default function AdminOrdersPage() {
                       </button>
                     )}
                   </div>
+
+                  <PaymentVerificationSummary order={order} />
                 </div>
 
                 <div className="flex flex-col items-center md:items-end justify-center min-w-[200px] gap-4 pl-6 md:border-l border-charcoal/5">
@@ -893,6 +896,66 @@ function splitLines(value: string) {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
+}
+
+function PaymentVerificationSummary({ order }: { order: Order }) {
+  const verification = order.paymentVerification;
+  if (!verification) return null;
+
+  const isDuplicate =
+    verification.duplicateDetected ||
+    order.riskFlags.includes("duplicate_payment_reference");
+  const isWarning = verification.status === "warning" || isDuplicate;
+  const statusLabel =
+    verification.status === "ok"
+      ? "AI amount match"
+      : verification.status === "unavailable"
+        ? "AI check unavailable"
+        : "AI check warning";
+
+  return (
+    <div
+      className={`w-full rounded-lg border px-3 py-3 text-xs ${
+        isDuplicate
+          ? "border-red-200 bg-red-50 text-red-900"
+          : isWarning
+            ? "border-amber-200 bg-amber-50 text-amber-900"
+            : "border-emerald-200 bg-emerald-50 text-emerald-900"
+      }`}
+    >
+      <div className="flex flex-wrap items-center gap-2 font-bold">
+        {isDuplicate && <AlertTriangle size={14} />}
+        <span>{isDuplicate ? "Duplicate payment reference / Possible scam risk" : statusLabel}</span>
+        {typeof verification.confidence === "number" && (
+          <span className="font-mono opacity-70">
+            Confidence {(verification.confidence * 100).toFixed(0)}%
+          </span>
+        )}
+      </div>
+      <div className="mt-2 grid gap-1 sm:grid-cols-3">
+        <span>Expected: {formatSgd(verification.expectedAmount ?? order.total)}</span>
+        <span>
+          Receipt:{" "}
+          {typeof verification.extractedAmount === "number"
+            ? formatSgd(verification.extractedAmount)
+            : "Not read"}
+        </span>
+        <span>Reference: {verification.referenceNumber || order.transactionId || "Not read"}</span>
+      </div>
+      {verification.duplicateOrderIds.length > 0 && (
+        <p className="mt-2 font-semibold">
+          Related orders: {verification.duplicateOrderIds.map((id) => `#${id.slice(-8)}`).join(", ")}
+        </p>
+      )}
+      {verification.warnings.length > 0 && (
+        <p className="mt-2 leading-5">{verification.warnings.join(" · ")}</p>
+      )}
+    </div>
+  );
+}
+
+function formatSgd(value: number) {
+  return `SGD ${value.toFixed(2)}`;
 }
 
 function buildOrderNotificationMessage(

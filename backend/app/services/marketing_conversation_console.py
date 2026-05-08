@@ -4,8 +4,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.services.marketing_contacts import MarketingContactService
-from app.services.marketing_utils import ensure_datetime, utcnow
+from app.services.marketing_utils import ensure_datetime, stable_id, utcnow
 from app.services.meta_client import get_meta_client
+from app.services.meta_media_assets import MetaMediaAssetService
 
 
 SUPPORTED_INBOX_CHANNELS = {"messenger", "whatsapp"}
@@ -97,6 +98,66 @@ class MarketingConversationConsoleService:
             "status": "sent",
             "provider_message_id": provider_message_id,
             "message_id": message_id,
+            "sent_by": admin.get("email") or admin.get("uid"),
+        }
+
+    def ensure_manual_reply_window_open(self, conversation_id: str) -> None:
+        conversation = self._get_conversation(conversation_id)
+        contact = self.contact_service.get_contact(conversation["contact_id"])
+        if not self._customer_window_open(contact):
+            raise ValueError("Customer service window is closed. Free-form replies are disabled.")
+
+    def send_manual_image(
+        self,
+        conversation_id: str,
+        *,
+        media_url: str,
+        media_content_type: str,
+        media_filename: str,
+        caption: str | None,
+        admin: dict[str, Any],
+    ) -> dict[str, Any]:
+        source_url = media_url.strip()
+        if not source_url:
+            raise ValueError("Image URL cannot be empty.")
+        conversation = self._get_conversation(conversation_id)
+        contact = self.contact_service.get_contact(conversation["contact_id"])
+        if not self._customer_window_open(contact):
+            raise ValueError("Customer service window is closed. Free-form replies are disabled.")
+
+        channel = conversation["channel"]
+        contact_for_send = self._contact_with_send_identifier(contact, channel)
+        stripped_caption = (caption or "").strip()
+        media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
+        result = media_service.send_chatbot_image(
+            channel=channel,
+            contact=contact_for_send,
+            source_url=source_url,
+            cache_key=stable_id("manual_image", conversation_id, source_url),
+            caption=stripped_caption or None,
+        )
+
+        provider_message_id = self._extract_provider_message_id(result)
+        _, message_id = self.contact_service.append_message(
+            contact_id=conversation["contact_id"],
+            channel=channel,
+            direction="outbound",
+            role="admin",
+            text=stripped_caption or "Manual image sent",
+            source=f"admin_{channel}_console",
+            provider_message_id=provider_message_id,
+            delivery_status="sent",
+            message_type="image",
+            created_at=utcnow(),
+            media_url=source_url,
+            media_content_type=media_content_type,
+            media_filename=media_filename,
+        )
+        return {
+            "status": "sent",
+            "provider_message_id": provider_message_id,
+            "message_id": message_id,
+            "media_url": source_url,
             "sent_by": admin.get("email") or admin.get("uid"),
         }
 
@@ -214,6 +275,21 @@ class MarketingConversationConsoleService:
         if channel == "whatsapp":
             return str(identifiers.get("wa_id") or identifiers.get("phone_e164") or "")
         return ""
+
+    @staticmethod
+    def _contact_with_send_identifier(contact: dict[str, Any], channel: str) -> dict[str, Any]:
+        identifiers = dict(contact.get("identifiers") or {})
+        if channel == "messenger":
+            if not identifiers.get("psid"):
+                raise ValueError("Messenger PSID is missing for this contact.")
+        elif channel == "whatsapp":
+            if not identifiers.get("wa_id") and identifiers.get("phone_e164"):
+                identifiers["wa_id"] = identifiers["phone_e164"]
+            if not identifiers.get("wa_id"):
+                raise ValueError("WhatsApp recipient ID is missing for this contact.")
+        else:
+            raise ValueError(f"Unsupported inbox channel: {channel}")
+        return {**contact, "identifiers": identifiers}
 
     @staticmethod
     def _masked_platform_id(platform_id: str) -> str:

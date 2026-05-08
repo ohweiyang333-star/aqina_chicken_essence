@@ -14,6 +14,13 @@ import httpx
 from tests.fakes import FakeFirestore, FakeGeminiService, FakeMetaClient, FakeTaskQueue
 
 
+RETIRED_PACKAGE_CODE = "trial" + "_3"
+RETIRED_PACKAGE_NAME_ZH = "新手" + "体验装"
+RETIRED_PACKAGE_NAME_EN = "Trial " + "Pack"
+RETIRED_PACKAGE_PRICE_TEXT = "SGD " + "18.00"
+RETIRED_PACKAGE_PACK_COUNT_TEXT = f"{3}包"
+
+
 class MarketingApiTests(unittest.TestCase):
     def setUp(self) -> None:
         os.environ["META_VERIFY_TOKEN"] = "test-verify-token"
@@ -105,8 +112,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("先理解，后推荐", payload["system_prompt"])
         self.assertIn("MD2 凤梨长大的快乐鸡", payload["system_prompt"])
         self.assertIn("主治医生", payload["system_prompt"])
-        self.assertIn("trial_3", payload["packages"])
-        self.assertEqual(payload["packages"]["trial_3"]["price_sgd"], 18.0)
+        self.assertNotIn(RETIRED_PACKAGE_CODE, payload["packages"])
+        for code in ["pack1", "pack2", "pack4", "pack6"]:
+            self.assertIn(code, payload["packages"])
         self.assertEqual(payload["packages"]["pack1"]["name_zh"], "日常滋养装")
         self.assertEqual(payload["faq"][0]["keywords"], ["delivery"])
         self.assertEqual(payload["payment"]["paynow"]["enabled"], True)
@@ -121,6 +129,62 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["media_assets"]["brand_intro_images"]["en"], "/chatbot/aqina-brand-intro-en.jpg")
         self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["zh"], "/chatbot/aqina-pack2-chatbot-zh.jpg")
         self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["en"], "/chatbot/aqina-pack2-chatbot-en.jpg")
+        self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["package_images"])
+        self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["captions"])
+
+    def test_chatbot_settings_removes_retired_trial_package_from_saved_document(self) -> None:
+        self.db.seed(
+            "chatbotSettings/default",
+            {
+                "system_prompt": (
+                    f"产品定价：- 【{RETIRED_PACKAGE_NAME_ZH}】{RETIRED_PACKAGE_PACK_COUNT_TEXT} = {RETIRED_PACKAGE_PRICE_TEXT}，适合先试口感。\n"
+                    f"推荐规则：可先给【{RETIRED_PACKAGE_NAME_ZH}】作为低门槛选择。"
+                ),
+                "packages": {
+                    RETIRED_PACKAGE_CODE: {
+                        "code": RETIRED_PACKAGE_CODE,
+                        "name_zh": RETIRED_PACKAGE_NAME_ZH,
+                        "name_en": RETIRED_PACKAGE_NAME_EN,
+                        "description_zh": f"{RETIRED_PACKAGE_PACK_COUNT_TEXT}低门槛体验装",
+                        "description_en": "Low-entry 3-pack trial",
+                        "price_sgd": 18.0,
+                        "pack_count": 3,
+                        "target_audience": ["self_care"],
+                        "hero": False,
+                        "free_shipping_eligible": False,
+                    }
+                },
+                "chatbot_skills": {
+                    "price_objection": {
+                        "recommended_package_code": RETIRED_PACKAGE_CODE,
+                        "required_questions": [f"您会想先用{RETIRED_PACKAGE_NAME_ZH}试口感，还是直接拿免运的活力升级装？"],
+                    },
+                    "taste_objection": {"recommended_package_code": RETIRED_PACKAGE_CODE},
+                },
+                "media_assets": {
+                    "package_images": {RETIRED_PACKAGE_CODE: "/chatbot/legacy-trial.jpg"},
+                    "captions": {RETIRED_PACKAGE_CODE: f"{RETIRED_PACKAGE_NAME_ZH}：{3} 包先试口感。"},
+                },
+            },
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/chatbot/settings",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        serialized_payload = json.dumps(payload, ensure_ascii=False)
+        self.assertNotIn(RETIRED_PACKAGE_CODE, payload["packages"])
+        self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["package_images"])
+        self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["captions"])
+        self.assertEqual(payload["chatbot_skills"]["price_objection"]["recommended_package_code"], "pack1")
+        self.assertEqual(payload["chatbot_skills"]["taste_objection"]["recommended_package_code"], "pack1")
+        self.assertNotIn(RETIRED_PACKAGE_NAME_ZH, serialized_payload)
+        self.assertNotIn(RETIRED_PACKAGE_NAME_EN, serialized_payload)
+        self.assertNotIn(RETIRED_PACKAGE_PRICE_TEXT, serialized_payload)
 
     def test_facebook_comment_webhook_processes_keyword_comment_to_private_reply(self) -> None:
         self._seed_runtime_settings()
@@ -613,7 +677,7 @@ class MarketingApiTests(unittest.TestCase):
             channel="whatsapp",
             runtime_settings={
                 "packages": {
-                    "trial_3": {"code": "trial_3", "price_sgd": 18.0},
+                    "pack1": {"code": "pack1", "price_sgd": 39.9},
                     "pack2": {"code": "pack2", "price_sgd": 75.0},
                 },
                 "knowledge_base": {},
@@ -621,9 +685,35 @@ class MarketingApiTests(unittest.TestCase):
         )
 
         self.assertIn("Allowed package codes", prompt)
-        self.assertIn("trial_3", prompt)
+        self.assertIn("pack1", prompt)
+        self.assertNotIn(RETIRED_PACKAGE_CODE, prompt)
         self.assertIn("不要发明新的 package code", prompt)
         self.assertIn("checkout_ready 才能为 true", prompt)
+
+    def test_gemini_chat_prompt_treats_whatsapp_channel_phone_as_collected(self) -> None:
+        from app.services.gemini_service import GeminiConversationService
+
+        prompt = GeminiConversationService._build_chat_prompt(
+            contact={
+                "current_tag": "qualified_warm",
+                "lead_goal": "self_care",
+                "identifiers": {"wa_id": "6591119999", "phone_e164": "6591119999"},
+                "order_fields": {"phone": "6591119999"},
+            },
+            messages=[],
+            incoming_text="我要两盒，地址是 1 Orchard Road Singapore 238823",
+            channel="whatsapp",
+            runtime_settings={
+                "packages": {
+                    "pack2": {"code": "pack2", "price_sgd": 75.0},
+                },
+                "knowledge_base": {},
+            },
+        )
+
+        self.assertIn("Known channel phone: 6591119999", prompt)
+        self.assertIn("WhatsApp 来讯号码已经可以作为联系电话", prompt)
+        self.assertIn("不要再询问联系电话", prompt)
 
     def test_chatbot_skill_router_selects_contextual_skills(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
@@ -772,15 +862,153 @@ class MarketingApiTests(unittest.TestCase):
             {"chatbot_brand_intro_media", "chatbot_product_media", "paynow_qr_media"},
         )
 
-    def test_process_inbound_message_creates_trial_checkout_with_shipping(self) -> None:
+    def test_process_inbound_message_uses_whatsapp_sender_phone_for_checkout(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
-                "reply_text": "可以的，我先帮您安排新手体验装，适合先试口感 🎈",
+                "reply_text": "我还需要您的联系电话才可以安排付款。",
+                "next_tag": "qualified_warm",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": "pack2",
+                "order_fields": {
+                    "name": "Christine Yon",
+                    "phone": None,
+                    "address": "Jurong West Street 92 #03-211 Singapore 640831",
+                },
+                "missing_order_fields": ["phone"],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-whatsapp-phone-default",
+            conversation_id="conv-whatsapp-phone-default",
+            event_id="event-whatsapp-phone-default",
+            channel="whatsapp",
+            incoming_text="Christine Yon, Jurong West Street 92 #03-211, 我要 2 盒",
+            identifier_key="wa_id",
+            identifier_value="6591119999",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-whatsapp-phone-default"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.json()["checkout_session_id"])
+
+        chat_calls = [call for call in self.gemini_service.calls if call[0] == "generate_chat_reply"]
+        self.assertEqual(chat_calls[0][1]["contact"]["order_fields"]["phone"], "6591119999")
+
+        orders = self.db.collection("orders").stream()
+        self.assertEqual(len(orders), 1)
+        order = orders[0].to_dict()
+        self.assertEqual(order["customer"]["name"], "Christine Yon")
+        self.assertEqual(order["customer"]["whatsapp"], "6591119999")
+        self.assertEqual(order["customer"]["address"], "Jurong West Street 92 #03-211 Singapore 640831")
+        self.assertEqual(order["items"][0]["product_id"], "pack2")
+        self.assertEqual(order["total_amount"], 75.0)
+
+        contact = self.db.collection("marketing_contacts").document("contact-whatsapp-phone-default").get().to_dict()
+        self.assertEqual(contact["current_tag"], "cart_hot")
+        self.assertEqual(contact["order_fields"]["phone"], "6591119999")
+        self.assertEqual(contact["missing_order_fields"], [])
+
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertIn("PayNow", message_calls[0][1]["text"])
+        self.assertNotIn("联系电话", message_calls[0][1]["text"])
+        self.assertNotIn("电话号码", message_calls[0][1]["text"])
+
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertTrue(any("Amount: SGD 75.00" in call[1]["caption"] for call in image_calls))
+        outbound_images = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-whatsapp-phone-default")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("message_type") == "image"
+        ]
+        self.assertIn("paynow_qr_media", {item["source"] for item in outbound_images})
+
+    def test_process_inbound_message_blocks_messenger_checkout_without_phone(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "我帮您安排，请再发联系电话。",
                 "next_tag": "cart_hot",
                 "lead_goal": "self_care",
-                "recommended_package_code": "trial_3",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": "pack2",
+                "order_fields": {
+                    "name": "Ben Lim",
+                    "phone": None,
+                    "address": "20 Tampines Central Singapore 529538",
+                },
+                "missing_order_fields": [],
+                "checkout_ready": True,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-messenger-missing-phone",
+            conversation_id="conv-messenger-missing-phone",
+            event_id="event-messenger-missing-phone",
+            channel="messenger",
+            incoming_text="Ben Lim, 20 Tampines Central Singapore 529538, 我要 2 盒",
+            identifier_key="psid",
+            identifier_value="psid-missing-phone",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-messenger-missing-phone"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()["checkout_session_id"])
+        self.assertEqual(self.db.collection("orders").stream(), [])
+
+        contact = self.db.collection("marketing_contacts").document("contact-messenger-missing-phone").get().to_dict()
+        self.assertIn("phone", contact["missing_order_fields"])
+
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_messenger_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertIn("联系电话", message_calls[0][1]["text"])
+        outbound_images = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-messenger-missing-phone")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("message_type") == "image"
+        ]
+        self.assertNotIn("paynow_qr_media", {item["source"] for item in outbound_images})
+
+    def test_process_inbound_message_creates_pack1_checkout_with_shipping(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "可以的，我先帮您安排日常滋养装，适合先试口感 🎈",
+                "next_tag": "cart_hot",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack1",
                 "upgrade_package_code": "pack2",
-                "selected_package_code": "trial_3",
+                "selected_package_code": "pack1",
                 "order_fields": {
                     "name": "Ben Lim",
                     "phone": "6592223333",
@@ -800,7 +1028,7 @@ class MarketingApiTests(unittest.TestCase):
             conversation_id="conv-trial",
             event_id="event-trial",
             channel="whatsapp",
-            incoming_text="我要新手体验装",
+            incoming_text="我要一盒",
             identifier_key="wa_id",
             identifier_value="6592223333",
         )
@@ -814,14 +1042,14 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         order = self.db.collection("orders").stream()[0].to_dict()
-        self.assertEqual(order["items"][0]["product_id"], "trial_3")
-        self.assertEqual(order["subtotal_amount"], 18.0)
+        self.assertEqual(order["items"][0]["product_id"], "pack1")
+        self.assertEqual(order["subtotal_amount"], 39.9)
         self.assertEqual(order["shipping_fee"], 8.0)
-        self.assertEqual(order["total_amount"], 26.0)
+        self.assertEqual(order["total_amount"], 47.9)
         self.assertEqual(order["box_count"], 1)
 
         contact = self.db.collection("marketing_contacts").document("contact-trial").get().to_dict()
-        self.assertEqual(contact["selected_package_code"], "trial_3")
+        self.assertEqual(contact["selected_package_code"], "pack1")
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
         self.assertEqual(len(image_calls), 3)
 
@@ -1396,6 +1624,205 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("人工同事", message_calls[0][1]["text"])
         self.assertNotIn("人工核对", message_calls[0][1]["text"])
 
+    def test_whatsapp_receipt_ai_verification_records_matching_reference(self) -> None:
+        self._seed_active_receipt_checkout(
+            contact_id="contact-receipt-ok",
+            conversation_id="conv-receipt-ok",
+            session_id="session-receipt-ok",
+            event_id="event-receipt-ok",
+            order_id="order_receipt_ok",
+            total_amount=75.0,
+        )
+        self.gemini_service.receipt_analysis = {
+            "paid_amount": 75.0,
+            "currency": "SGD",
+            "bank_transaction_reference": "ABC123456",
+            "recipient_reference": "AQINA-order_receipt_ok",
+            "payment_datetime": "2026-04-10 10:30",
+            "confidence": 0.94,
+            "warnings": [],
+        }
+
+        client = self._build_client()
+        with patch("app.services.marketing_orchestrator.upload_public_file_to_firebase", return_value="https://storage.example.com/chat-receipt-ok.jpg"):
+            response = client.post(
+                "/api/v1/marketing/tasks/process-inbound-message",
+                json={"event_id": "event-receipt-ok"},
+                headers={"X-Internal-Token": "internal-secret"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        order = self.db.collection("orders").document("order_receipt_ok").get().to_dict()
+        verification = order["payment_verification"]
+        self.assertEqual(order["payment_status"], "payment_submitted")
+        self.assertEqual(order["transaction_id"], "ABC123456")
+        self.assertEqual(verification["status"], "ok")
+        self.assertEqual(verification["expected_amount"], 75.0)
+        self.assertEqual(verification["extracted_amount"], 75.0)
+        self.assertEqual(verification["reference_number"], "ABC123456")
+        self.assertEqual(verification["reference_normalized"], "ABC123456")
+        self.assertTrue(verification["amount_match"])
+        self.assertFalse(verification["duplicate_detected"])
+        payments = self.db.collection("payments").stream()
+        self.assertEqual(len(payments), 1)
+        payment = payments[0].to_dict()
+        self.assertEqual(payment["transaction_id"], "ABC123456")
+        self.assertEqual(payment["payment_verification"]["status"], "ok")
+        analysis_calls = [call for call in self.gemini_service.calls if call[0] == "analyze_payment_receipt_image"]
+        self.assertEqual(len(analysis_calls), 1)
+        self.assertEqual(analysis_calls[0][1]["expected_amount"], 75.0)
+
+    def test_whatsapp_receipt_ai_verification_warns_underpaid_without_auto_paid(self) -> None:
+        self._seed_active_receipt_checkout(
+            contact_id="contact-receipt-underpaid",
+            conversation_id="conv-receipt-underpaid",
+            session_id="session-receipt-underpaid",
+            event_id="event-receipt-underpaid",
+            order_id="order_receipt_underpaid",
+            total_amount=75.0,
+        )
+        self.gemini_service.receipt_analysis = {
+            "paid_amount": 67.0,
+            "currency": "SGD",
+            "bank_transaction_reference": "PAY-777-888",
+            "recipient_reference": "AQINA-order_receipt_underpaid",
+            "confidence": 0.91,
+            "warnings": ["Detected amount is lower than expected."],
+        }
+
+        client = self._build_client()
+        with patch("app.services.marketing_orchestrator.upload_public_file_to_firebase", return_value="https://storage.example.com/chat-receipt-underpaid.jpg"):
+            response = client.post(
+                "/api/v1/marketing/tasks/process-inbound-message",
+                json={"event_id": "event-receipt-underpaid"},
+                headers={"X-Internal-Token": "internal-secret"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        order = self.db.collection("orders").document("order_receipt_underpaid").get().to_dict()
+        verification = order["payment_verification"]
+        self.assertEqual(order["payment_status"], "payment_submitted")
+        self.assertEqual(verification["status"], "warning")
+        self.assertEqual(verification["expected_amount"], 75.0)
+        self.assertEqual(verification["extracted_amount"], 67.0)
+        self.assertFalse(verification["amount_match"])
+        self.assertIn("Amount does not match expected total", verification["warnings"])
+        payments = self.db.collection("payments").stream()
+        self.assertEqual(payments[0].to_dict()["status"], "payment_submitted")
+
+    def test_whatsapp_receipt_duplicate_reference_flags_order_payment_and_escalation(self) -> None:
+        self._seed_active_receipt_checkout(
+            contact_id="contact-receipt-duplicate",
+            conversation_id="conv-receipt-duplicate",
+            session_id="session-receipt-duplicate",
+            event_id="event-receipt-duplicate",
+            order_id="order_receipt_duplicate",
+            total_amount=75.0,
+        )
+        self.db.seed(
+            "payments/payment_existing_duplicate",
+            {
+                "order_id": "order_existing_duplicate",
+                "method": "paynow",
+                "payment_method": "paynow",
+                "amount": 75.0,
+                "status": "payment_submitted",
+                "transaction_id": "ABC123456",
+                "payment_verification": {
+                    "reference_normalized": "ABC123456",
+                    "duplicate_detected": False,
+                },
+                "created_at": "2026-04-09T00:00:00Z",
+                "updated_at": "2026-04-09T00:00:00Z",
+            },
+        )
+        self.gemini_service.receipt_analysis = {
+            "paid_amount": 75.0,
+            "currency": "SGD",
+            "bank_transaction_reference": "ABC 123-456",
+            "confidence": 0.93,
+            "warnings": [],
+        }
+
+        client = self._build_client()
+        with patch("app.services.marketing_orchestrator.upload_public_file_to_firebase", return_value="https://storage.example.com/chat-receipt-duplicate.jpg"):
+            response = client.post(
+                "/api/v1/marketing/tasks/process-inbound-message",
+                json={"event_id": "event-receipt-duplicate"},
+                headers={"X-Internal-Token": "internal-secret"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        order = self.db.collection("orders").document("order_receipt_duplicate").get().to_dict()
+        verification = order["payment_verification"]
+        self.assertEqual(order["payment_status"], "payment_submitted")
+        self.assertEqual(order["transaction_id"], "ABC 123-456")
+        self.assertEqual(verification["status"], "warning")
+        self.assertTrue(verification["duplicate_detected"])
+        self.assertEqual(verification["duplicate_order_ids"], ["order_existing_duplicate"])
+        self.assertEqual(verification["duplicate_payment_ids"], ["payment_existing_duplicate"])
+        self.assertIn("duplicate_payment_reference", order["risk_flags"])
+        new_payment = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("payments").stream()
+            if snapshot.to_dict().get("order_id") == "order_receipt_duplicate"
+        ][0]
+        self.assertTrue(new_payment["payment_verification"]["duplicate_detected"])
+        self.assertIn("duplicate_payment_reference", new_payment["risk_flags"])
+        escalations = self.db.collection("marketing_escalations").stream()
+        self.assertEqual(len(escalations), 1)
+        self.assertEqual(escalations[0].to_dict()["reason"], "duplicate_payment_reference")
+
+    def test_whatsapp_receipt_ai_verification_unavailable_when_model_fails(self) -> None:
+        self._seed_active_receipt_checkout(
+            contact_id="contact-receipt-unavailable",
+            conversation_id="conv-receipt-unavailable",
+            session_id="session-receipt-unavailable",
+            event_id="event-receipt-unavailable",
+            order_id="order_receipt_unavailable",
+            total_amount=75.0,
+        )
+        self.gemini_service.receipt_analysis_error = RuntimeError("model unavailable")
+
+        client = self._build_client()
+        with patch("app.services.marketing_orchestrator.upload_public_file_to_firebase", return_value="https://storage.example.com/chat-receipt-unavailable.jpg"):
+            response = client.post(
+                "/api/v1/marketing/tasks/process-inbound-message",
+                json={"event_id": "event-receipt-unavailable"},
+                headers={"X-Internal-Token": "internal-secret"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        order = self.db.collection("orders").document("order_receipt_unavailable").get().to_dict()
+        verification = order["payment_verification"]
+        self.assertEqual(order["payment_status"], "payment_submitted")
+        self.assertEqual(order["payment_receipt_url"], "https://storage.example.com/chat-receipt-unavailable.jpg")
+        self.assertEqual(verification["status"], "unavailable")
+        self.assertEqual(verification["expected_amount"], 75.0)
+        self.assertIsNone(verification["extracted_amount"])
+        self.assertIn("AI receipt analysis unavailable", verification["warnings"])
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertIn("收到您的 PayNow 付款截图", message_calls[0][1]["text"])
+
+    def test_landing_order_with_receipt_does_not_analyze_receipt_image(self) -> None:
+        client = self._build_client()
+
+        with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Kelvin Tan",
+                    "customer_phone": "6591234567",
+                    "customer_address": "1 Orchard Road, Singapore 238823",
+                    "product_id": "pack2",
+                },
+                files={"payment_receipt": ("receipt.png", b"fake-image", "image/png")},
+            )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertFalse([call for call in self.gemini_service.calls if call[0] == "analyze_payment_receipt_image"])
+
     def test_payment_confirmation_text_does_not_send_extra_handoff_message(self) -> None:
         self._seed_runtime_settings()
         self._seed_contact_and_event(
@@ -1884,6 +2311,150 @@ class MarketingApiTests(unittest.TestCase):
         ]
         self.assertEqual(outbound_messages[0]["role"], "admin")
         self.assertEqual(outbound_messages[0]["source"], "admin_messenger_console")
+
+    def test_unified_conversations_api_sends_whatsapp_manual_image_inside_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-manual-image-wa",
+            conversation_id="conv-manual-image-wa",
+            event_id="event-manual-image-wa",
+            channel="whatsapp",
+            incoming_text="可以发图片给我看吗？",
+            identifier_key="wa_id",
+            identifier_value="6591000100",
+        )
+
+        client = self._build_client()
+        with patch(
+            "app.api.v1.marketing.upload_public_file_to_firebase",
+            return_value="https://storage.example.com/manual.png",
+            create=True,
+        ):
+            response = client.post(
+                "/api/v1/marketing/conversations/conv-manual-image-wa/images",
+                data={"caption": "这是 2 盒配套图片"},
+                files={"image": ("manual.png", b"fake-image", "image/png")},
+                headers={"Authorization": "Bearer admin-token"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "sent")
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(image_calls), 1)
+        self.assertEqual(image_calls[0][1]["to"], "6591000100")
+        self.assertEqual(image_calls[0][1]["caption"], "这是 2 盒配套图片")
+        outbound_messages = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-manual-image-wa")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("direction") == "outbound"
+        ]
+        self.assertEqual(outbound_messages[0]["message_type"], "image")
+        self.assertEqual(outbound_messages[0]["media_url"], "https://storage.example.com/manual.png")
+        self.assertEqual(outbound_messages[0]["media_content_type"], "image/png")
+
+    def test_unified_conversations_api_sends_messenger_manual_image_inside_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-manual-image-msgr",
+            conversation_id="conv-manual-image-msgr",
+            event_id="event-manual-image-msgr",
+            channel="messenger",
+            incoming_text="send photo",
+            identifier_key="psid",
+            identifier_value="psid-manual-image",
+        )
+
+        client = self._build_client()
+        with patch(
+            "app.api.v1.marketing.upload_public_file_to_firebase",
+            return_value="https://storage.example.com/manual-msgr.webp",
+            create=True,
+        ):
+            response = client.post(
+                "/api/v1/marketing/conversations/conv-manual-image-msgr/images",
+                data={"caption": "Product photo"},
+                files={"image": ("manual.webp", b"fake-image", "image/webp")},
+                headers={"Authorization": "Bearer admin-token"},
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "sent")
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_messenger_image_attachment"]
+        self.assertEqual(len(image_calls), 1)
+        self.assertEqual(image_calls[0][1]["recipient_psid"], "psid-manual-image")
+        outbound_messages = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-manual-image-msgr")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("direction") == "outbound"
+        ]
+        self.assertEqual(outbound_messages[0]["message_type"], "image")
+        self.assertEqual(outbound_messages[0]["text"], "Product photo")
+        self.assertEqual(outbound_messages[0]["media_filename"], "manual.webp")
+
+    def test_unified_conversations_api_blocks_manual_image_after_window(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-manual-image-closed",
+            conversation_id="conv-manual-image-closed",
+            event_id="event-manual-image-closed",
+            channel="whatsapp",
+            incoming_text="之前问过图片",
+            identifier_key="wa_id",
+            identifier_value="6591000101",
+        )
+        self.db.collection("marketing_contacts").document("contact-manual-image-closed").set(
+            {"window_expires_at": "2026-04-01T00:00:00Z"},
+            merge=True,
+        )
+
+        client = self._build_client()
+        with patch(
+            "app.api.v1.marketing.upload_public_file_to_firebase",
+            return_value="https://storage.example.com/manual.png",
+            create=True,
+        ):
+            response = client.post(
+                "/api/v1/marketing/conversations/conv-manual-image-closed/images",
+                files={"image": ("manual.png", b"fake-image", "image/png")},
+                headers={"Authorization": "Bearer admin-token"},
+            )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Customer service window", response.json()["detail"])
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"])
+
+    def test_unified_conversations_api_rejects_invalid_manual_image_uploads(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-manual-image-invalid",
+            conversation_id="conv-manual-image-invalid",
+            event_id="event-manual-image-invalid",
+            channel="whatsapp",
+            incoming_text="图片",
+            identifier_key="wa_id",
+            identifier_value="6591000102",
+        )
+
+        client = self._build_client()
+        invalid_type_response = client.post(
+            "/api/v1/marketing/conversations/conv-manual-image-invalid/images",
+            files={"image": ("manual.txt", b"not-image", "text/plain")},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        oversized_response = client.post(
+            "/api/v1/marketing/conversations/conv-manual-image-invalid/images",
+            files={"image": ("manual.png", b"x" * (8 * 1024 * 1024 + 1), "image/png")},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(invalid_type_response.status_code, 400)
+        self.assertIn("JPG, PNG, or WebP", invalid_type_response.json()["detail"])
+        self.assertEqual(oversized_response.status_code, 413)
+        self.assertIn("too large", oversized_response.json()["detail"])
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"])
 
     def test_unified_conversations_api_blocks_messenger_manual_reply_after_window(self) -> None:
         self._seed_contact_and_event(
@@ -2519,10 +3090,10 @@ class MarketingApiTests(unittest.TestCase):
                         "hero": False,
                         "free_shipping_eligible": True,
                     },
-                    "trial_3": {
-                        "code": "trial_3",
-                        "name_zh": "新手体验装",
-                        "name_en": "Trial Pack",
+                    RETIRED_PACKAGE_CODE: {
+                        "code": RETIRED_PACKAGE_CODE,
+                        "name_zh": RETIRED_PACKAGE_NAME_ZH,
+                        "name_en": RETIRED_PACKAGE_NAME_EN,
                         "price_sgd": 18.0,
                         "pack_count": 3,
                         "target_audience": ["self_care"],
@@ -2653,6 +3224,95 @@ class MarketingApiTests(unittest.TestCase):
                     "text": incoming_text,
                     identifier_key: identifier_value,
                     "provider_message_id": f"{event_id}-mid",
+                },
+                "received_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+    def _seed_active_receipt_checkout(
+        self,
+        *,
+        contact_id: str,
+        conversation_id: str,
+        session_id: str,
+        event_id: str,
+        order_id: str,
+        total_amount: float,
+    ) -> None:
+        self._seed_runtime_settings()
+        self.db.seed(
+            f"marketing_contacts/{contact_id}",
+            {
+                "channel": "whatsapp",
+                "identifiers": {"wa_id": "6591112222"},
+                "current_tag": "cart_hot",
+                "checkout_session_id": session_id,
+                "latest_conversation_id": conversation_id,
+                "status": "active",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            f"marketing_conversations/{conversation_id}",
+            {
+                "contact_id": contact_id,
+                "channel": "whatsapp",
+                "status": "open",
+                "message_count": 1,
+                "opened_at": "2026-04-10T00:00:00Z",
+                "last_message_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            f"marketing_checkout_sessions/{session_id}",
+            {
+                "order_id": order_id,
+                "token": f"token-{order_id}",
+                "package_code": "pack2",
+                "checkout_url": f"https://aqina.example.com/paynow/token-{order_id}",
+                "status": "active",
+                "contact_id": contact_id,
+                "total_amount": total_amount,
+            },
+        )
+        self.db.seed(
+            f"orders/{order_id}",
+            {
+                "customer": {
+                    "name": "Alice Tan",
+                    "email": None,
+                    "whatsapp": "6591112222",
+                    "address": "1 Orchard Road, Singapore 238823",
+                },
+                "items": [],
+                "subtotal_amount": total_amount,
+                "shipping_fee": 0.0,
+                "box_count": 2,
+                "total_amount": total_amount,
+                "payment_method": "paynow",
+                "payment_status": "pending",
+                "order_status": "pending",
+                "source": "marketing_chatbot",
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            f"marketing_events/{event_id}",
+            {
+                "provider": "meta",
+                "channel": "whatsapp",
+                "event_type": "whatsapp_message_received",
+                "status": "queued",
+                "contact_id": contact_id,
+                "conversation_id": conversation_id,
+                "payload": {
+                    "channel": "whatsapp",
+                    "text": "[image]",
+                    "message_type": "image",
+                    "media_id": f"{event_id}-media-id",
+                    "provider_message_id": f"{event_id}-message-id",
+                    "wa_id": "6591112222",
                 },
                 "received_at": "2026-04-10T00:00:00Z",
             },

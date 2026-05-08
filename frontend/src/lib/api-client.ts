@@ -34,11 +34,13 @@ export class ApiClient {
   /**
    * Get authentication headers for requests
    */
-  private async getAuthHeaders(): Promise<HeadersInit> {
+  private async getAuthHeaders(includeContentType = true): Promise<HeadersInit> {
     const token = await this.getAuthToken();
-    const headers: HeadersInit = {
-      'Content-Type': 'application/json',
-    };
+    const headers: HeadersInit = {};
+
+    if (includeContentType) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
@@ -118,6 +120,36 @@ export class ApiClient {
    */
   async post<T>(endpoint: string, data: object): Promise<T> {
     return this.request<T>('POST', endpoint, data);
+  }
+
+  /**
+   * POST multipart/form-data request.
+   */
+  async postForm<T>(endpoint: string, data: FormData): Promise<T> {
+    const url = this.buildUrl(endpoint);
+    const headers = await this.getAuthHeaders(false);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: data,
+      });
+
+      if (!response.ok) {
+        const errorData: ApiErrorResponse = await response.json().catch(() => ({
+          detail: 'Unknown error occurred',
+        }));
+        throw new Error(errorData.detail || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(`API request failed: ${error.message}`);
+      }
+      throw new Error('Unknown API error');
+    }
   }
 
   /**

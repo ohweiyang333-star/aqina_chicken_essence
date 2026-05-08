@@ -338,11 +338,15 @@ class FakeGeminiService:
         chat_result: dict[str, Any] | None = None,
         follow_up_result: Any | None = None,
         audio_transcript: str = "请问多少钱？",
+        receipt_analysis: dict[str, Any] | None = None,
+        receipt_analysis_error: Exception | None = None,
     ):
         self.reply_text = reply_text
         self.chat_result = chat_result
         self.follow_up_result = follow_up_result
         self.audio_transcript = audio_transcript
+        self.receipt_analysis = receipt_analysis or {}
+        self.receipt_analysis_error = receipt_analysis_error
         self.calls: list[tuple[str, dict[str, Any]]] = []
 
     def is_ready(self) -> bool:
@@ -359,6 +363,12 @@ class FakeGeminiService:
     def transcribe_audio_bytes(self, **kwargs: Any) -> str:
         self.calls.append(("transcribe_audio_bytes", kwargs))
         return self.audio_transcript
+
+    def analyze_payment_receipt_image(self, **kwargs: Any) -> dict[str, Any]:
+        self.calls.append(("analyze_payment_receipt_image", kwargs))
+        if self.receipt_analysis_error:
+            raise self.receipt_analysis_error
+        return self.receipt_analysis
 
 
 def _matches_filter(data: dict[str, Any], field: str, op: str, value: Any) -> bool:

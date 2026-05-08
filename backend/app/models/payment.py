@@ -1,6 +1,6 @@
 """Payment models for API requests and responses."""
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 from datetime import datetime
 
 
@@ -24,6 +24,8 @@ class PaymentResponse(BaseModel):
     status: Literal["pending", "payment_submitted", "paid", "failed", "refunded"]
     transaction_id: Optional[str] = None
     screenshot_url: Optional[str] = None
+    payment_verification: Optional[dict[str, Any]] = None
+    risk_flags: list[str] = Field(default_factory=list)
     notes: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

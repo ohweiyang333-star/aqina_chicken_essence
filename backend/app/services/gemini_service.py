@@ -118,6 +118,53 @@ class GeminiConversationService:
         )
         return (response.text or "").strip()
 
+    def analyze_payment_receipt_image(
+        self,
+        *,
+        data: bytes,
+        mime_type: str,
+        expected_amount: float,
+    ) -> dict[str, Any]:
+        """Extract structured payment fields from a PayNow receipt image."""
+        if not self.is_ready():
+            raise RuntimeError("Gemini configuration is incomplete")
+
+        from google import genai
+        from google.genai import types
+
+        prompt = (
+            "Read this Singapore PayNow or bank transfer receipt image for manual payment verification.\n"
+            f"Expected order total: SGD {float(expected_amount):.2f}\n"
+            "Return only JSON with these exact keys: "
+            "paid_amount, currency, bank_transaction_reference, recipient_reference, "
+            "payment_datetime, confidence, warnings.\n"
+            "Use bank_transaction_reference for the bank transaction id/reference number from the receipt, "
+            "not the customer's free-text recipient reference. If a field is not visible, use null. "
+            "confidence must be a number from 0 to 1. warnings must be an array of short strings."
+        )
+        client = genai.Client(api_key=settings.gemini_api_key)
+        response = client.models.generate_content(
+            model=settings.gemini_model,
+            contents=[
+                prompt,
+                types.Part.from_bytes(data=data, mime_type=mime_type or "image/jpeg"),
+            ],
+            config=types.GenerateContentConfig(
+                temperature=0,
+                response_mime_type="application/json",
+            ),
+        )
+        raw_text = (response.text or "").strip()
+        if not raw_text:
+            return {}
+
+        json_text = self._extract_json(raw_text)
+        try:
+            payload = json.loads(json_text)
+        except json.JSONDecodeError:
+            return {}
+        return payload if isinstance(payload, dict) else {}
+
     @staticmethod
     def _normalize_sales_turn_payload(payload: dict[str, Any]) -> SalesConversationTurn:
         normalized = dict(payload)
@@ -194,6 +241,11 @@ class GeminiConversationService:
         package_codes = sorted(str(code) for code in available_packages.keys())
         packages = json.dumps(available_packages, ensure_ascii=False)
         knowledge_base = json.dumps(runtime_settings.get("knowledge_base", {}), ensure_ascii=False)
+        order_fields = contact.get("order_fields", {}) if isinstance(contact.get("order_fields"), dict) else {}
+        identifiers = contact.get("identifiers", {}) if isinstance(contact.get("identifiers"), dict) else {}
+        known_channel_phone = ""
+        if channel == "whatsapp":
+            known_channel_phone = str(order_fields.get("phone") or identifiers.get("wa_id") or identifiers.get("phone_e164") or "")
         active_skills = ChatbotSkillRouter(runtime_settings).active_skill_payloads(
             contact=contact,
             incoming_text=incoming_text,
@@ -204,7 +256,8 @@ class GeminiConversationService:
             f"Channel: {channel}\n"
             f"Current tag: {contact.get('current_tag', 'lead_cold')}\n"
             f"Lead goal: {contact.get('lead_goal', 'unknown')}\n"
-            f"Known order fields: {json.dumps(contact.get('order_fields', {}), ensure_ascii=False)}\n"
+            f"Known order fields: {json.dumps(order_fields, ensure_ascii=False)}\n"
+            f"Known channel phone: {known_channel_phone}\n"
             f"Allowed package codes: {json.dumps(package_codes, ensure_ascii=False)}\n"
             f"Available packages: {packages}\n"
             f"Active chatbot skills: {active_skills_json}\n"
@@ -214,6 +267,9 @@ class GeminiConversationService:
             "只使用 Active chatbot skills 作为当前场景 playbook；不要把未注入的 skill 规则写进回复。\n"
             "不要在 reply_text 里输出 skill_id、lead tag、package code、checkout_ready、escalate 或任何内部字段。\n"
             "图片会由系统作为媒体文件另发；不要把图片 URL 或 checkout URL 写进 reply_text。\n"
+            "如果 Channel 是 whatsapp 且 Known order fields.phone 或 Known channel phone 已有号码，"
+            "这个 WhatsApp 来讯号码已经可以作为联系电话；不要再询问联系电话，也不要把 phone 放进 missing_order_fields。\n"
+            "如果 Channel 不是 whatsapp，仍必须向顾客收集联系电话。\n"
             "输出 JSON，字段固定为：reply_text, next_tag, lead_goal, recommended_package_code, "
             "upgrade_package_code, selected_package_code, order_fields, missing_order_fields, "
             "checkout_ready, escalate, escalation_reason, faq_topic, opt_in_granted。\n"
@@ -222,6 +278,7 @@ class GeminiConversationService:
             "recommended_package_code, upgrade_package_code, selected_package_code 只能使用 Allowed package codes 中存在的值，"
             "如果没有合适套餐请填 null，不要发明新的 package code。\n"
             "只有顾客明确购买，并且 name、phone、address 都已经收集完整时，checkout_ready 才能为 true；"
+            "WhatsApp channel 已有 Known channel phone 时可视为 phone 已收集；"
             "资料不齐时 checkout_ready=false，missing_order_fields 必须列出缺少字段。"
         )
 

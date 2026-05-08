@@ -1,6 +1,6 @@
 """Order models for API requests and responses."""
 from pydantic import BaseModel, Field
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 from datetime import date, datetime
 
 
@@ -51,6 +51,9 @@ class OrderResponse(BaseModel):
     payment_status: Literal["pending", "payment_submitted", "paid", "failed", "refunded"]
     order_status: Literal["pending", "processing", "shipped", "delivered", "cancelled"]
     payment_receipt_url: Optional[str] = None
+    transaction_id: Optional[str] = None
+    payment_verification: Optional[dict[str, Any]] = None
+    risk_flags: list[str] = Field(default_factory=list)
     notes: Optional[str] = None
     source: Optional[str] = None
     source_channel: Optional[str] = None

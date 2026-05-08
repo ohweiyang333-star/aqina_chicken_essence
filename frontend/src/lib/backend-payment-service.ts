@@ -18,6 +18,23 @@ export interface CreatePaymentDTO {
   notes?: string;
 }
 
+export interface PaymentVerification {
+  status: 'ok' | 'warning' | 'unavailable';
+  expected_amount?: number;
+  extracted_amount?: number;
+  amount_match?: boolean;
+  reference_number?: string;
+  reference_normalized?: string;
+  duplicate_detected?: boolean;
+  duplicate_order_ids?: string[];
+  duplicate_payment_ids?: string[];
+  warnings?: string[];
+  confidence?: number;
+  currency?: string;
+  recipient_reference?: string;
+  payment_datetime?: string;
+}
+
 export interface Payment {
   payment_id: string;
   order_id: string;
@@ -28,6 +45,8 @@ export interface Payment {
   status: PaymentStatus;
   transaction_id?: string;
   screenshot_url?: string;
+  payment_verification?: PaymentVerification;
+  risk_flags?: string[];
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -122,5 +141,6 @@ function normalizePayment(payment: Payment): Payment {
   return {
     ...payment,
     payment_method: payment.payment_method || payment.method || 'paynow',
+    risk_flags: Array.isArray(payment.risk_flags) ? payment.risk_flags : [],
   };
 }

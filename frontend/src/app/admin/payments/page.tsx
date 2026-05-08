@@ -126,10 +126,16 @@ export default function PaymentsPage() {
                     Amount
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Reference
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Method
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Risk
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Date
@@ -151,6 +157,16 @@ export default function PaymentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       ${payment.amount.toFixed(2)}
                     </td>
+                    <td className="px-6 py-4 text-sm text-gray-900">
+                      <div className="max-w-[180px] truncate font-mono">
+                        {payment.payment_verification?.reference_number || payment.transaction_id || '-'}
+                      </div>
+                      {typeof payment.payment_verification?.confidence === 'number' && (
+                        <div className="mt-1 text-[11px] text-gray-500">
+                          AI {(payment.payment_verification.confidence * 100).toFixed(0)}%
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {payment.payment_method}
                     </td>
@@ -160,6 +176,9 @@ export default function PaymentsPage() {
                       >
                         {payment.status}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      <PaymentRiskCell payment={payment} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {format(new Date(payment.created_at), 'yyyy-MM-dd')}
@@ -236,4 +255,45 @@ export default function PaymentsPage() {
       </div>
     </div>
   );
+}
+
+function PaymentRiskCell({ payment }: { payment: Payment }) {
+  const verification = payment.payment_verification;
+  const isDuplicate =
+    Boolean(verification?.duplicate_detected) ||
+    Boolean(payment.risk_flags?.includes('duplicate_payment_reference'));
+
+  if (isDuplicate) {
+    return (
+      <div className="max-w-[220px] rounded-md border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-800">
+        Duplicate reference
+        {verification?.duplicate_order_ids?.length ? (
+          <div className="mt-1 font-mono font-normal">
+            {verification.duplicate_order_ids.map((id) => `#${id.slice(-8)}`).join(', ')}
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (verification?.status === 'warning') {
+    return (
+      <div className="max-w-[220px] rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-800">
+        Check warning
+        {verification.warnings?.length ? (
+          <div className="mt-1 line-clamp-2 font-normal">{verification.warnings.join(' · ')}</div>
+        ) : null}
+      </div>
+    );
+  }
+
+  if (verification?.status === 'ok') {
+    return <span className="text-xs font-semibold text-green-700">AI matched</span>;
+  }
+
+  if (verification?.status === 'unavailable') {
+    return <span className="text-xs font-semibold text-gray-500">AI unavailable</span>;
+  }
+
+  return <span className="text-xs text-gray-400">-</span>;
 }
