@@ -127,8 +127,10 @@ export function initializeMarketingAnalytics() {
     window.dataLayer = window.dataLayer || [];
     window.gtag =
       window.gtag ||
-      function gtag(...args: GtagValue[]) {
-        window.dataLayer?.push(args);
+      function gtag() {
+        // Match Google's official gtag snippet: it queues the arguments object, not a copied array.
+        // eslint-disable-next-line prefer-rest-params
+        window.dataLayer?.push(arguments);
       };
     window.gtag('js', new Date());
     window.gtag('config', gaMeasurementId, { send_page_view: false });
