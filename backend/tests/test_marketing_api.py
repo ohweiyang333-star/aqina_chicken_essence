@@ -109,8 +109,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertIn("先理解，后推荐", payload["system_prompt"])
-        self.assertIn("MD2 凤梨长大的快乐鸡", payload["system_prompt"])
+        self.assertEqual(payload["conversion_optimization_version"], 1)
+        self.assertIn("先理解，后推荐，再收单", payload["system_prompt"])
+        self.assertIn("先 PayNow 付款", payload["system_prompt"])
         self.assertIn("主治医生", payload["system_prompt"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["packages"])
         for code in ["pack1", "pack2", "pack4", "pack6"]:
@@ -121,8 +122,13 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["escalation"]["pause_automation_on_handoff"], True)
         self.assertTrue(payload["facebook_comment_automation"]["enabled"])
         self.assertIn("price", payload["facebook_comment_automation"]["keywords"])
+        self.assertIn("paynow", payload["facebook_comment_automation"]["keywords"])
+        self.assertIn("地址", payload["facebook_comment_automation"]["keywords"])
         self.assertIn("chatbot_skills", payload)
         self.assertIn("ice_breaking", payload["chatbot_skills"])
+        self.assertIn("1盒试喝", payload["chatbot_skills"]["price_objection"]["required_questions"][0])
+        self.assertIn("2盒 SGD75 免运", payload["chatbot_skills"]["price_objection"]["required_questions"][0])
+        self.assertIn("不要发送长篇感官描述", payload["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
         self.assertIn("media_assets", payload)
         self.assertIn("brand_intro", payload["media_assets"])
         self.assertEqual(payload["media_assets"]["brand_intro_images"]["zh"], "/chatbot/aqina-brand-intro-zh.jpg")
@@ -185,6 +191,76 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn(RETIRED_PACKAGE_NAME_ZH, serialized_payload)
         self.assertNotIn(RETIRED_PACKAGE_NAME_EN, serialized_payload)
         self.assertNotIn(RETIRED_PACKAGE_PRICE_TEXT, serialized_payload)
+
+    def test_chatbot_settings_applies_conversion_playbook_without_overwriting_payment_or_handoff(self) -> None:
+        self.db.seed(
+            "chatbotSettings/default",
+            {
+                "conversion_optimization_version": 0,
+                "system_prompt": "Old education-first prompt",
+                "facebook_comment_automation": {
+                    "enabled": False,
+                    "keywords": ["old-keyword"],
+                    "public_reply_enabled": False,
+                    "private_reply_enabled": True,
+                    "ignore_page_self_comments": True,
+                },
+                "payment": {
+                    "paynow": {
+                        "enabled": True,
+                        "account_name": "Custom PayNow Name",
+                        "payment_qr_image": "https://example.com/custom-qr.png",
+                        "payment_qr_alt": "Custom QR",
+                        "payment_reference_prefix": "CUSTOM",
+                        "payment_note": "Custom payment note",
+                    }
+                },
+                "escalation": {
+                    "enabled": True,
+                    "private_whatsapp_number": "+6599999999",
+                    "whatsapp_template_name": "custom_template",
+                    "pause_automation_on_handoff": True,
+                },
+            },
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/chatbot/settings",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["conversion_optimization_version"], 1)
+        self.assertIn("先理解，后推荐，再收单", payload["system_prompt"])
+        self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
+        self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
+        self.assertEqual(payload["escalation"]["private_whatsapp_number"], "+6599999999")
+        self.assertFalse(payload["facebook_comment_automation"]["enabled"])
+        self.assertIn("paynow", payload["facebook_comment_automation"]["keywords"])
+
+    def test_chatbot_conversion_playbook_covers_planned_sales_scenarios(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+
+        settings_doc = get_default_chatbot_settings()
+        prompt = settings_doc["system_prompt"]
+        skills = settings_doc["chatbot_skills"]
+        serialized = json.dumps(settings_doc, ensure_ascii=False)
+
+        self.assertIn("用户英文进来就全程英文", prompt)
+        self.assertIn("若用户问“多少钱/price/how much”，直接报价", prompt)
+        self.assertIn("1盒 SGD 39.90；2盒 SGD 75 免运；4盒 SGD 149", prompt)
+        self.assertIn("严禁推荐三包体验装", prompt)
+        self.assertNotIn(RETIRED_PACKAGE_CODE, serialized)
+        self.assertIn("给出地址、电话、付款截图", prompt)
+        self.assertIn("先 PayNow 付款", prompt)
+        self.assertIn("回传付款截图", prompt)
+        self.assertIn("4盒 SGD149 月度装", skills["maternity_consultation"]["instruction"])
+        self.assertIn("2盒 SGD75 免运起步", skills["maternity_consultation"]["instruction"])
+        self.assertIn("不做医疗承诺", skills["maternity_consultation"]["instruction"])
+        self.assertIn("不要发送长篇感官描述", settings_doc["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
+        self.assertIn("回复 YES", settings_doc["crm_follow_up_rules"]["t23h"]["default"]["instruction"])
 
     def test_facebook_comment_webhook_processes_keyword_comment_to_private_reply(self) -> None:
         self._seed_runtime_settings()
@@ -762,6 +838,27 @@ class MarketingApiTests(unittest.TestCase):
             router.select_active_skill_ids(
                 contact={"current_tag": "cart_hot", "lead_goal": "self_care"},
                 incoming_text="我已经完成付款，截图发了",
+            ),
+        )
+        self.assertIn(
+            "checkout_collect",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+                incoming_text="运费怎么算？地址是 Jurong West",
+            ),
+        )
+        self.assertIn(
+            "checkout_collect",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+                incoming_text="I want to order 2 boxes. Delivery how long?",
+            ),
+        )
+        self.assertIn(
+            "price_objection",
+            router.select_active_skill_ids(
+                contact={"current_tag": "lead_cold", "lead_goal": "unknown"},
+                incoming_text="How much is it?",
             ),
         )
 

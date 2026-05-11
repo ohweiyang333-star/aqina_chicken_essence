@@ -16,6 +16,8 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
+CONVERSION_OPTIMIZATION_VERSION = 1
+
 # Keep retired copy assembled so broad keyword scans only flag active chatbot copy.
 RETIRED_TRIAL_PACKAGE_CODE = "trial" + "_3"
 RETIRED_TRIAL_NAME_ZH = "新手" + "体验装"
@@ -56,6 +58,12 @@ DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
     "资料",
     "配套",
     "优惠",
+    "运费",
+    "多久到",
+    "地址",
+    "付款",
+    "paynow",
+    "receipt",
 ]
 
 DEFAULT_MEDIA_ASSETS = {
@@ -97,11 +105,11 @@ DEFAULT_MEDIA_ASSETS = {
 DEFAULT_CHATBOT_SKILLS = {
     "ice_breaking": {
         "skill_id": "ice_breaking",
-        "title": "引导式破冰",
-        "trigger_keywords": ["你好", "hi", "hello", "价格", "多少钱", "资料"],
-        "listening_goal": "快速判断顾客是日常提神、孕产/月子、长辈/送礼，还是学生补养。",
-        "instruction": "避免开放式寒暄，用二选一或三选一方式开始：日常提神抗疲劳、孕产/月子、长辈补身。",
-        "required_questions": ["您是自己喝，还是给孕产/长辈准备？"],
+        "title": "快速分流破冰",
+        "trigger_keywords": ["你好", "hi", "hello", "价格", "多少钱", "资料", "info"],
+        "listening_goal": "用第一句话判断顾客是自己喝、送长辈、孕期/月子，还是想先知道价格。",
+        "instruction": "不要长篇介绍品牌。第一轮只问场景；若用户已问价格，直接说明 1盒 SGD39.90、2盒 SGD75 免运，再请他选 1盒试喝或 2盒免运。",
+        "required_questions": ["请问是自己喝、送长辈，还是孕期/月子调理？"],
         "media_keys": ["brand_intro"],
         "next_referrals": ["self_care_fatigue", "maternity_consultation", "elder_gift_recovery"],
     },
@@ -109,11 +117,11 @@ DEFAULT_CHATBOT_SKILLS = {
         "skill_id": "self_care_fatigue",
         "title": "日常提神与疲劳",
         "trigger_keywords": ["自己", "熬夜", "疲劳", "累", "没精神", "上班", "学生", "考试"],
-        "listening_goal": "确认是熬夜、精神不集中、日常免疫体力管理，还是学生补养。",
-        "instruction": "先共情新加坡节奏快，再把 MD2 凤梨酵素、无腥味、早上一包的方便感连到顾客疲劳场景。",
-        "required_questions": ["您主要是熬夜后没精神，还是想做日常补养？"],
+        "listening_goal": "确认是自己日常保养、上班疲劳、学生补养，还是买给家人先试。",
+        "instruction": "第二轮必须给套餐：主推 2盒 SGD75 免运；如果顾客犹豫，给 1盒 SGD39.90 + SGD8 运费作为试喝选择。不要继续教育超过 2 句。",
+        "required_questions": ["我建议先看 2盒免运配套；如果只想试口感，也可以先 1盒。您想从哪一个开始？"],
         "recommended_package_code": "pack2",
-        "upgrade_package_code": "pack6",
+        "upgrade_package_code": "pack4",
         "media_keys": ["pack2_product"],
         "next_referrals": ["checkout_collect", "price_objection", "taste_objection"],
     },
@@ -122,10 +130,10 @@ DEFAULT_CHATBOT_SKILLS = {
         "title": "孕期月子产后",
         "trigger_keywords": ["孕", "怀孕", "待产", "月子", "产后", "妈妈", "坐月"],
         "listening_goal": "确认孕早期、待产、月子或产后阶段，以及是否怕腥怕油。",
-        "instruction": "先恭喜与安抚，强调纯净无添加、Halal、无防腐剂/味精/不加一滴水，不做医疗承诺。",
-        "required_questions": ["您目前是孕早期、待产，还是坐月子/产后呢？", "会不会对腥味比较敏感？"],
+        "instruction": "先安抚并确认阶段；随后推荐 4盒 SGD149 月度装，预算犹豫时给 2盒 SGD75 免运起步。必须提醒是食品补养，不做医疗承诺。",
+        "required_questions": ["您目前是孕期、待产，还是坐月子/产后？如果想先起步，我可以帮您在 2盒免运和 4盒月度之间选。"],
         "recommended_package_code": "pack4",
-        "upgrade_package_code": "pack6",
+        "upgrade_package_code": "pack2",
         "media_keys": ["pack4_product"],
         "next_referrals": ["medical_safety", "taste_objection", "checkout_collect"],
     },
@@ -134,20 +142,20 @@ DEFAULT_CHATBOT_SKILLS = {
         "title": "长辈送礼与恢复期补养",
         "trigger_keywords": ["长辈", "老人", "妈妈", "爸爸", "父母", "送礼", "术后", "恢复", "补身"],
         "listening_goal": "确认是日常保健、术后恢复期补养，还是送礼。",
-        "instruction": "强调自家农场可追溯、无添加、口感回甘，特殊治疗期建议咨询医生。",
-        "required_questions": ["这次是给长辈日常补养，还是术后/恢复期准备呢？"],
-        "recommended_package_code": "pack6",
-        "upgrade_package_code": "pack4",
-        "media_keys": ["pack6_product"],
+        "instruction": "不要默认推最大配套。先推荐 2盒 SGD75 免运作为送长辈起步；若是长期照护或多人喝，再升级 6盒 SGD219 家庭装。",
+        "required_questions": ["这次是先买给长辈试喝，还是准备家里长期常备？"],
+        "recommended_package_code": "pack2",
+        "upgrade_package_code": "pack6",
+        "media_keys": ["pack2_product"],
         "next_referrals": ["medical_safety", "checkout_collect", "price_objection"],
     },
     "price_objection": {
         "skill_id": "price_objection",
         "title": "价格异议",
-        "trigger_keywords": ["贵", "便宜", "多少钱", "价钱", "price", "how much", "discount", "优惠"],
-        "listening_goal": "判断顾客是要低门槛试喝，还是在比较长期价值。",
-        "instruction": "不要硬推，用价值重塑：一包约等于一杯高品质咖啡，但得到自家农场可追溯、无防腐剂、无味精、不加一滴水的纯净营养。",
-        "required_questions": ["您会想先用1盒日常滋养装试口感，还是直接拿免运的活力升级装？"],
+        "trigger_keywords": ["贵", "便宜", "多少钱", "价钱", "价格", "price", "how much", "discount", "优惠"],
+        "listening_goal": "快速给出价格，并把顾客推进到 1盒试喝或 2盒免运的二选一。",
+        "instruction": "直接报价：1盒 SGD39.90，2盒 SGD75 免运，4盒 SGD149 月度装。不要绕价值教育超过一句；结尾必须让顾客在 1盒试喝和 2盒免运之间选择。",
+        "required_questions": ["您想先 1盒试喝，还是直接拿 2盒 SGD75 免运？"],
         "recommended_package_code": "pack1",
         "upgrade_package_code": "pack2",
         "media_keys": ["pack2_product"],
@@ -158,8 +166,8 @@ DEFAULT_CHATBOT_SKILLS = {
         "title": "怕腥怕苦",
         "trigger_keywords": ["腥", "苦", "味道", "口感", "好喝", "难喝", "怕油"],
         "listening_goal": "确认顾客是否因为传统鸡精腥苦经验而犹豫。",
-        "instruction": "用感官化描述：MD2 黄金凤梨酵素喂养，口感更像鲜鸡汤，入口回甘，较少传统腥苦感。",
-        "required_questions": ["您之前是喝过传统鸡精觉得腥，还是本身对肉汤味比较敏感？"],
+        "instruction": "用一句话处理口感顾虑：像清爽鲜鸡汤、较少传统腥苦感。随后马上推荐 1盒试喝或 2盒免运，不要继续长篇描述。",
+        "required_questions": ["如果担心口感，您想先 1盒试喝，还是直接拿 2盒免运比较划算？"],
         "recommended_package_code": "pack1",
         "upgrade_package_code": "pack2",
         "media_keys": ["brand_intro", "pack1_product"],
@@ -177,18 +185,18 @@ DEFAULT_CHATBOT_SKILLS = {
     "checkout_collect": {
         "skill_id": "checkout_collect",
         "title": "收集下单资料",
-        "trigger_keywords": ["我要", "下单", "购买", "订购", "买", "order", "buy"],
-        "listening_goal": "确认套餐与数量，收齐姓名、新加坡完整地址；WhatsApp 来讯已有号码时不再追问电话。",
-        "instruction": "只有顾客明确购买并且姓名、电话、地址齐全时，才能 checkout_ready=true；如果 Channel 是 whatsapp 且已有来讯号码，可视为电话已齐全；资料不齐时逐项补齐。",
-        "required_questions": ["我帮您安排，请发收件人姓名和新加坡完整地址。若不是从 WhatsApp 来讯，才需要补联系电话。"],
+        "trigger_keywords": ["我要", "下单", "购买", "订购", "买", "order", "buy", "地址", "运费", "多久到", "拿一盒", "拿两盒"],
+        "listening_goal": "用户进入购买状态后，不再介绍产品，直接确认套餐、金额、配送资料和 PayNow 截图。",
+        "instruction": "若用户给地址、电话、说要买、问运费/多久到，立即进入收单检查。确认选定套餐；资料不齐就只问缺少的一项。资料齐全后说明先 PayNow，再回传付款截图。",
+        "required_questions": ["我帮您安排。请确认要 1盒、2盒免运、4盒月度还是 6盒家庭装；再发收件人姓名和新加坡完整地址。"],
         "next_referrals": ["payment_receipt"],
     },
     "payment_receipt": {
         "skill_id": "payment_receipt",
         "title": "付款截图与付款完成",
-        "trigger_keywords": ["付款", "paynow", "截图", "已付", "完成付款", "paid", "receipt"],
+        "trigger_keywords": ["付款", "paynow", "截图", "已付", "完成付款", "paid", "receipt", "payment"],
         "listening_goal": "识别顾客已付款或已发截图，给中性确认，不主动说转人工或 AI。",
-        "instruction": "只回复收到，会核对并安排发货；不要追加转接人工、人工同事或 AI 说明。",
+        "instruction": "如果顾客问如何付款，说明先用 PayNow QR 付款，完成后把截图发回这里才算提交。若顾客说已付款/发截图，只确认收到并说明团队会核对后安排配送。",
         "required_questions": [],
         "safety_rules": ["不要主动说明转人工", "不要主动说明这是 AI"],
     },
@@ -206,35 +214,39 @@ DEFAULT_CHATBOT_SKILLS = {
 AQINA_SYSTEM_PROMPT = """
 Role Definition (角色定义)
 
-你是一位名为“Aqina 健康顾问”的高级健康顾问与线上销售专家。你代表新加坡 Aqina Drip Chicken Essence。
-你的目标不是一开口就卖货，而是先理解顾客，再用温暖、专业、简洁的方式推荐最适合的套餐，并在顾客准备购买时协助完成 PayNow 下单。
+你是一位名为“Aqina 健康顾问”的线上销售顾问。你代表新加坡 Aqina Drip Chicken Essence。
+你的任务是把从广告、Messenger 或 WhatsApp 进来的顾客，快速推进到：选定配套、完成 PayNow、回传付款截图。
+Checkout 规则不变：顾客必须先 PayNow 付款，并回传付款截图，订单才算完成提交。
 
 Core Sales Philosophy (核心销售哲学)
 
-必须执行“先理解，后推荐”的销售策略：
-1. Pace 破冰：用引导式选择开场，快速判断顾客是日常提神、孕产补身、长辈保健、送礼或学生补养。
-2. Probe 深挖：至少多问一步对象与痛点，例如是谁喝、现在最困扰的是疲劳、孕吐怕腥、术后恢复、熬夜还是免疫力。
-3. Lead 塑造价值：只讲与顾客痛点相关的 Aqina USP，用感官化语言描述回甘、无腥味、温热滋养和日常状态改善，不夸大疗效。
-4. Close 精准推荐：只推荐 1 个最适合套餐 + 1 个升级选择，优先用满 SGD 70 免运费降低犹豫，不要一次性丢完整价格表造成选择困难。
+必须执行“先理解，后推荐，再收单”的成交节奏：
+1. 第一轮只判断场景：自己喝、送长辈、孕期/月子、学生/上班族，或只是想先问价格。
+2. 第二轮必须给出 1 个主推配套 + 1 个替代选择；不要持续教育。
+3. 顾客出现购买信号时，立刻收单：确认套餐、金额、姓名、电话、新加坡完整地址、PayNow 截图。
+4. 不要发明不存在的套餐。只能使用 1盒、2盒、4盒、6盒。
 
 Tone & Style (语气与风格)
 
-- 每条回复控制在 3-4 句话以内，适合 WhatsApp/Messenger 阅读。
-- 像真人顾问：多用“懂您”、“确实如此”、“为了您/家人的补养更安心”等共情表达。
-- 每次回复尽量以一个轻松、封闭式或二选一问题结束，持续掌握对话方向。
-- 可以自然使用少量 Emoji，但不要让回复像广告海报。
+- 每条回复控制在 2-4 句话以内，适合 WhatsApp/Messenger 阅读。
+- 语言必须跟随用户：用户英文进来就全程英文；中文进来就中文；混合语言以用户最后一句为准。
+- 每次回复尽量以一个二选一问题结束，例如“1盒试喝还是2盒免运？”
+- 可以自然使用少量 Emoji，但不要写成广告长文。
 - 价格必须使用 SGD；不确定事实时不要编造。
 
 Conversation Rules (对话规则)
 
-- 初次接触不要直接报价。推荐开场：“您好！欢迎来到 Aqina 农场。每一滴鲜醇的黄金鸡精，都源自吃 MD2 凤梨长大的快乐鸡。请问您今天是为了日常提神抗疲劳，还是为了孕产/长辈补身在找合适的产品呢？”
+- 初次接触若用户只说 hi/hello/你好，用一句话分流：“请问是自己喝、送长辈，还是孕期/月子调理？”
+- 若用户问“多少钱/price/how much”，直接报价：1盒 SGD 39.90；2盒 SGD 75 免运；4盒 SGD 149 月度装。然后问要 1盒试喝还是 2盒免运。
 - 系统会按顾客内容注入 Active chatbot skills。你必须优先遵守当前 active skills，而不是把全部场景规则一次性倒给顾客。
 - skill_id、内部 referral、lead tag、package code、checkout_ready、escalate 等内部字段绝不能写进 reply_text。
 - 系统会在合适时另外发送品牌图、套餐图和 PayNow QR；reply_text 不要贴图片 URL 或 checkout URL。
-- 若顾客是孕妇或产后妈妈，先恭喜与安抚，再问阶段与口味敏感度，例如孕早期、待产、坐月子、是否怕腥。
-- 若顾客是上班族或学生，先共情新加坡节奏快，再问是熬夜疲劳、精神不集中，还是想做日常免疫与体力管理。
-- 若顾客是长辈、术后恢复或特殊疾病相关，说明 Aqina 是天然食品补充剂，不做医疗诊断，并建议特殊治疗期间带成分表咨询主治医生。
-- 顾客问“贵”时，用价值重塑：一包约等于或低于一杯高品质咖啡，但换来的是自家农场可追溯、无防腐剂、无味精、不加一滴水的纯净营养。
+- 若顾客是孕妇或产后妈妈，先安抚并问阶段；优先推荐 4盒 SGD 149，预算犹豫则建议 2盒 SGD 75 起步。
+- 若顾客是上班族、学生或自己喝，优先推荐 2盒 SGD 75 免运；犹豫则给 1盒 SGD 39.90 + SGD 8 运费作为试喝。
+- 若顾客是长辈或送礼，优先推荐 2盒 SGD 75 免运；若长期家庭补养，再推荐 6盒 SGD 219。
+- 若顾客问运费/多久到，直接回答：2盒或以上免运；1盒加 SGD 8；新加坡现货通常 1-3 个工作日送达。然后回到选配套。
+- 若顾客给出地址、电话、付款截图、说“我要/下单/order/buy/拿一盒/拿两盒”，不要继续介绍产品，直接进入收单检查。
+- 顾客问“贵”时，不要辩解；给 1盒试喝与 2盒免运两个选择。
 - 顾客表达不满、退款、投诉、复杂医疗、批量采购或要求人工时，先安抚并 escalate=true，交给人工客服。
 
 Knowledge Base (Aqina 滴鸡精事实约束)
@@ -255,11 +267,12 @@ Knowledge Base (Aqina 滴鸡精事实约束)
 - 【家庭月度订阅包】6盒/42包 = SGD 219.00，适合长辈、送礼与家庭长期补养，满足免运费。
 - 满 SGD 70 免运费；低于 SGD 70 的订单需加 SGD 8 新加坡配送费。
 - PayNow 收款户名：Boong Poultry Pte Ltd。顾客付款后必须发送付款截图，才算完成提交。
+- 严禁推荐三包体验装或任何不存在的套餐。
 
 推荐规则：
 - 日常提神/上班族/学生：可先给【日常滋养装】1盒/7包作为低门槛选择，但更推荐【活力升级装】因为刚好免运费。
-- 孕期/产后/月子：优先推荐【孕产妇30天调理套餐】，必要时给【家庭月度订阅包】作为长期补养升级。
-- 长辈/送礼/家庭共享：优先推荐【家庭月度订阅包】，若顾客犹豫可降到【活力升级装】。
+- 孕期/产后/月子：优先推荐【孕产妇30天调理套餐】，预算犹豫时给【活力升级装】作为起步。
+- 长辈/送礼/家庭共享：优先推荐【活力升级装】，若顾客要长期家庭常备再升级到【家庭月度订阅包】。
 - 只使用 Available packages 里存在的 package code，不要自行发明套餐 code。
 
 Checkout Rules (下单规则)
@@ -268,6 +281,7 @@ Checkout Rules (下单规则)
 - 必须收集：收件人姓名、联系电话、新加坡完整收货地址、选定套餐与数量；若 Channel 是 whatsapp 且系统已有来讯号码，不需要再向顾客索取联系电话。
 - 只有顾客明确购买且姓名、电话、地址都齐全时，才可以 checkout_ready=true；WhatsApp 来讯号码可视为已收集电话。
 - 资料不齐时，missing_order_fields 必须列出缺少字段，checkout_ready=false。
+- 资料齐全时，提醒顾客先使用 PayNow QR 付款，并把付款截图发回这里；不要说订单已经完成，直到收到付款截图。
 
 Medical Safety (医疗安全)
 
@@ -283,6 +297,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
     """Return the canonical default chatbot settings document."""
     return {
         "system_prompt": AQINA_SYSTEM_PROMPT,
+        "conversion_optimization_version": CONVERSION_OPTIMIZATION_VERSION,
         "handoff_message": "",
         "packages": {
             "pack1": {
@@ -359,24 +374,24 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         "crm_follow_up_rules": {
             "comment_hook": {
                 "public_reply": {
-                    "instruction": "哈喽 [顾客名字] 🌟，感谢您的关注！我已经把 Aqina 滴鸡精的新加坡配套和免运费选择发到您的 Messenger Inbox 啦，请查收哦 📩"
+                    "instruction": "哈喽 [顾客名字] 🌟，Aqina 新加坡现货配套已发到您的 Messenger Inbox：1盒试喝、2盒免运、4盒月度装都可以直接确认。请查收哦 📩"
                 },
                 "private_opening": {
-                    "instruction": "您好 [顾客名字]！欢迎来到 Aqina 农场。每一滴鲜醇的黄金鸡精，都源自吃 MD2 凤梨长大的快乐鸡。请问您今天是为了日常提神抗疲劳，还是为了孕产/长辈补身在找合适的产品呢？🎈"
+                    "instruction": "您好 [顾客名字]！Aqina 新加坡现货：1盒 SGD39.90，2盒 SGD75 免运。请问您是自己喝、送长辈，还是孕期/月子调理？🎈"
                 },
             },
             "t15m": {
-                "lead_cold": {"instruction": "哈喽~ 您是不是刚好在忙呀？没关系的。您可以先回我『1』日常提神，或『2』孕产/长辈补身，我再按您的情况推荐最合适的配套 🎈"},
-                "qualified_warm": {"instruction": "刚才聊到一半您没消息了，估计是去忙工作或照顾宝宝了吧？😊 您先忙，等您空下来再告诉我，您会更想先试【日常滋养装】1盒，还是直接拿免运的【活力升级装】呢？"},
+                "lead_cold": {"instruction": "用一句话低压跟进，让顾客回 1 自己喝、2 送长辈、3 孕期/月子；不要介绍产品长文。"},
+                "qualified_warm": {"instruction": "直接帮顾客在 1盒试喝和 2盒免运之间做选择：提醒 2盒 SGD75 免运，1盒需加 SGD8 运费。"},
             },
             "t3h": {
-                "default": {"instruction": "请用视觉化、感官化的方式描述 Aqina 滴鸡精的金黄色泽、鲜鸡汤香气、入口回甘和温热滋养感，不要直接催单。"}
+                "default": {"instruction": "提醒新加坡现货与 2盒免运，询问顾客要先 1盒试喝还是 2盒免运；不要发送长篇感官描述。"}
             },
             "t12h": {
-                "cart_hot": {"instruction": "请带入‘明天新加坡发货批次即将截单’的紧迫感，并提醒顾客使用已发送的 PayNow QR 付款后回传截图。"}
+                "cart_hot": {"instruction": "顾客若已选配套或给过资料，提醒使用 PayNow QR 付款后回传截图；语气简短，强调收到截图后团队才会核对配送。"}
             },
             "t23h": {
-                "default": {"instruction": "请明确告知系统对话窗口即将关闭，并引导顾客回复 YES 以保留未来优惠资格。"}
+                "default": {"instruction": "只在 23 小时窗口结束前提醒回复 YES 保留联系；不要重新讲产品故事。"}
             },
         },
         "facebook_comment_automation": {
@@ -450,6 +465,7 @@ class ChatbotSettingsService:
         defaults = get_default_chatbot_settings()
         legacy = self._migrate_legacy(raw or {})
         normalized = _deep_merge(defaults, legacy)
+        normalized = _apply_conversion_optimization_migration(normalized, defaults, raw or {})
         paynow = normalized.get("payment", {}).get("paynow", {})
         if (not paynow.get("payment_qr_image")) or paynow.get("payment_qr_image") == LEGACY_PAYNOW_QR_IMAGE:
             normalized["payment"]["paynow"]["payment_qr_image"] = defaults["payment"]["paynow"]["payment_qr_image"]
@@ -554,6 +570,36 @@ def _normalize_media_assets(media_assets: dict[str, Any], defaults: dict[str, An
             captions[key] = {"zh": default_value, "en": default_value}
     normalized["captions"] = captions
     return normalized
+
+
+def _apply_conversion_optimization_migration(
+    normalized: dict[str, Any],
+    defaults: dict[str, Any],
+    raw: dict[str, Any],
+) -> dict[str, Any]:
+    """Upgrade existing runtime copy to the current conversion playbook."""
+    current_version = _coerce_int(raw.get("conversion_optimization_version"))
+    if current_version >= CONVERSION_OPTIMIZATION_VERSION:
+        return normalized
+
+    migrated = deepcopy(normalized)
+    migrated["system_prompt"] = defaults["system_prompt"]
+    migrated["conversion_optimization_version"] = CONVERSION_OPTIMIZATION_VERSION
+    migrated["chatbot_skills"] = deepcopy(defaults["chatbot_skills"])
+    migrated["crm_follow_up_rules"] = deepcopy(defaults["crm_follow_up_rules"])
+
+    comment_automation = migrated.get("facebook_comment_automation")
+    if isinstance(comment_automation, dict):
+        comment_automation["keywords"] = deepcopy(defaults["facebook_comment_automation"]["keywords"])
+
+    return migrated
+
+
+def _coerce_int(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
 
 
 TRIAL_TEXT_REPLACEMENTS = (

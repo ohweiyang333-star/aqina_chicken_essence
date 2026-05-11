@@ -64,15 +64,15 @@
       }
     },
     "products": {
-      "eyebrow": "纯粹保养配套",
-      "title": "选择你的日常轻补养配套",
-      "subtitle": "从轻量体验到家庭常备，按你的节奏安排每一天都容易坚持的温热补给。",
+      "eyebrow": "新加坡现货配套",
+      "title": "先选配套，再 PayNow 下单",
+      "subtitle": "第一次建议从 1 盒试喝或 2 盒免运开始；需要孕产、月子或家庭照护，可直接看 4 盒月度装。",
       "recommended": "推荐选择",
       "buyNow": "PayNow 下单",
-      "whatsappFallbackTitle": "不确定该选哪一个？",
-      "whatsappFallbackBody": "付款前可以先问 Aqina 客服。我们会按日常饮用、送礼或家人照护需求协助你选择。",
-      "whatsappFallbackCta": "先 WhatsApp 问配套",
-      "whatsappMessage": "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合我的日常饮用。",
+      "whatsappFallbackTitle": "想先确认 1 盒还是 2 盒？",
+      "whatsappFallbackBody": "付款前可以先 WhatsApp 客服，我们会按自己喝、送长辈、孕期或月子需求，直接帮你选一个配套。",
+      "whatsappFallbackCta": "WhatsApp 确认配套",
+      "whatsappMessage": "Hi Aqina SG，我想确认自己适合 1盒试喝还是 2盒免运配套。",
       "featuresLabel": "方案重点",
       "currency": "SGD",
       "detailFallbackOne": "纯萃滴鸡精，不额外加水",
@@ -90,26 +90,26 @@
         "pack6": "6 盒 · 42 袋（约 42 天）"
       },
       "badges": {
-        "pack1": "先启动",
-        "pack2": "主力选择",
-        "pack4": "月度常备",
+        "pack1": "试喝入门",
+        "pack2": "2盒免运主推",
+        "pack4": "孕产/月度",
         "pack6": "家庭常备"
       },
       "details": {
         "pack1": [
-          "适合初次体验，先把“每天一袋”执行起来",
-          "用 7 天确认口感接受度与日常节奏",
-          "适合先试后定、减少一次性决策压力"
+          "适合第一次试喝，先确认口感是否适合",
+          "1 盒需加 SGD 8 新加坡配送费",
+          "适合想低门槛开始、不急着囤货的人"
         ],
         "pack2": [
-          "覆盖 14 天日常补养节奏，适合连续饮用",
-          "兼顾成本与执行强度的主力方案",
-          "适合工作、学习或家庭照护阶段连续补给"
+          "2 盒 SGD 75，刚好满足免运门槛",
+          "最适合日常保养、上班族、学生或送家人先试",
+          "比 1 盒更划算，也是付款前最容易决定的主推选择"
         ],
         "pack4": [
-          "覆盖 28 天，适合阶段性补养安排",
-          "适合家属按周管理补给进度与库存",
-          "对需要更长周期坚持的人群更稳妥"
+          "4 盒 SGD 149，适合 28 天月度补养",
+          "适合孕期、坐月子、产后或需要持续照护的人",
+          "满足免运费，家属更容易按周期安排"
         ],
         "pack6": [
           "覆盖 42 天，适合长期巩固与多人照护",
@@ -176,9 +176,9 @@
       },
       "support": {
         "title": "付款前想先确认？",
-        "body": "如果不确定这个配套是否适合，可以先 WhatsApp 咨询。",
-        "cta": "询问这个配套",
-        "message": "Hi Aqina SG，我想问 {product} 是否适合我的日常饮用。"
+        "body": "如果不确定是否要直接 PayNow，可以先让客服确认 1 盒试喝、2 盒免运或 4 盒月度哪个更适合。",
+        "cta": "确认这个配套",
+        "message": "Hi Aqina SG，我想确认 {product} 是否适合我，现在应该直接 PayNow 下单还是换 2盒免运配套。"
       }
     },
     "mobileCta": {
@@ -681,46 +681,46 @@
     },
     "v2": {
       "hero": {
-        "eyebrow": "黄梨酵素滴鸡精",
-        "title": "黄梨酵素滴鸡精，更清爽、更日常。",
-        "subtitle": "以清爽汤感、即热即饮与暖米金质感，呈现适合现代生活节奏的日常补给体验。",
-        "primaryCta": "立即选择配套",
+        "eyebrow": "新加坡现货 · PayNow 下单",
+        "title": "从 1 盒试喝，到 2 盒免运。",
+        "subtitle": "Aqina 黄梨酵素滴鸡精适合日常保养、送长辈、孕期与月子补养。新加坡现货供应，先 PayNow，上传付款截图后由团队核对配送。",
+        "primaryCta": "查看今天配套",
         "secondaryCta": "看真实场景",
-        "whatsappCta": "WhatsApp 咨询",
-        "whatsappMessage": "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合日常饮用。",
-        "priceLabel": "体验配套",
-        "priceLine": "SGD 39.90 起",
+        "whatsappCta": "先问 1盒/2盒",
+        "whatsappMessage": "Hi Aqina SG，我想确认自己适合 1盒试喝还是 2盒免运配套。",
+        "priceLabel": "试喝入门",
+        "priceLine": "1盒 SGD 39.90 起",
         "imageAlt": "Aqina 黄梨酵素滴鸡精外盒、单包和温热饮用场景",
         "badges": [
-          "黄梨酵素概念",
-          "清爽汤感",
+          "1盒试喝",
+          "2盒免运",
           "新加坡配送"
         ],
         "notes": [
-          "满 SGD 70 免运费",
-          "可 PayNow 下单或 WhatsApp 先咨询",
-          "团队核对付款后安排配送"
+          "2盒 SGD 75 免运费",
+          "新加坡现货 1-3 个工作日送达",
+          "PayNow 后上传截图才算提交"
         ],
         "trustItems": [
-          "黄梨酵素滴鸡精",
+          "自己喝 / 送长辈 / 月子补养",
           "Halal / HACCP / GMP 信任标识",
-          "新加坡配送"
+          "PayNow 截图后人工核对"
         ],
         "proofLabel": "日常细节"
       },
       "quickTrust": {
         "items": [
           {
-            "title": "认证信息清楚",
-            "body": "Halal、HACCP、GMP、ISO9001 与兽医局标识清楚展示，方便核对。"
+            "title": "价格先讲清楚",
+            "body": "1盒 SGD 39.90 适合试喝；2盒 SGD 75 刚好免运，是第一次下单的主推选择。"
           },
           {
-            "title": "适合日常坚持",
-            "body": "清爽汤感与独立小袋，降低每天重复饮用的阻力。"
+            "title": "场景快速对号",
+            "body": "日常保养、送长辈、孕期或月子补养，都可以直接按页面配套选择。"
           },
           {
             "title": "下单路径清楚",
-            "body": "可以直接选择配套 PayNow，也可以先 WhatsApp 咨询适合哪一款。"
+            "body": "选择配套后先 PayNow，上传付款截图，团队核对后安排新加坡配送。"
           }
         ]
       },
@@ -935,8 +935,8 @@
       },
       "faq": {
         "eyebrow": "下单前常见问题",
-        "title": "先把最关键的疑虑讲清楚。",
-        "body": "让第一次从广告进来的用户，不需要翻完整页也能快速判断是否适合。",
+        "title": "先把付款前最关键的问题讲清楚。",
+        "body": "第一次从广告进来，不需要看完整页，也能判断该选 1 盒、2 盒还是 4 盒。",
         "items": [
           {
             "question": "第一次应该选哪一个配套？",
@@ -958,11 +958,11 @@
       },
       "finalCta": {
         "eyebrow": "最后一步",
-        "title": "选择一组真正喝得下去、坚持得住的温热补给。",
-        "body": "从 7 天体验到家庭常备，先选一个你真正愿意每天执行的节奏。你也可以通过 WhatsApp 询问适合的配套。",
-        "productsCta": "立即选择配套",
-        "whatsappCta": "WhatsApp 咨询",
-        "whatsappMessage": "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合日常饮用。",
+        "title": "现在只需要决定：1 盒试喝，还是 2 盒免运。",
+        "body": "如果是孕期、月子或买给家人，可以直接看 4 盒月度装；不确定就 WhatsApp 让客服帮你确认。",
+        "productsCta": "回到配套选择",
+        "whatsappCta": "WhatsApp 确认配套",
+        "whatsappMessage": "Hi Aqina SG，我想确认自己适合 1盒试喝、2盒免运，还是 4盒月度配套。",
         "imageAlt": "Aqina 滴鸡精最终行动区产品场景"
       }
     },

@@ -76,8 +76,8 @@ export function getV2WhatsAppPrefill(locale: string, productName?: string) {
   }
 
   return isZh
-    ? "Hi Aqina SG，我想了解哪一个滴鸡精配套比较适合我的日常饮用。"
-    : "Hi Aqina SG, I would like to ask which chicken essence plan fits my daily routine.";
+    ? "Hi Aqina SG，我想确认自己适合 1盒试喝还是 2盒免运配套。"
+    : "Hi Aqina SG, I want to confirm whether I should start with 1 box or the 2-box free delivery pack.";
 }
 
 export function getV2WhatsAppHref(locale: string, productName?: string) {

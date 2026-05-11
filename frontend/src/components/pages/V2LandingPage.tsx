@@ -63,8 +63,6 @@ export default function V2LandingPage() {
     >
       <main className="flex min-h-screen flex-col bg-[#fff7e8] pb-24 text-[#23170d]">
         <V2HeroSection />
-        <V2QuickTrustStrip />
-        <V2ComparisonSection />
         <V2ProductPricingBand>
           <ProductPricingSection
             products={products}
@@ -75,12 +73,14 @@ export default function V2LandingPage() {
             showWhatsAppFallback
           />
         </V2ProductPricingBand>
+        <V2QuickTrustStrip />
+        <V2FAQSection />
+        <V2ComparisonSection />
         <V2PineappleStorySection />
         <V2CraftLightnessSection />
         <V2AudienceSection />
         <V2UgcEvidenceWall />
         <V2TrustSection />
-        <V2FAQSection />
         <V2FinalCtaSection />
         <Footer />
         {!isCheckoutOpen ? <MobileFloatingCTA /> : null}

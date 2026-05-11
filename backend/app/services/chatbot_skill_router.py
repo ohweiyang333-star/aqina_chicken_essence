@@ -80,6 +80,7 @@ PAYMENT_KEYWORDS = {
     "paynow",
     "paid",
     "receipt",
+    "payment",
     "截图",
 }
 MEDICAL_KEYWORDS = {"疾病", "治疗", "吃药", "药", "手术", "糖尿", "高血压", "癌", "医生", "肾", "病"}
@@ -87,7 +88,23 @@ MATERNITY_KEYWORDS = {"孕", "怀孕", "待产", "月子", "产后", "坐月", "
 ELDER_KEYWORDS = {"长辈", "老人", "妈妈", "爸爸", "父母", "送礼", "术后", "恢复", "补身"}
 TASTE_KEYWORDS = {"腥", "苦", "味道", "口感", "好喝", "难喝", "怕油"}
 PRICE_KEYWORDS = {"多少钱", "价钱", "价格", "贵", "便宜", "price", "how much", "discount", "优惠"}
-CHECKOUT_KEYWORDS = {"我要", "下单", "购买", "订购", "买", "order", "buy", "拿一盒", "拿两盒"}
+CHECKOUT_KEYWORDS = {
+    "我要",
+    "下单",
+    "购买",
+    "订购",
+    "买",
+    "order",
+    "buy",
+    "拿一盒",
+    "拿两盒",
+    "地址",
+    "电话",
+    "运费",
+    "多久到",
+    "delivery",
+    "shipping",
+}
 SELF_CARE_KEYWORDS = {"自己", "熬夜", "疲劳", "很累", "累", "没精神", "上班", "学生", "考试", "提神", "日常"}
 
 

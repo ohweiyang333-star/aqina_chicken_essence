@@ -64,15 +64,15 @@
       }
     },
     "products": {
-      "eyebrow": "Pure Care Plans",
-      "title": "Choose Your Daily Light Nourishment Plan",
-      "subtitle": "From a first box to household reserve, choose a warm routine that stays easy to follow.",
+      "eyebrow": "Singapore Ready Stock",
+      "title": "Choose a pack, then order with PayNow",
+      "subtitle": "First-time buyers can start with 1 box or the 2-box free delivery pack. For maternity, confinement, or family care, compare the 4-box monthly pack.",
       "recommended": "Recommended",
       "buyNow": "Order with PayNow",
-      "whatsappFallbackTitle": "Not sure which plan fits?",
-      "whatsappFallbackBody": "Ask Aqina support before paying. We can help you choose based on daily drinking, gifting, or family care.",
-      "whatsappFallbackCta": "Ask WhatsApp before choosing",
-      "whatsappMessage": "Hi Aqina SG, I would like to ask which chicken essence plan fits my daily routine.",
+      "whatsappFallbackTitle": "Not sure: 1 box or 2 boxes?",
+      "whatsappFallbackBody": "Ask Aqina support before paying. We will help you pick one pack based on daily drinking, gifting, pregnancy, confinement, or family care.",
+      "whatsappFallbackCta": "Confirm pack on WhatsApp",
+      "whatsappMessage": "Hi Aqina SG, I want to confirm whether I should start with 1 box or the 2-box free delivery pack.",
       "featuresLabel": "Key Features",
       "currency": "SGD",
       "detailFallbackOne": "Premium extraction with no added water",
@@ -90,26 +90,26 @@
         "pack6": "6 boxes · 42 pouches"
       },
       "badges": {
-        "pack1": "Starter Ritual",
-        "pack2": "Core Routine",
-        "pack4": "Monthly Care",
+        "pack1": "First Trial",
+        "pack2": "Best First Order",
+        "pack4": "Maternity / Monthly",
         "pack6": "Family Stock"
       },
       "details": {
         "pack1": [
-          "A practical first box for everyday nourishment",
-          "Clean-tasting daily ritual with low commitment",
-          "Ideal for first-time Aqina buyers"
+          "Best for first-time tasting before stocking up",
+          "One-box orders add SGD 8 Singapore delivery",
+          "A low-commitment way to confirm taste and routine"
         ],
         "pack2": [
-          "Our strongest balance of value and consistency",
-          "Enough volume to feel a routine take shape",
-          "Best fit for repeat office and home use"
+          "2 boxes at SGD 75, qualifying for free delivery",
+          "Best first order for daily care, work, study, or family trial",
+          "The simplest recommendation before paying with PayNow"
         ],
         "pack4": [
-          "Structured pack for a 28-day nourishment rhythm",
-          "Useful for households planning a full month ahead",
-          "A steadier option for longer daily routines"
+          "4 boxes at SGD 149 for a 28-day monthly routine",
+          "Best fit for pregnancy, confinement, postpartum, or continued care",
+          "Free delivery and easier planning for the household"
         ],
         "pack6": [
           "Highest reserve for long-cycle household use",
@@ -176,9 +176,9 @@
       },
       "support": {
         "title": "Need help before paying?",
-        "body": "Ask us on WhatsApp if you are unsure about this plan.",
-        "cta": "Ask about this plan",
-        "message": "Hi Aqina SG, I would like to ask if {product} is suitable for my daily routine."
+        "body": "If you are unsure before PayNow, ask us to confirm whether 1 box, the 2-box free delivery pack, or the 4-box monthly pack fits better.",
+        "cta": "Confirm this pack",
+        "message": "Hi Aqina SG, I want to confirm if {product} suits me, or if I should switch to the 2-box free delivery pack before PayNow."
       }
     },
     "mobileCta": {
@@ -681,46 +681,46 @@
     },
     "v2": {
       "hero": {
-        "eyebrow": "Pineapple Enzyme Chicken Essence",
-        "title": "Light pineapple-enzyme chicken essence for everyday routines.",
-        "subtitle": "A bright rice-gold experience built around clean soup-like taste, easy warming, and a daily nourishment ritual that feels simple to keep.",
-        "primaryCta": "Choose Plan Now",
+        "eyebrow": "Singapore Ready Stock · PayNow Order",
+        "title": "Start with 1 box, or choose 2 boxes for free delivery.",
+        "subtitle": "Aqina pineapple-enzyme chicken essence is made for daily care, gifting, maternity, and confinement nourishment. PayNow first, upload the payment screenshot, and our team verifies before Singapore delivery.",
+        "primaryCta": "View Today's Packs",
         "secondaryCta": "See Real Scenes",
-        "whatsappCta": "Ask WhatsApp",
-        "whatsappMessage": "Hi Aqina SG, I would like to know which chicken essence plan fits daily drinking.",
-        "priceLabel": "Starter plan",
-        "priceLine": "From SGD 39.90",
+        "whatsappCta": "Ask 1 Box / 2 Boxes",
+        "whatsappMessage": "Hi Aqina SG, I want to confirm whether I should start with 1 box or the 2-box free delivery pack.",
+        "priceLabel": "Trial entry",
+        "priceLine": "1 box from SGD 39.90",
         "imageAlt": "Aqina pineapple enzyme chicken essence box, pouch, and warm serving scene",
         "badges": [
-          "Pineapple enzyme concept",
-          "Clean soup-like taste",
+          "1-box trial",
+          "2-box free delivery",
           "Singapore delivery"
         ],
         "notes": [
-          "Free shipping SGD 70+",
-          "PayNow checkout or WhatsApp support",
-          "Team verifies payment before delivery"
+          "2 boxes SGD 75 with free delivery",
+          "Singapore ready stock, 1-3 working days",
+          "PayNow screenshot required before submission"
         ],
         "trustItems": [
-          "Pineapple enzyme chicken essence",
+          "Self-care / elder gifting / maternity care",
           "Halal / HACCP / GMP signals",
-          "Singapore delivery"
+          "Manual payment verification after PayNow"
         ],
         "proofLabel": "Daily details"
       },
       "quickTrust": {
         "items": [
           {
-            "title": "Visible certifications",
-            "body": "Halal, HACCP, GMP, ISO9001, and veterinary marks are shown for easier checking."
+            "title": "Pricing is clear",
+            "body": "1 box at SGD 39.90 is for trial. 2 boxes at SGD 75 qualifies for free delivery and is the main first-order choice."
           },
           {
-            "title": "Made for daily intake",
-            "body": "Clean soup-like taste and single pouches reduce the friction of repeating the routine."
+            "title": "Choose by situation",
+            "body": "Daily care, elder gifting, pregnancy, or confinement needs can be matched directly to a pack."
           },
           {
             "title": "Clear purchase path",
-            "body": "Choose a plan with PayNow, or ask WhatsApp support before deciding."
+            "body": "Choose a pack, complete PayNow, upload the screenshot, and our team verifies before Singapore delivery."
           }
         ]
       },
@@ -935,8 +935,8 @@
       },
       "faq": {
         "eyebrow": "Before You Order",
-        "title": "Common questions before choosing a plan.",
-        "body": "These answers help cold traffic decide faster without needing to search the whole page.",
+        "title": "Clear the key questions before PayNow.",
+        "body": "First-time visitors should quickly know whether to choose 1 box, 2 boxes, or the 4-box monthly pack.",
         "items": [
           {
             "question": "Which plan should I start with?",
@@ -958,11 +958,11 @@
       },
       "finalCta": {
         "eyebrow": "Final Step",
-        "title": "Choose a warm routine that is realistic to drink and easy to keep.",
-        "body": "From a 7-day trial to household reserve, start with a rhythm you can realistically keep. You can also ask WhatsApp support which plan fits your daily routine.",
-        "productsCta": "Choose Plan Now",
-        "whatsappCta": "Ask on WhatsApp",
-        "whatsappMessage": "Hi Aqina SG, I would like to know which chicken essence plan fits daily drinking.",
+        "title": "Decide now: 1 box to try, or 2 boxes with free delivery.",
+        "body": "For pregnancy, confinement, or family care, compare the 4-box monthly pack. If unsure, WhatsApp us and we will help you confirm one pack.",
+        "productsCta": "Back to Packs",
+        "whatsappCta": "Confirm on WhatsApp",
+        "whatsappMessage": "Hi Aqina SG, I want to confirm whether I should choose 1 box, the 2-box free delivery pack, or the 4-box monthly pack.",
         "imageAlt": "Aqina chicken essence final call to action product scene"
       }
     },

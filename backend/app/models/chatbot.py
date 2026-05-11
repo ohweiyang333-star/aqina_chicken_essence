@@ -118,6 +118,7 @@ class ChatbotSettingsResponse(BaseModel):
     """Canonical chatbot settings document returned to admin UI."""
 
     system_prompt: str
+    conversion_optimization_version: int = 1
     handoff_message: str
     packages: dict[str, ChatbotPackage]
     knowledge_base: KnowledgeBase
@@ -136,6 +137,7 @@ class UpdateChatbotSettingsRequest(BaseModel):
     """Partial settings update payload."""
 
     system_prompt: str | None = None
+    conversion_optimization_version: int | None = None
     handoff_message: str | None = None
     packages: dict[str, ChatbotPackage] | None = None
     knowledge_base: KnowledgeBase | None = None
