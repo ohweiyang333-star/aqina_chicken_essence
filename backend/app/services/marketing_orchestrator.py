@@ -67,6 +67,46 @@ class MarketingAutomationOrchestrator:
             for message_event in entry.get("messaging", []):
                 messenger_event = self._normalize_messenger_event(message_event)
                 if messenger_event is None:
+                    referral_event = self._normalize_messenger_referral_event(message_event)
+                    if referral_event is None:
+                        continue
+
+                    occurred_at = referral_event["occurred_at"]
+                    identifiers = {"psid": referral_event["sender_psid"]}
+                    contact_id, conversation_id = self.contact_service.upsert_contact_from_event(
+                        channel="messenger",
+                        identifiers=identifiers,
+                        current_tag="lead_cold",
+                        status="active",
+                        interaction_time=occurred_at,
+                        acquisition=referral_event["acquisition"],
+                    )
+                    normalized = NormalizedMarketingEvent(
+                        provider="meta",
+                        channel="messenger",
+                        event_type="messenger_referral_received",
+                        dedupe_key=referral_event["dedupe_key"],
+                        occurred_at=occurred_at,
+                        contact_id=contact_id,
+                        conversation_id=conversation_id,
+                        identifiers=identifiers,
+                        payload={
+                            "channel": "messenger",
+                            "acquisition": referral_event["acquisition"],
+                            "sender_psid": identifiers["psid"],
+                        },
+                    )
+                    if self._record_event(normalized):
+                        event_id = stable_id("event", normalized.dedupe_key)
+                        self.db.collection("marketing_events").document(event_id).set(
+                            {
+                                "status": "processed_referral",
+                                "processed_at": utcnow(),
+                                "updated_at": utcnow(),
+                            },
+                            merge=True,
+                        )
+                        accepted += 1
                     continue
 
                 occurred_at = messenger_event["occurred_at"]
@@ -290,6 +330,20 @@ class MarketingAutomationOrchestrator:
             "quick_reply_payload": quick_reply_payload,
             "attachment_url": (attachment or {}).get("payload", {}).get("url"),
             "mime_type": (attachment or {}).get("payload", {}).get("mime_type"),
+            "acquisition": self._messenger_acquisition(message_event),
+        }
+
+    def _normalize_messenger_referral_event(self, message_event: dict[str, Any]) -> dict[str, Any] | None:
+        sender_psid = str(message_event.get("sender", {}).get("id") or "")
+        referral = message_event.get("referral")
+        if not sender_psid or not isinstance(referral, dict) or not referral:
+            return None
+
+        occurred_at = ensure_datetime(message_event.get("timestamp")) or utcnow()
+        return {
+            "sender_psid": sender_psid,
+            "occurred_at": occurred_at,
+            "dedupe_key": f"messenger:referral:{sender_psid}:{occurred_at.isoformat()}:{payload_hash(referral)}",
             "acquisition": self._messenger_acquisition(message_event),
         }
 

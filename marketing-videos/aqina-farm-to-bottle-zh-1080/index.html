@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background: #091a14;
+        color: #f8f5ec;
+        font-family: "Plus Jakarta Sans", "PingFang SC", "Noto Sans SC", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 10%, rgba(212, 175, 55, 0.28), rgba(212, 175, 55, 0) 28%),
+          linear-gradient(180deg, #0d211a 0%, #091a14 58%, #07150f 100%);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .scene {
+        background-color: #091a14;
+        opacity: 0;
+      }
+
+      .scene::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.12;
+        background-image:
+          linear-gradient(to right, rgba(212, 175, 55, 0.32) 1px, rgba(212, 175, 55, 0) 1px),
+          linear-gradient(to bottom, rgba(212, 175, 55, 0.2) 1px, rgba(212, 175, 55, 0) 1px);
+        background-size: 54px 54px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0));
+      }
+
+      .scene::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 82% 20%, rgba(255, 184, 0, 0.18), rgba(255, 184, 0, 0) 32%),
+          radial-gradient(circle at 18% 86%, rgba(43, 118, 77, 0.22), rgba(43, 118, 77, 0) 28%);
+      }
+
+      .scene-content {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        padding: 72px 78px 118px;
+        gap: 36px;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .topline {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 999px;
+        background: rgba(9, 26, 20, 0.72);
+        color: #ffd36a;
+        padding: 12px 18px;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 0;
+      }
+
+      .topline-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ffb800;
+        box-shadow: 0 0 22px rgba(255, 184, 0, 0.7);
+      }
+
+      .headline {
+        max-width: 900px;
+        font-family: "Cormorant Garamond", "Songti SC", serif;
+        font-size: 76px;
+        font-weight: 700;
+        line-height: 1.04;
+        letter-spacing: 0;
+        color: #f8f5ec;
+        text-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+      }
+
+      .headline strong,
+      .gold {
+        color: #ffcb37;
+        font-weight: 800;
+      }
+
+      .body-copy {
+        max-width: 760px;
+        color: rgba(248, 245, 236, 0.86);
+        font-size: 28px;
+        font-weight: 600;
+        line-height: 1.55;
+        letter-spacing: 0;
+      }
+
+      .body-copy.dark {
+        color: #4d351f;
+      }
+
+      .hero-layout {
+        display: grid;
+        grid-template-columns: 0.94fr 1.06fr;
+        align-items: center;
+        gap: 34px;
+        height: 100%;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 28px;
+      }
+
+      .visual-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 500px;
+        border: 1px solid rgba(212, 175, 55, 0.32);
+        border-radius: 8px;
+        background: #112b22;
+        box-shadow:
+          0 30px 74px rgba(0, 0, 0, 0.34),
+          inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .visual-card.tall {
+        min-height: 660px;
+      }
+
+      .visual-card.light {
+        background: #f8ecd5;
+        border-color: #dcc08c;
+        box-shadow: 0 28px 70px rgba(91, 57, 24, 0.18);
+      }
+
+      .scene-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center;
+      }
+
+      .image-dim {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(9, 26, 20, 0.02) 0%, rgba(9, 26, 20, 0.74) 100%),
+          radial-gradient(circle at 78% 22%, rgba(255, 184, 0, 0.28), rgba(255, 184, 0, 0) 38%);
+      }
+
+      .floating-product {
+        position: absolute;
+        right: 42px;
+        bottom: 28px;
+        width: 360px;
+        height: 360px;
+        object-fit: contain;
+        filter: drop-shadow(0 28px 42px rgba(0, 0, 0, 0.38));
+      }
+
+      .mini-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+
+      .mini-stat {
+        min-height: 112px;
+        border: 1px solid rgba(212, 175, 55, 0.3);
+        border-radius: 8px;
+        background: rgba(17, 43, 34, 0.84);
+        padding: 18px 16px;
+      }
+
+      .mini-stat b {
+        display: block;
+        color: #ffcb37;
+        font-size: 34px;
+        line-height: 1;
+      }
+
+      .mini-stat span {
+        display: block;
+        margin-top: 10px;
+        color: rgba(248, 245, 236, 0.82);
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.32;
+      }
+
+      .light-scene {
+        background: #f8ecd5;
+        color: #23170d;
+      }
+
+      .light-scene::before {
+        opacity: 0.16;
+        background-image:
+          linear-gradient(to right, rgba(155, 107, 31, 0.26) 1px, rgba(155, 107, 31, 0) 1px),
+          linear-gradient(to bottom, rgba(155, 107, 31, 0.2) 1px, rgba(155, 107, 31, 0) 1px);
+      }
+
+      .light-scene::after {
+        background:
+          radial-gradient(circle at 82% 22%, rgba(255, 184, 0, 0.24), rgba(255, 184, 0, 0) 34%),
+          radial-gradient(circle at 16% 78%, rgba(17, 43, 34, 0.12), rgba(17, 43, 34, 0) 28%);
+      }
+
+      .light-scene .headline {
+        color: #23170d;
+        text-shadow: none;
+      }
+
+      .light-scene .headline strong,
+      .light-scene .gold {
+        color: #6d451d;
+      }
+
+      .light-scene .topline {
+        background: rgba(255, 250, 241, 0.84);
+        border-color: #d4af37;
+        color: #6d451d;
+      }
+
+      .ecosystem-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+        margin-top: 10px;
+      }
+
+      .eco-card {
+        min-height: 160px;
+        border: 1px solid rgba(212, 175, 55, 0.24);
+        border-radius: 8px;
+        background: rgba(17, 43, 34, 0.9);
+        padding: 22px;
+        color: #f8f5ec;
+      }
+
+      .eco-card .num {
+        color: #ffcb37;
+        font-size: 22px;
+        font-weight: 900;
+      }
+
+      .eco-card h3 {
+        margin-top: 16px;
+        font-size: 28px;
+        line-height: 1.15;
+      }
+
+      .eco-card p {
+        margin-top: 10px;
+        color: rgba(248, 245, 236, 0.74);
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+
+      .enzyme-rings {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .ring {
+        position: absolute;
+        border: 2px solid rgba(255, 203, 55, 0.44);
+        border-radius: 50%;
+        box-shadow: 0 0 34px rgba(255, 184, 0, 0.18);
+      }
+
+      .ring.r1 {
+        width: 240px;
+        height: 240px;
+        top: 118px;
+        right: 128px;
+      }
+
+      .ring.r2 {
+        width: 140px;
+        height: 140px;
+        top: 184px;
+        right: 180px;
+      }
+
+      .ring.r3 {
+        width: 78px;
+        height: 78px;
+        top: 216px;
+        right: 212px;
+        background: rgba(255, 203, 55, 0.16);
+      }
+
+      .timeline {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        align-items: end;
+        gap: 12px;
+        margin-top: 24px;
+      }
+
+      .day {
+        min-height: 194px;
+        border: 1px solid #dcc08c;
+        border-radius: 8px;
+        background: rgba(255, 250, 241, 0.76);
+        padding: 16px 12px;
+        text-align: center;
+        box-shadow: 0 18px 34px rgba(91, 57, 24, 0.08);
+      }
+
+      .day b {
+        display: block;
+        color: #9b6b1f;
+        font-size: 34px;
+        line-height: 1;
+      }
+
+      .day span {
+        display: block;
+        margin-top: 14px;
+        color: #594530;
+        font-size: 17px;
+        font-weight: 800;
+        line-height: 1.35;
+      }
+
+      .zero-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-top: 22px;
+      }
+
+      .zero-pill {
+        border: 1px solid rgba(255, 203, 55, 0.42);
+        border-radius: 8px;
+        background: rgba(9, 26, 20, 0.64);
+        padding: 18px 12px;
+        text-align: center;
+      }
+
+      .zero-pill b {
+        display: block;
+        color: #ffcb37;
+        font-size: 42px;
+        line-height: 1;
+      }
+
+      .zero-pill span {
+        display: block;
+        margin-top: 8px;
+        color: rgba(248, 245, 236, 0.86);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .trust-badges {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+        margin-top: 28px;
+      }
+
+      .trust-badge {
+        min-height: 126px;
+        border: 1px solid #dcc08c;
+        border-radius: 8px;
+        background: rgba(255, 250, 241, 0.86);
+        color: #23170d;
+        padding: 20px 18px;
+      }
+
+      .trust-badge b {
+        display: block;
+        color: #8d6221;
+        font-size: 28px;
+      }
+
+      .trust-badge span {
+        display: block;
+        margin-top: 8px;
+        color: #6f5a43;
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1.4;
+      }
+
+      .cta-scene .scene-content {
+        justify-content: center;
+        padding: 76px 78px 90px;
+      }
+
+      .cta-panel {
+        position: relative;
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        align-items: center;
+        gap: 40px;
+        min-height: 850px;
+        border: 1px solid rgba(255, 203, 55, 0.42);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 78% 24%, rgba(255, 184, 0, 0.18), rgba(255, 184, 0, 0) 34%),
+          linear-gradient(180deg, rgba(17, 43, 34, 0.98), rgba(9, 26, 20, 0.98));
+        padding: 50px 42px;
+        box-shadow: 0 34px 86px rgba(0, 0, 0, 0.38);
+      }
+
+      .cta-products {
+        position: relative;
+        min-height: 640px;
+      }
+
+      .cta-pack {
+        position: absolute;
+        object-fit: contain;
+        filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.36));
+      }
+
+      .cta-pack.one {
+        width: 372px;
+        left: 18px;
+        top: 36px;
+      }
+
+      .cta-pack.two {
+        width: 312px;
+        right: 0;
+        top: 178px;
+      }
+
+      .cta-cup {
+        position: absolute;
+        width: 330px;
+        height: 248px;
+        left: 30px;
+        bottom: 18px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid rgba(255, 203, 55, 0.28);
+      }
+
+      .cta-title {
+        font-family: "Cormorant Garamond", "Songti SC", serif;
+        color: #f8f5ec;
+        font-size: 76px;
+        font-weight: 800;
+        line-height: 1.02;
+      }
+
+      .cta-subtitle {
+        margin-top: 24px;
+        color: rgba(248, 245, 236, 0.84);
+        font-size: 30px;
+        font-weight: 700;
+        line-height: 1.5;
+      }
+
+      .cta-button {
+        display: inline-flex;
+        width: fit-content;
+        margin-top: 34px;
+        border-radius: 8px;
+        background: linear-gradient(180deg, #ffcb37 0%, #ffb800 100%);
+        color: #091a14;
+        padding: 22px 28px;
+        font-size: 28px;
+        font-weight: 950;
+        box-shadow: 0 16px 34px rgba(255, 184, 0, 0.24);
+      }
+
+      .contact-line {
+        margin-top: 18px;
+        color: #ffd36a;
+        font-size: 24px;
+        font-weight: 850;
+      }
+
+      .caption {
+        position: absolute;
+        inset: auto 70px 34px 70px;
+        bottom: 34px;
+        z-index: 20;
+        display: flex;
+        justify-content: center;
+        overflow: visible;
+        opacity: 0;
+        border: 1px solid rgba(255, 203, 55, 0.34);
+        border-radius: 8px;
+        background: #091a14;
+        padding: 18px 26px;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.34);
+        pointer-events: none;
+      }
+
+      .caption span {
+        display: block;
+        max-width: 900px;
+        color: #ffffff;
+        text-align: center;
+        font-size: 31px;
+        font-weight: 850;
+        line-height: 1.38;
+        opacity: 1;
+        visibility: hidden;
+      }
+
+      #scene-feed .headline {
+        font-size: 66px;
+        max-width: 780px;
+      }
+
+      #scene-standards .headline {
+        font-size: 64px;
+        max-width: 540px;
+      }
+
+      .transition-wash {
+        z-index: 30;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .wash-band {
+        position: absolute;
+        inset: -20% -35%;
+        transform: translateX(-72%) rotate(-9deg);
+        background:
+          linear-gradient(90deg, rgba(255, 203, 55, 0) 0%, rgba(255, 203, 55, 0.9) 45%, rgba(248, 245, 236, 0.98) 52%, rgba(255, 184, 0, 0) 100%);
+        filter: blur(10px);
+      }
+
+      .gold-grain {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        opacity: 0.18;
+        background-image:
+          radial-gradient(circle at 20% 30%, rgba(255, 203, 55, 0.38) 0 2px, rgba(255, 203, 55, 0) 3px),
+          radial-gradient(circle at 70% 52%, rgba(248, 245, 236, 0.24) 0 1px, rgba(248, 245, 236, 0) 3px);
+        background-size: 92px 92px, 128px 128px;
+      }
+
+      .final-fade {
+        z-index: 40;
+        pointer-events: none;
+        background: #091a14;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="60"
+      data-width="1080"
+      data-height="1080"
+    >
+      <section id="scene-hook" class="clip scene" data-start="0" data-duration="5" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content hero-layout">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>Farm-to-Bottle Journey</span></div>
+            <h1 class="headline">不是普通鸡精，是从源头开始可追溯的 <strong>黄梨鸡滴鸡精</strong>。</h1>
+            <p class="body-copy">Aqina 把黄梨园、饲料、养殖与加工放在同一套标准里。</p>
+          </div>
+          <figure class="visual-card tall">
+            <img class="scene-image" src="assets/pineapple-farm.webp" alt="Aqina 黄梨农场" data-layout-allow-overflow />
+            <div class="image-dim"></div>
+            <img class="floating-product" src="assets/pack-1.webp" alt="Aqina 滴鸡精包装" />
+          </figure>
+        </div>
+      </section>
+
+      <section id="scene-ecosystem" class="clip scene" data-start="5" data-duration="7" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>100% Traceable Ecosystem</span></div>
+            <h2 class="headline">从农场到每一袋，<strong>自有体系</strong> 层层把关。</h2>
+          </div>
+          <div class="ecosystem-grid">
+            <article class="eco-card"><div class="num">01</div><h3>MD2 黄梨园</h3><p>黄梨酵素故事，从种植源头开始。</p></article>
+            <article class="eco-card"><div class="num">02</div><h3>自有饲料</h3><p>配方与标准由 Aqina 体系控制。</p></article>
+            <article class="eco-card"><div class="num">03</div><h3>黄梨鸡养殖</h3><p>专属鸡只，按自然成长周期饲养。</p></article>
+            <article class="eco-card"><div class="num">04</div><h3>滴取加工</h3><p>进入 Halal 认证加工体系。</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-md2" class="clip scene light-scene" data-start="12" data-duration="8" data-track-index="0">
+        <div class="scene-content hero-layout">
+          <figure class="visual-card light tall">
+            <img class="scene-image" src="assets/pineapple-craft.webp" alt="MD2 黄梨酵素工艺" data-layout-allow-overflow />
+            <div class="enzyme-rings" data-layout-ignore>
+              <span class="ring r1"></span>
+              <span class="ring r2"></span>
+              <span class="ring r3"></span>
+            </div>
+          </figure>
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>MD2 Pineapple Enzyme</span></div>
+            <h2 class="headline"><strong>MD2 黄梨酵素</strong>，形成清爽回甘的风味基础。</h2>
+            <p class="body-copy dark">黄梨酵素进入饲养理念，让传统滋补更贴近现代日常。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-feed" class="clip scene" data-start="20" data-duration="8" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content hero-layout">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>White Label Pineapple Chicken</span></div>
+            <h2 class="headline">专属黄梨鸡，<strong>clean feed</strong>，No added growth hormones。</h2>
+            <p class="body-copy">一包滴鸡精的品质，先从鸡只的饲养方式开始。</p>
+            <div class="mini-row">
+              <div class="mini-stat"><b>Clean</b><span>自有饲料标准</span></div>
+              <div class="mini-stat"><b>MD2</b><span>黄梨酵素理念</span></div>
+              <div class="mini-stat"><b>0</b><span>不添加生长激素</span></div>
+            </div>
+          </div>
+          <figure class="visual-card tall">
+            <img class="scene-image" src="assets/evidence-farm.webp" alt="Aqina 养殖与农场标准" data-layout-allow-overflow />
+            <div class="image-dim"></div>
+          </figure>
+        </div>
+      </section>
+
+      <section id="scene-cycle" class="clip scene light-scene" data-start="28" data-duration="8" data-track-index="0">
+        <div class="scene-content">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>45-Day Natural Growth</span></div>
+            <h2 class="headline"><strong>45 天自然成长</strong>，让香醇肉质慢慢养成。</h2>
+            <p class="body-copy dark">不追求过度堆叠，重点是稳定风味、清爽汤感与日常可坚持。</p>
+          </div>
+          <div class="timeline">
+            <div class="day"><b>01</b><span>从饲养源头开始记录</span></div>
+            <div class="day"><b>15</b><span>稳定饲料与环境管理</span></div>
+            <div class="day"><b>30</b><span>自然活动与成长</span></div>
+            <div class="day"><b>45</b><span>达到理想风味基础</span></div>
+            <div class="day"><b>✓</b><span>进入加工与滴取</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-drip" class="clip scene" data-start="36" data-duration="11" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content hero-layout">
+          <figure class="visual-card tall">
+            <img class="scene-image" src="assets/golden-essence.webp" alt="清透金黄滴鸡精" data-layout-allow-overflow />
+            <div class="image-dim"></div>
+          </figure>
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>Pure Drip Technology</span></div>
+            <h2 class="headline"><strong>0 加水</strong>，慢滴取原汤精华。</h2>
+            <p class="body-copy">只取鸡肉与骨中的清透金汤，让温热饮用更轻盈。</p>
+            <div class="zero-grid">
+              <div class="zero-pill"><b>0%</b><span>Added Water</span></div>
+              <div class="zero-pill"><b>0%</b><span>Preservatives</span></div>
+              <div class="zero-pill"><b>0%</b><span>MSG</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-standards" class="clip scene light-scene" data-start="47" data-duration="7" data-track-index="0">
+        <div class="scene-content hero-layout">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>Quality & Safety</span></div>
+            <h2 class="headline">可追溯、清楚标准、<strong>每天更容易坚持</strong>。</h2>
+            <p class="body-copy dark">广告只讲产品来源、工艺与标准，不做医疗疗效承诺。</p>
+            <div class="trust-badges">
+              <div class="trust-badge"><b>Halal</b><span>清楚认证体系</span></div>
+              <div class="trust-badge"><b>HACCP</b><span>食品安全管理</span></div>
+              <div class="trust-badge"><b>GMP</b><span>规范生产标准</span></div>
+              <div class="trust-badge"><b>ISO9001</b><span>质量管理信任标识</span></div>
+            </div>
+          </div>
+          <figure class="visual-card light tall">
+            <img class="scene-image" src="assets/evidence-safety.webp" alt="Aqina 安全与质量标准" data-layout-allow-overflow />
+          </figure>
+        </div>
+      </section>
+
+      <section id="scene-cta" class="clip scene cta-scene" data-start="54" data-duration="6" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content">
+          <div class="cta-panel">
+            <div class="cta-products">
+              <img class="cta-pack one" src="assets/pack-4.webp" alt="Aqina 30-day pack" />
+              <img class="cta-pack two" src="assets/pack-2.webp" alt="Aqina trial pack" />
+              <img class="cta-cup" src="assets/pure-essence-bowl.webp" alt="Aqina 温热金汤" />
+            </div>
+            <div>
+              <div class="topline"><span class="topline-dot"></span><span>Aqina Singapore</span></div>
+              <h2 class="cta-title">Aqina 黄梨酵素滴鸡精</h2>
+              <p class="cta-subtitle">从农场到每一袋，把清透温热的日常补养带回生活。</p>
+              <div class="cta-button">WhatsApp 咨询适合配套</div>
+              <div class="contact-line">+65 9626 5734</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="caption-1" class="clip caption" data-start="0" data-duration="5" data-track-index="8"><span>不是普通鸡精，是从源头开始可追溯的黄梨鸡滴鸡精。</span></div>
+      <div id="caption-2" class="clip caption" data-start="5" data-duration="7" data-track-index="8"><span>从农场到每一袋，Aqina 自有体系层层把关。</span></div>
+      <div id="caption-3" class="clip caption" data-start="12" data-duration="8" data-track-index="8"><span>MD2 黄梨酵素，形成清爽回甘的风味基础。</span></div>
+      <div id="caption-4" class="clip caption" data-start="20" data-duration="8" data-track-index="8"><span>专属黄梨鸡，clean feed，No added growth hormones。</span></div>
+      <div id="caption-5" class="clip caption" data-start="28" data-duration="8" data-track-index="8"><span>45 天自然成长，香醇风味慢慢养成。</span></div>
+      <div id="caption-6" class="clip caption" data-start="36" data-duration="11" data-track-index="8"><span>0 加水｜0 防腐剂｜0 MSG｜慢滴取原汤精华。</span></div>
+      <div id="caption-7" class="clip caption" data-start="47" data-duration="7" data-track-index="8"><span>可追溯、清楚标准、每天更容易坚持。</span></div>
+      <div id="caption-8" class="clip caption" data-start="54" data-duration="6" data-track-index="8"><span>WhatsApp 咨询，选择适合你的日常补养配套。</span></div>
+
+      <audio
+        id="narration"
+        data-start="0"
+        data-duration="60"
+        data-track-index="9"
+        src="assets/narration.wav"
+        data-volume="1"
+      ></audio>
+
+      <div id="transition-wash" class="clip transition-wash" data-start="0" data-duration="60" data-track-index="10" data-layout-ignore>
+        <div class="wash-band"></div>
+      </div>
+      <div id="final-fade" class="clip final-fade" data-start="0" data-duration="60" data-track-index="11" data-layout-ignore></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      const scenes = [
+        { id: "scene-hook", start: 0, duration: 5 },
+        { id: "scene-ecosystem", start: 5, duration: 7 },
+        { id: "scene-md2", start: 12, duration: 8 },
+        { id: "scene-feed", start: 20, duration: 8 },
+        { id: "scene-cycle", start: 28, duration: 8 },
+        { id: "scene-drip", start: 36, duration: 11 },
+        { id: "scene-standards", start: 47, duration: 7 },
+        { id: "scene-cta", start: 54, duration: 6 }
+      ];
+      const sceneStarts = scenes.map(function (scene) { return scene.start; });
+      const transitionTimes = [5, 12, 20, 28, 36, 47, 54];
+
+      scenes.forEach(function (scene) {
+        tl.set("#" + scene.id, { opacity: 1 }, scene.start);
+        tl.set("#" + scene.id + " .scene-content", { opacity: 1, visibility: "visible" }, scene.start);
+        tl.set("#" + scene.id + " .scene-content", { opacity: 0, visibility: "hidden" }, scene.start + scene.duration);
+        tl.set("#" + scene.id, { opacity: 0 }, scene.start + scene.duration);
+      });
+
+      for (let i = 1; i <= 8; i += 1) {
+        const start = sceneStarts[i - 1];
+        const duration = scenes[i - 1].duration;
+        tl.set("#caption-" + i, { opacity: 1 }, start);
+        tl.set("#caption-" + i + " span", { opacity: 1, visibility: "visible" }, start);
+        tl.set("#caption-" + i + " span", { visibility: "hidden" }, start + duration);
+        tl.set("#caption-" + i, { opacity: 0 }, start + duration);
+      }
+
+      function addFrom(selector, vars, position) {
+        const targets = document.querySelectorAll(selector);
+        if (targets.length > 0) {
+          tl.from(targets, vars, position);
+        }
+      }
+
+      function enterScene(sceneId, time) {
+        const root = "#" + sceneId;
+        addFrom(root + " .topline", { y: 22, opacity: 0, duration: 0.46, ease: "power3.out" }, time + 0.16);
+        addFrom(root + " .headline, " + root + " .cta-title", { y: 44, opacity: 0, scale: 0.98, duration: 0.66, ease: "expo.out" }, time + 0.28);
+        addFrom(root + " .body-copy, " + root + " .cta-subtitle", { y: 28, opacity: 0, duration: 0.52, ease: "sine.out" }, time + 0.54);
+        addFrom(root + " .visual-card, " + root + " .cta-products", { y: 38, opacity: 0, scale: 0.965, duration: 0.68, ease: "power2.out" }, time + 0.34);
+        addFrom(root + " .mini-stat, " + root + " .eco-card, " + root + " .day, " + root + " .zero-pill, " + root + " .trust-badge, " + root + " .cta-button, " + root + " .contact-line", {
+          y: 26,
+          opacity: 0,
+          scale: 0.98,
+          duration: 0.44,
+          ease: "power3.out",
+          stagger: 0.08
+        }, time + 0.72);
+      }
+
+      scenes.forEach(function (scene) {
+        enterScene(scene.id, scene.start);
+      });
+
+      tl.from(".floating-product", { y: 42, opacity: 0, scale: 0.86, duration: 0.74, ease: "back.out(1.4)" }, 0.76);
+      tl.from(".cta-pack.one", { x: -34, y: 34, opacity: 0, scale: 0.9, duration: 0.62, ease: "power3.out" }, 54.82);
+      tl.from(".cta-pack.two", { x: 34, y: 28, opacity: 0, scale: 0.9, duration: 0.56, ease: "power3.out" }, 55.02);
+      tl.from(".cta-cup", { y: 30, opacity: 0, scale: 0.96, duration: 0.5, ease: "sine.out" }, 55.2);
+
+      tl.to(".scene-image", { scale: 1.035, duration: 60, ease: "none" }, 0);
+      tl.to(".gold-grain", { opacity: 0.28, duration: 4.5, repeat: 12, yoyo: true, ease: "sine.inOut" }, 0.2);
+      tl.to(".ring.r1", { scale: 1.12, opacity: 0.34, duration: 2.2, repeat: 3, yoyo: true, ease: "sine.inOut" }, 12.8);
+      tl.to(".ring.r2", { scale: 0.88, opacity: 0.72, duration: 1.8, repeat: 4, yoyo: true, ease: "sine.inOut" }, 13.0);
+      tl.to(".ring.r3", { scale: 1.22, opacity: 0.78, duration: 1.4, repeat: 5, yoyo: true, ease: "sine.inOut" }, 13.2);
+
+      transitionTimes.forEach(function (time) {
+        tl.set("#transition-wash", { opacity: 1 }, time - 0.34);
+        tl.fromTo("#transition-wash .wash-band", { xPercent: -86 }, { xPercent: 86, duration: 0.78, ease: "power2.inOut" }, time - 0.34);
+        tl.to("#transition-wash", { opacity: 0, duration: 0.18, ease: "sine.out" }, time + 0.42);
+        tl.set("#transition-wash", { opacity: 0 }, time + 0.6);
+      });
+
+      for (let i = 1; i <= 8; i += 1) {
+        const selector = "#caption-" + i;
+        const start = sceneStarts[i - 1];
+        tl.from(selector + " span", { y: 18, opacity: 0, scale: 0.97, duration: 0.32, ease: "power3.out" }, start + 0.4);
+      }
+
+      tl.to("#final-fade", { opacity: 1, duration: 0.72, ease: "sine.inOut" }, 59.28);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

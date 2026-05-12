@@ -488,6 +488,81 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(event["payload"]["sender_psid"], "psid-ad-1")
         self.assertEqual(self.task_queue.created_tasks[0]["processor"], "process-inbound-message")
 
+    def test_messenger_webhook_records_standalone_referral_before_first_message(self) -> None:
+        client = self._build_client()
+        referral_payload = {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "messaging": [
+                        {
+                            "sender": {"id": "psid-ad-standalone"},
+                            "recipient": {"id": "page-1"},
+                            "timestamp": 1770000000000,
+                            "referral": {
+                                "source": "ADS",
+                                "type": "OPEN_THREAD",
+                                "ref": "may-offer",
+                                "ad_id": "ad-standalone-123",
+                            },
+                        }
+                    ],
+                }
+            ]
+        }
+        message_payload = {
+            "entry": [
+                {
+                    "id": "page-1",
+                    "messaging": [
+                        {
+                            "sender": {"id": "psid-ad-standalone"},
+                            "recipient": {"id": "page-1"},
+                            "timestamp": 1770000005000,
+                            "message": {"mid": "mid-standalone-1", "text": "请问多少钱？"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        referral_response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(referral_payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(referral_payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(referral_response.status_code, 202)
+        self.assertEqual(referral_response.json()["accepted_events"], 1)
+        self.assertFalse(self.task_queue.created_tasks)
+
+        message_response = client.post(
+            "/api/v1/marketing/webhooks/facebook",
+            content=json.dumps(message_payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(message_payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(message_response.status_code, 202)
+        self.assertEqual(message_response.json()["accepted_events"], 1)
+        event_tasks = [task for task in self.task_queue.created_tasks if task["type"] == "event"]
+        self.assertEqual(len(event_tasks), 1)
+        self.assertEqual(event_tasks[0]["processor"], "process-inbound-message")
+        contact = self.db.collection("marketing_contacts").stream()[0].to_dict()
+        self.assertEqual(contact["acquisition"]["source"], "ADS")
+        self.assertEqual(contact["acquisition"]["ref"], "may-offer")
+        self.assertEqual(contact["acquisition"]["ad_id"], "ad-standalone-123")
+        events = [item.to_dict() for item in self.db.collection("marketing_events").stream()]
+        self.assertEqual({event["event_type"] for event in events}, {"messenger_referral_received", "messenger_message_received"})
+        referral_event = next(event for event in events if event["event_type"] == "messenger_referral_received")
+        self.assertEqual(referral_event["status"], "processed_referral")
+        self.assertEqual(referral_event["payload"]["acquisition"]["ad_id"], "ad-standalone-123")
+
     def test_messenger_postback_is_recorded_as_inbound_conversation_event(self) -> None:
         client = self._build_client()
         payload = {
@@ -2011,6 +2086,28 @@ class MarketingApiTests(unittest.TestCase):
         payload = response.json()
         self.assertEqual(payload["status"], "skipped_handoff_pending")
 
+    def test_gemini_follow_up_fallback_does_not_return_stage_instruction(self) -> None:
+        from app.services.gemini_service import GeminiConversationService, SAFE_FOLLOW_UP_FALLBACK_TEXT
+
+        service = GeminiConversationService()
+        stage_instruction = "提醒新加坡现货与 2盒免运，询问顾客要先 1盒试喝还是 2盒免运；不要发送长篇感官描述。"
+
+        with patch.object(service, "_generate_json", return_value=None):
+            result = service.generate_follow_up_reply(
+                contact={"current_tag": "lead_cold"},
+                messages=[],
+                stage="t3h",
+                instruction=stage_instruction,
+                runtime_settings={"system_prompt": "Aqina health advisor prompt"},
+            )
+
+        self.assertEqual(result.reply_text, SAFE_FOLLOW_UP_FALLBACK_TEXT)
+        self.assertIn("新加坡现货", result.reply_text)
+        self.assertIn("2盒 SGD75", result.reply_text)
+        self.assertIn("1盒试喝", result.reply_text)
+        self.assertNotIn("不要发送长篇感官描述", result.reply_text)
+        self.assertNotIn("询问顾客", result.reply_text)
+
     def test_follow_up_result_model_normalizes_to_reply_text_only(self) -> None:
         from app.models.chatbot import FollowUpTurnResult
         from app.services.follow_up import FollowUpEngine
@@ -2081,6 +2178,20 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("reply_text=", reply_text)
         self.assertNotIn("checkout_link_required", reply_text)
         self.assertNotIn("https://aqina.example.com/paynow/token-123", reply_text)
+
+    def test_follow_up_result_replaces_internal_instruction_with_safe_fallback(self) -> None:
+        from app.services.follow_up import FollowUpEngine
+        from app.services.gemini_service import SAFE_FOLLOW_UP_FALLBACK_TEXT
+
+        reply_text, next_tag = FollowUpEngine._normalize_follow_up_result(
+            "提醒新加坡现货与 2盒免运，询问顾客要先 1盒试喝还是 2盒免运；不要发送长篇感官描述。",
+            checkout_url=None,
+        )
+
+        self.assertIsNone(next_tag)
+        self.assertEqual(reply_text, SAFE_FOLLOW_UP_FALLBACK_TEXT)
+        self.assertNotIn("不要发送长篇感官描述", reply_text)
+        self.assertNotIn("询问顾客", reply_text)
 
     def test_follow_up_job_sends_only_reply_text_from_structured_model(self) -> None:
         from app.models.chatbot import FollowUpTurnResult
@@ -2171,6 +2282,86 @@ class MarketingApiTests(unittest.TestCase):
         ]
         self.assertEqual(len(outbound_messages), 1)
         self.assertEqual(outbound_messages[0]["text"], "哈喽~ 您是不是刚好在忙呀？没关系的。")
+
+    def test_t3h_follow_up_job_uses_safe_fallback_when_gemini_returns_none(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import SAFE_FOLLOW_UP_FALLBACK_TEXT
+
+        class NullFollowUpGemini(FakeGeminiService):
+            def generate_follow_up_reply(self, **kwargs):
+                self.calls.append(("generate_follow_up_reply", kwargs))
+                return None
+
+        self.gemini_service = NullFollowUpGemini()
+        self.db.seed("chatbotSettings/default", get_default_chatbot_settings())
+        self.db.seed(
+            "marketing_contacts/contact-followup-t3h",
+            {
+                "channel": "messenger",
+                "identifiers": {"psid": "psid-followup-t3h"},
+                "current_tag": "lead_cold",
+                "follow_up_stage": "none",
+                "last_interaction_time": "2026-04-10T00:00:00Z",
+                "window_expires_at": "2099-01-01T00:00:00Z",
+                "latest_conversation_id": "conv-followup-t3h",
+                "status": "active",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-followup-t3h",
+            {
+                "contact_id": "contact-followup-t3h",
+                "channel": "messenger",
+                "status": "open",
+                "message_count": 1,
+                "opened_at": "2026-04-10T00:00:00Z",
+                "last_message_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-followup-t3h/messages/msg-1",
+            {
+                "direction": "inbound",
+                "role": "user",
+                "text": "请问多少钱？",
+                "source": "messenger_webhook",
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_follow_up_jobs/job-followup-t3h",
+            {
+                "contact_id": "contact-followup-t3h",
+                "conversation_id": "conv-followup-t3h",
+                "stage": "t3h",
+                "anchor_interaction_time": "2026-04-10T00:00:00Z",
+                "due_at": "2026-04-10T03:00:00Z",
+                "eligible_tags": ["lead_cold", "qualified_warm", "cart_hot"],
+                "status": "scheduled",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-follow-up-job",
+            json={"job_id": "job-followup-t3h"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "completed")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_messenger_text"]
+        self.assertEqual(len(message_calls), 1)
+        self.assertEqual(message_calls[0][1]["text"], SAFE_FOLLOW_UP_FALLBACK_TEXT)
+        self.assertIn("新加坡现货", message_calls[0][1]["text"])
+        self.assertIn("2盒 SGD75", message_calls[0][1]["text"])
+        self.assertIn("1盒试喝", message_calls[0][1]["text"])
+        self.assertNotIn("不要发送长篇感官描述", message_calls[0][1]["text"])
+        self.assertNotIn("询问顾客", message_calls[0][1]["text"])
 
     def test_follow_up_job_sends_only_reply_text_from_string_repr(self) -> None:
         self.gemini_service = FakeGeminiService(

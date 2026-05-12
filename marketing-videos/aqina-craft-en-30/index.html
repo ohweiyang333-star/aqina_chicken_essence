@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background: #091a14;
+        color: #f8f5ec;
+        font-family: "Plus Jakarta Sans", "Noto Sans SC", sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 12%, rgba(212, 175, 55, 0.22), rgba(212, 175, 55, 0) 32%),
+          linear-gradient(180deg, #0d211a 0%, #091a14 58%, #07150f 100%);
+      }
+
+      .clip {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      .scene {
+        background-color: #091a14;
+        opacity: 0;
+      }
+
+      .scene::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.1;
+        background-image:
+          linear-gradient(to right, rgba(212, 175, 55, 0.28) 1px, rgba(212, 175, 55, 0) 1px),
+          linear-gradient(to bottom, rgba(212, 175, 55, 0.18) 1px, rgba(212, 175, 55, 0) 1px);
+        background-size: 54px 54px;
+        mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0));
+      }
+
+      .scene::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          radial-gradient(circle at 82% 18%, rgba(255, 184, 0, 0.16), rgba(255, 184, 0, 0) 33%),
+          radial-gradient(circle at 18% 84%, rgba(43, 118, 77, 0.22), rgba(43, 118, 77, 0) 30%);
+      }
+
+      .light-scene {
+        background: #f8ecd5;
+        color: #23170d;
+      }
+
+      .light-scene::before {
+        opacity: 0.12;
+        background-image:
+          linear-gradient(to right, rgba(155, 107, 31, 0.22) 1px, rgba(155, 107, 31, 0) 1px),
+          linear-gradient(to bottom, rgba(155, 107, 31, 0.18) 1px, rgba(155, 107, 31, 0) 1px);
+      }
+
+      .light-scene::after {
+        background:
+          radial-gradient(circle at 84% 18%, rgba(255, 184, 0, 0.18), rgba(255, 184, 0, 0) 34%),
+          radial-gradient(circle at 12% 86%, rgba(17, 43, 34, 0.09), rgba(17, 43, 34, 0) 30%);
+      }
+
+      .scene-content {
+        position: relative;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        padding: 70px 76px 118px;
+        gap: 28px;
+        opacity: 0;
+        visibility: hidden;
+      }
+
+      .hero-layout {
+        display: grid;
+        grid-template-columns: 0.95fr 1.05fr;
+        align-items: center;
+        gap: 34px;
+        height: 100%;
+      }
+
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+      }
+
+      .topline {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid rgba(212, 175, 55, 0.4);
+        border-radius: 999px;
+        background: rgba(9, 26, 20, 0.72);
+        color: #ffd36a;
+        padding: 11px 17px;
+        font-size: 20px;
+        font-weight: 850;
+      }
+
+      .light-scene .topline {
+        background: rgba(255, 250, 241, 0.86);
+        color: #6d451d;
+        border-color: #d4af37;
+      }
+
+      .topline-dot {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: #ffb800;
+        box-shadow: 0 0 20px rgba(255, 184, 0, 0.72);
+      }
+
+      .headline {
+        max-width: 850px;
+        font-family: "Cormorant Garamond", serif;
+        font-size: 70px;
+        font-weight: 780;
+        line-height: 1.03;
+        color: #f8f5ec;
+        text-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+      }
+
+      .light-scene .headline {
+        color: #23170d;
+        text-shadow: none;
+      }
+
+      .headline strong {
+        color: #ffcb37;
+      }
+
+      .light-scene .headline strong {
+        color: #6d451d;
+      }
+
+      .body-copy {
+        max-width: 720px;
+        color: rgba(248, 245, 236, 0.86);
+        font-size: 27px;
+        font-weight: 650;
+        line-height: 1.48;
+      }
+
+      .body-copy.dark {
+        color: #4d351f;
+      }
+
+      .visual-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 560px;
+        border: 1px solid rgba(212, 175, 55, 0.32);
+        border-radius: 8px;
+        background: #112b22;
+        box-shadow: 0 30px 74px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .visual-card.light {
+        background: #f8ecd5;
+        border-color: #dcc08c;
+        box-shadow: 0 28px 70px rgba(91, 57, 24, 0.18);
+      }
+
+      .feed-content {
+        justify-content: center;
+        gap: 24px;
+      }
+
+      .feed-hero {
+        display: grid;
+        grid-template-columns: 1.06fr 0.94fr;
+        align-items: center;
+        gap: 32px;
+      }
+
+      .feed-hero .headline {
+        font-size: 58px;
+        line-height: 1.04;
+      }
+
+      .feed-visual {
+        min-height: 410px;
+        border-color: #dcc08c;
+        background: #f8ecd5;
+        box-shadow: 0 24px 62px rgba(91, 57, 24, 0.18);
+      }
+
+      .feed-visual::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(248, 245, 236, 0) 48%, rgba(248, 245, 236, 0.38) 100%),
+          radial-gradient(circle at 18% 18%, rgba(255, 184, 0, 0.22), rgba(255, 184, 0, 0) 34%);
+        pointer-events: none;
+      }
+
+      .generated-photo {
+        min-height: 620px;
+      }
+
+      .generated-photo::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(9, 26, 20, 0) 44%, rgba(9, 26, 20, 0.54) 100%),
+          radial-gradient(circle at 76% 18%, rgba(255, 184, 0, 0.2), rgba(255, 184, 0, 0) 36%);
+        pointer-events: none;
+      }
+
+      .photo-note {
+        position: absolute;
+        left: 22px;
+        right: 22px;
+        bottom: 22px;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .photo-note span {
+        border: 1px solid rgba(255, 203, 55, 0.42);
+        border-radius: 8px;
+        background: rgba(9, 26, 20, 0.74);
+        color: #f8f5ec;
+        padding: 12px 10px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 850;
+        line-height: 1.2;
+      }
+
+      .scene-image {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform-origin: center;
+      }
+
+      .image-dim {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(9, 26, 20, 0.03) 0%, rgba(9, 26, 20, 0.74) 100%),
+          radial-gradient(circle at 78% 22%, rgba(255, 184, 0, 0.25), rgba(255, 184, 0, 0) 38%);
+      }
+
+      .product-pack {
+        position: absolute;
+        right: 38px;
+        bottom: 34px;
+        width: 350px;
+        height: 350px;
+        object-fit: contain;
+        filter: drop-shadow(0 28px 42px rgba(0, 0, 0, 0.36));
+      }
+
+      .closed-house {
+        position: relative;
+        height: 620px;
+        border: 1px solid rgba(212, 175, 55, 0.34);
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, rgba(248, 245, 236, 0.05), rgba(248, 245, 236, 0)),
+          #10271f;
+        overflow: hidden;
+        box-shadow: 0 30px 74px rgba(0, 0, 0, 0.28);
+      }
+
+      .house-roof {
+        position: absolute;
+        left: 70px;
+        right: 70px;
+        top: 112px;
+        height: 84px;
+        background: linear-gradient(135deg, #d4af37, #8d6221);
+        clip-path: polygon(0 100%, 50% 0, 100% 100%);
+      }
+
+      .house-body {
+        position: absolute;
+        left: 96px;
+        right: 96px;
+        top: 196px;
+        height: 230px;
+        border: 2px solid rgba(255, 203, 55, 0.5);
+        border-radius: 8px;
+        background: linear-gradient(180deg, rgba(248, 245, 236, 0.1), rgba(9, 26, 20, 0.25));
+      }
+
+      .house-leg {
+        position: absolute;
+        top: 426px;
+        width: 12px;
+        height: 74px;
+        background: rgba(255, 203, 55, 0.54);
+      }
+
+      .house-leg.l1 { left: 132px; }
+      .house-leg.l2 { left: 292px; }
+      .house-leg.l3 { right: 292px; }
+      .house-leg.l4 { right: 132px; }
+
+      .fan {
+        position: absolute;
+        top: 246px;
+        width: 76px;
+        height: 76px;
+        border: 2px solid rgba(248, 245, 236, 0.56);
+        border-radius: 50%;
+      }
+
+      .fan::before,
+      .fan::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 54px;
+        height: 8px;
+        background: rgba(248, 245, 236, 0.48);
+        border-radius: 999px;
+        transform: translate(-50%, -50%);
+      }
+
+      .fan::after {
+        transform: translate(-50%, -50%) rotate(90deg);
+      }
+
+      .fan.f1 { left: 162px; }
+      .fan.f2 { left: 50%; transform: translateX(-50%); }
+      .fan.f3 { right: 162px; }
+
+      .house-label {
+        position: absolute;
+        left: 74px;
+        right: 74px;
+        bottom: 58px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .house-chip {
+        border: 1px solid rgba(255, 203, 55, 0.34);
+        border-radius: 8px;
+        background: rgba(9, 26, 20, 0.68);
+        padding: 16px 12px;
+        text-align: center;
+        color: #f8f5ec;
+        font-size: 18px;
+        font-weight: 850;
+        line-height: 1.25;
+      }
+
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 20px;
+      }
+
+      .feed-content .flow {
+        gap: 14px;
+        margin-top: 0;
+      }
+
+      .flow-card {
+        min-height: 154px;
+        border: 1px solid #dcc08c;
+        border-radius: 8px;
+        background: rgba(255, 250, 241, 0.76);
+        padding: 18px 14px;
+        color: #23170d;
+        box-shadow: 0 18px 34px rgba(91, 57, 24, 0.08);
+      }
+
+      .feed-content .flow-card {
+        min-height: 118px;
+        padding: 15px 14px;
+      }
+
+      .flow-card b {
+        display: block;
+        color: #8d6221;
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .feed-content .flow-card b {
+        font-size: 25px;
+      }
+
+      .flow-card span {
+        display: block;
+        margin-top: 14px;
+        color: #4d351f;
+        font-size: 19px;
+        font-weight: 850;
+        line-height: 1.3;
+      }
+
+      .feed-content .flow-card span {
+        margin-top: 10px;
+        font-size: 17px;
+      }
+
+      .boiler {
+        position: relative;
+        height: 620px;
+        border: 1px solid rgba(212, 175, 55, 0.34);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 50% 18%, rgba(255, 184, 0, 0.18), rgba(255, 184, 0, 0) 34%),
+          #10271f;
+        overflow: hidden;
+        box-shadow: 0 30px 74px rgba(0, 0, 0, 0.28);
+      }
+
+      .pot-outer {
+        position: absolute;
+        left: 142px;
+        right: 142px;
+        bottom: 120px;
+        height: 250px;
+        border: 3px solid rgba(255, 203, 55, 0.64);
+        border-radius: 26px 26px 74px 74px;
+        background: linear-gradient(180deg, rgba(248, 245, 236, 0.11), rgba(9, 26, 20, 0.18));
+      }
+
+      .pot-inner {
+        position: absolute;
+        left: 210px;
+        right: 210px;
+        bottom: 190px;
+        height: 162px;
+        border: 2px solid rgba(248, 245, 236, 0.54);
+        border-radius: 18px 18px 54px 54px;
+      }
+
+      .drip-line {
+        position: absolute;
+        left: 50%;
+        top: 318px;
+        width: 4px;
+        height: 120px;
+        transform: translateX(-50%);
+        background: linear-gradient(180deg, rgba(255, 203, 55, 0), #ffcb37, rgba(255, 203, 55, 0));
+      }
+
+      .drop {
+        position: absolute;
+        left: calc(50% - 11px);
+        top: 322px;
+        width: 22px;
+        height: 30px;
+        border-radius: 50% 50% 50% 50%;
+        background: #ffcb37;
+        box-shadow: 0 0 28px rgba(255, 184, 0, 0.64);
+      }
+
+      .bowl {
+        position: absolute;
+        left: 50%;
+        bottom: 54px;
+        width: 260px;
+        height: 76px;
+        transform: translateX(-50%);
+        border-radius: 50%;
+        border: 2px solid rgba(255, 203, 55, 0.6);
+        background: radial-gradient(ellipse at center, #ffcb37 0%, #b98220 45%, rgba(9, 26, 20, 0.2) 72%);
+      }
+
+      .steam {
+        position: absolute;
+        top: 112px;
+        width: 32px;
+        height: 120px;
+        border-radius: 999px;
+        border-left: 3px solid rgba(248, 245, 236, 0.54);
+      }
+
+      .steam.s1 { left: 330px; }
+      .steam.s2 { left: 50%; }
+      .steam.s3 { right: 330px; }
+
+      .zero-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .zero-pill {
+        border: 1px solid rgba(255, 203, 55, 0.42);
+        border-radius: 8px;
+        background: rgba(9, 26, 20, 0.64);
+        padding: 16px 10px;
+        text-align: center;
+      }
+
+      .zero-pill b {
+        display: block;
+        color: #ffcb37;
+        font-size: 34px;
+      }
+
+      .zero-pill span {
+        display: block;
+        color: rgba(248, 245, 236, 0.86);
+        font-size: 16px;
+        font-weight: 850;
+      }
+
+      .check-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-top: 20px;
+      }
+
+      .check-card {
+        min-height: 116px;
+        border: 1px solid #dcc08c;
+        border-radius: 8px;
+        background: rgba(255, 250, 241, 0.86);
+        color: #23170d;
+        padding: 18px;
+      }
+
+      .check-card b {
+        display: block;
+        color: #8d6221;
+        font-size: 26px;
+      }
+
+      .check-card span {
+        display: block;
+        margin-top: 8px;
+        color: #4d351f;
+        font-size: 17px;
+        font-weight: 750;
+        line-height: 1.32;
+      }
+
+      .cta-panel {
+        position: relative;
+        display: grid;
+        grid-template-columns: 0.96fr 1.04fr;
+        align-items: center;
+        gap: 36px;
+        min-height: 820px;
+        border: 1px solid rgba(255, 203, 55, 0.42);
+        border-radius: 8px;
+        background:
+          radial-gradient(circle at 78% 24%, rgba(255, 184, 0, 0.18), rgba(255, 184, 0, 0) 34%),
+          linear-gradient(180deg, rgba(17, 43, 34, 0.98), rgba(9, 26, 20, 0.98));
+        padding: 44px 40px;
+        box-shadow: 0 34px 86px rgba(0, 0, 0, 0.38);
+      }
+
+      .cta-products {
+        position: relative;
+        min-height: 620px;
+      }
+
+      .cta-pack {
+        position: absolute;
+        width: 360px;
+        left: 28px;
+        top: 36px;
+        object-fit: contain;
+        filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.36));
+      }
+
+      .cta-cup {
+        position: absolute;
+        width: 340px;
+        height: 250px;
+        left: 24px;
+        bottom: 30px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid rgba(255, 203, 55, 0.28);
+      }
+
+      .cta-title {
+        font-family: "Cormorant Garamond", serif;
+        color: #f8f5ec;
+        font-size: 66px;
+        font-weight: 800;
+        line-height: 1.02;
+      }
+
+      .cta-subtitle {
+        margin-top: 24px;
+        color: rgba(248, 245, 236, 0.84);
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.46;
+      }
+
+      .cta-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 34px;
+        border: 2px solid rgba(255, 203, 55, 0.76);
+        border-radius: 8px;
+        background: #091a14;
+        color: #ffffff;
+        padding: 20px 28px;
+        font-size: 30px;
+        font-weight: 950;
+        line-height: 1.15;
+        box-shadow: 0 18px 46px rgba(255, 184, 0, 0.24);
+      }
+
+      .caption {
+        position: absolute;
+        inset: auto 70px 86px 70px;
+        z-index: 80;
+        display: flex;
+        justify-content: center;
+        border: 2px solid rgba(255, 203, 55, 0.5);
+        border-radius: 8px;
+        background: rgba(9, 26, 20, 0.96);
+        padding: 18px 28px;
+        opacity: 0;
+        overflow: visible;
+        pointer-events: none;
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.44);
+      }
+
+      .caption span {
+        display: block;
+        max-width: 900px;
+        color: #ffffff;
+        text-align: center;
+        font-size: 32px;
+        font-weight: 850;
+        line-height: 1.34;
+      }
+
+      .transition-wash {
+        z-index: 30;
+        pointer-events: none;
+        opacity: 0;
+      }
+
+      .wash-band {
+        position: absolute;
+        inset: -20% -35%;
+        transform: translateX(-72%) rotate(-9deg);
+        background:
+          linear-gradient(90deg, rgba(255, 203, 55, 0) 0%, rgba(255, 203, 55, 0.9) 45%, rgba(248, 245, 236, 0.98) 52%, rgba(255, 184, 0, 0) 100%);
+        filter: blur(10px);
+      }
+
+      .gold-grain {
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        pointer-events: none;
+        opacity: 0.16;
+        background-image:
+          radial-gradient(circle at 20% 30%, rgba(255, 203, 55, 0.34) 0 2px, rgba(255, 203, 55, 0) 3px),
+          radial-gradient(circle at 70% 52%, rgba(248, 245, 236, 0.22) 0 1px, rgba(248, 245, 236, 0) 3px);
+        background-size: 92px 92px, 128px 128px;
+      }
+
+      .final-fade {
+        z-index: 40;
+        pointer-events: none;
+        background: #091a14;
+        opacity: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      id="root"
+      data-composition-id="main"
+      data-start="0"
+      data-duration="32"
+      data-width="1080"
+      data-height="1080"
+    >
+      <section id="scene-hook" class="clip scene" data-start="0" data-duration="4.2" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content hero-layout">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>Raised by us. Crafted by us.</span></div>
+            <h1 class="headline">Aqina starts with our own <strong>Pineapple Enzyme Chickens</strong>.</h1>
+            <p class="body-copy">A closer look at the source, feed, craft, and checks behind every pouch.</p>
+          </div>
+          <figure class="visual-card">
+            <img class="scene-image" src="assets/pineapple-farm.webp" alt="Aqina pineapple source" data-layout-allow-overflow />
+            <div class="image-dim"></div>
+            <img class="product-pack" src="assets/pack-1.webp" alt="Aqina chicken essence pack" />
+          </figure>
+        </div>
+      </section>
+
+      <section id="scene-house" class="clip scene" data-start="4.2" data-duration="6.89" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content hero-layout">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>Controlled Malaysian Closed Houses</span></div>
+            <h2 class="headline">Our chickens are raised in <strong>controlled Malaysian closed houses</strong>.</h2>
+            <p class="body-copy">Clean airflow, controlled conditions, and Aqina-managed standards.</p>
+          </div>
+          <figure class="visual-card generated-photo">
+            <img class="scene-image" src="assets/generated/closed-house-gpt-image-2.webp" alt="Controlled Malaysian closed house chicken raising environment" data-layout-allow-overflow />
+            <div class="photo-note">
+              <span>Own raising</span>
+              <span>Closed house</span>
+              <span>Malaysia</span>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <section id="scene-feed" class="clip scene light-scene" data-start="11.1" data-duration="5.45" data-track-index="0">
+        <div class="scene-content feed-content">
+          <div class="feed-hero">
+            <div class="stack">
+              <div class="topline"><span class="topline-dot"></span><span>MD2 Pineapple Enzyme Nutrition</span></div>
+              <h2 class="headline">Fed with <strong>MD2 pineapple enzyme nutrition</strong> for Aqina's signature clean profile.</h2>
+              <p class="body-copy dark">The value begins before extraction, with feed thinking built around the chicken.</p>
+            </div>
+            <figure class="visual-card feed-visual">
+              <img class="scene-image" src="assets/generated/feed-pineapple-enzyme-gpt-image-2.webp" alt="MD2 pineapple enzyme nutrition and clean feed ingredients" data-layout-allow-overflow />
+            </figure>
+          </div>
+          <div class="flow">
+            <article class="flow-card"><b>01</b><span>MD2 pineapple enzyme source</span></article>
+            <article class="flow-card"><b>02</b><span>Aqina-managed clean feed</span></article>
+            <article class="flow-card"><b>03</b><span>Own Pineapple Enzyme Chickens</span></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="scene-boil" class="clip scene" data-start="16.55" data-duration="5.1" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content hero-layout">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>Double-Boil Steaming</span></div>
+            <h2 class="headline">The precious step: <strong>slow drip extraction</strong> with no added water.</h2>
+            <p class="body-copy">Steam draws clear essence from chicken meat and bone into concentrated golden drops.</p>
+            <div class="zero-row">
+              <div class="zero-pill"><b>0%</b><span>Added water</span></div>
+              <div class="zero-pill"><b>0%</b><span>Preservatives</span></div>
+              <div class="zero-pill"><b>0%</b><span>MSG</span></div>
+            </div>
+          </div>
+          <figure class="visual-card generated-photo">
+            <img class="scene-image" src="assets/generated/slow-drip-gpt-image-2.webp" alt="Slow drip extraction of golden chicken essence through double-boil steaming" data-layout-allow-overflow />
+            <div class="photo-note">
+              <span>Double-boil</span>
+              <span>Slow drip</span>
+              <span>No added water</span>
+            </div>
+          </figure>
+        </div>
+      </section>
+
+      <section id="scene-checks" class="clip scene light-scene" data-start="21.65" data-duration="4.35" data-track-index="0">
+        <div class="scene-content hero-layout">
+          <div class="stack">
+            <div class="topline"><span class="topline-dot"></span><span>Strict Batch Checks</span></div>
+            <h2 class="headline">Clean process. <strong>Natural at heart</strong>.</h2>
+            <p class="body-copy dark">Every batch is checked before packing, with clear standards behind every pouch.</p>
+            <div class="check-grid">
+              <div class="check-card"><b>Halal</b><span>Certified production flow</span></div>
+              <div class="check-card"><b>HACCP</b><span>Food safety management</span></div>
+              <div class="check-card"><b>GMP</b><span>Good manufacturing practice</span></div>
+              <div class="check-card"><b>Batch</b><span>Checked before packing</span></div>
+            </div>
+          </div>
+          <figure class="visual-card light">
+            <img class="scene-image" src="assets/golden-essence.webp" alt="Clear golden chicken essence" data-layout-allow-overflow />
+          </figure>
+        </div>
+      </section>
+
+      <section id="scene-cta" class="clip scene" data-start="26" data-duration="6" data-track-index="0">
+        <div class="gold-grain" data-layout-ignore></div>
+        <div class="scene-content">
+          <div class="cta-panel">
+            <div class="cta-products">
+              <img class="cta-pack" src="assets/pack-4.webp" alt="Aqina chicken essence pack" />
+              <img class="cta-cup" src="assets/pure-essence-bowl.webp" alt="Warm golden essence" />
+            </div>
+            <div>
+              <div class="topline"><span class="topline-dot"></span><span>Aqina Pineapple Enzyme Chicken Essence</span></div>
+              <h2 class="cta-title">Natural at the source. Clean in the process.</h2>
+              <p class="cta-subtitle">Trusted for daily drinking.</p>
+              <div class="cta-button">Contact us on WhatsApp to order now</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div id="caption-1" class="clip caption" data-start="0" data-duration="2.65" data-track-index="8"><span>Raised by us. Crafted by us.</span></div>
+      <div id="caption-2" class="clip caption" data-start="2.65" data-duration="3.2" data-track-index="8"><span>Aqina begins with our own Pineapple Enzyme Chickens.</span></div>
+      <div id="caption-3" class="clip caption" data-start="5.85" data-duration="2.2" data-track-index="8"><span>Raised in controlled Malaysian closed houses.</span></div>
+      <div id="caption-4" class="clip caption" data-start="8.05" data-duration="3.1" data-track-index="8"><span>With clean airflow and Aqina-managed standards.</span></div>
+      <div id="caption-5" class="clip caption" data-start="11.15" data-duration="3.1" data-track-index="8"><span>Their feed includes MD2 pineapple enzyme nutrition.</span></div>
+      <div id="caption-6" class="clip caption" data-start="14.25" data-duration="2.3" data-track-index="8"><span>Building a clean profile from the source.</span></div>
+      <div id="caption-7" class="clip caption" data-start="16.55" data-duration="2.55" data-track-index="8"><span>Double-boil steaming slowly draws out essence.</span></div>
+      <div id="caption-8" class="clip caption" data-start="19.1" data-duration="2.54" data-track-index="8"><span>From chicken meat and bone, with no added water.</span></div>
+      <div id="caption-9" class="clip caption" data-start="21.65" data-duration="1.85" data-track-index="8"><span>Every batch is checked before packing.</span></div>
+      <div id="caption-10" class="clip caption" data-start="23.5" data-duration="2" data-track-index="8"><span>So each pouch is clean and traceable.</span></div>
+      <div id="caption-11" class="clip caption" data-start="25.55" data-duration="2.8" data-track-index="8"><span>Natural at the source. Clean in the process.</span></div>
+      <div id="caption-12" class="clip caption" data-start="28.4" data-duration="2.75" data-track-index="8"><span>Contact us on WhatsApp to order now.</span></div>
+
+      <audio
+        id="narration"
+        data-start="0"
+        data-duration="32"
+        data-track-index="9"
+        src="assets/narration.wav"
+        data-volume="1"
+      ></audio>
+
+      <div id="transition-wash" class="clip transition-wash" data-start="0" data-duration="32" data-track-index="10" data-layout-ignore>
+        <div class="wash-band"></div>
+      </div>
+      <div id="final-fade" class="clip final-fade" data-start="0" data-duration="32" data-track-index="11" data-layout-ignore></div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      const scenes = [
+        { id: "scene-hook", start: 0, duration: 4.2 },
+        { id: "scene-house", start: 4.2, duration: 6.89 },
+        { id: "scene-feed", start: 11.1, duration: 5.45 },
+        { id: "scene-boil", start: 16.55, duration: 5.1 },
+        { id: "scene-checks", start: 21.65, duration: 4.35 },
+        { id: "scene-cta", start: 26, duration: 6 }
+      ];
+      const captions = [
+        { id: "caption-1", start: 0, duration: 2.65 },
+        { id: "caption-2", start: 2.65, duration: 3.2 },
+        { id: "caption-3", start: 5.85, duration: 2.2 },
+        { id: "caption-4", start: 8.05, duration: 3.1 },
+        { id: "caption-5", start: 11.15, duration: 3.1 },
+        { id: "caption-6", start: 14.25, duration: 2.3 },
+        { id: "caption-7", start: 16.55, duration: 2.55 },
+        { id: "caption-8", start: 19.1, duration: 2.54 },
+        { id: "caption-9", start: 21.65, duration: 1.85 },
+        { id: "caption-10", start: 23.5, duration: 2 },
+        { id: "caption-11", start: 25.55, duration: 2.8 },
+        { id: "caption-12", start: 28.4, duration: 2.75 }
+      ];
+      const transitionTimes = [4.2, 11.1, 16.55, 21.65, 26];
+
+      scenes.forEach(function (scene) {
+        tl.set("#" + scene.id, { opacity: 1 }, scene.start);
+        tl.set("#" + scene.id + " .scene-content", { opacity: 1, visibility: "visible" }, scene.start);
+        tl.set("#" + scene.id + " .scene-content", { opacity: 0, visibility: "hidden" }, scene.start + scene.duration);
+        tl.set("#" + scene.id, { opacity: 0 }, scene.start + scene.duration);
+      });
+
+      captions.forEach(function (caption) {
+        tl.set("#" + caption.id, { opacity: 1 }, caption.start);
+        tl.set("#" + caption.id, { opacity: 0 }, caption.start + caption.duration);
+        tl.from("#" + caption.id + " span", { y: 16, opacity: 0, scale: 0.98, duration: 0.28, ease: "power3.out" }, caption.start + 0.1);
+      });
+
+      function addFrom(selector, vars, position) {
+        const targets = document.querySelectorAll(selector);
+        if (targets.length > 0) {
+          tl.from(targets, vars, position);
+        }
+      }
+
+      function enterScene(sceneId, time) {
+        const root = "#" + sceneId;
+        addFrom(root + " .topline", { y: 20, opacity: 0, duration: 0.42, ease: "power3.out" }, time + 0.12);
+        addFrom(root + " .headline, " + root + " .cta-title", { y: 42, opacity: 0, scale: 0.98, duration: 0.58, ease: "expo.out" }, time + 0.22);
+        addFrom(root + " .body-copy, " + root + " .cta-subtitle", { y: 28, opacity: 0, duration: 0.46, ease: "sine.out" }, time + 0.42);
+        addFrom(root + " .visual-card, " + root + " .closed-house, " + root + " .boiler, " + root + " .cta-products", { y: 34, opacity: 0, scale: 0.97, duration: 0.58, ease: "power2.out" }, time + 0.3);
+        addFrom(root + " .flow-card, " + root + " .zero-pill, " + root + " .check-card, " + root + " .house-chip, " + root + " .photo-note span", {
+          y: 22,
+          opacity: 0,
+          scale: 0.98,
+          duration: 0.36,
+          ease: "power3.out",
+          stagger: 0.06
+        }, time + 0.62);
+      }
+
+      scenes.forEach(function (scene) {
+        enterScene(scene.id, scene.start);
+      });
+
+      tl.from(".product-pack", { y: 38, opacity: 0, scale: 0.88, duration: 0.62, ease: "back.out(1.35)" }, 0.62);
+      tl.to(".scene-image", { scale: 1.025, duration: 32, ease: "none" }, 0);
+      tl.to(".gold-grain", { opacity: 0.24, duration: 3.2, repeat: 8, yoyo: true, ease: "sine.inOut" }, 0.2);
+
+      transitionTimes.forEach(function (time) {
+        tl.set("#transition-wash", { opacity: 1, overwrite: "auto" }, time - 0.28);
+        tl.fromTo("#transition-wash .wash-band", { xPercent: -86 }, { xPercent: 86, duration: 0.64, ease: "power2.inOut" }, time - 0.28);
+        tl.to("#transition-wash", { opacity: 0, duration: 0.16, ease: "sine.out", overwrite: "auto" }, time + 0.3);
+      });
+
+      tl.to("#final-fade", { opacity: 1, duration: 0.45, ease: "sine.inOut" }, 31.55);
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

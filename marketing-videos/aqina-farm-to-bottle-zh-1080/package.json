@@ -1,0 +1,11 @@
+{
+  "name": "aqina-farm-to-bottle-zh-1080",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "PATH=/usr/local/bin:$PATH npx --yes hyperframes@0.5.5 preview",
+    "check": "PATH=/usr/local/bin:$PATH npx --yes hyperframes@0.5.5 lint && PATH=/usr/local/bin:$PATH npx --yes hyperframes@0.5.5 validate && PATH=/usr/local/bin:$PATH npx --yes hyperframes@0.5.5 inspect",
+    "render": "PATH=/usr/local/bin:$PATH npx --yes hyperframes@0.5.5 render",
+    "publish": "PATH=/usr/local/bin:$PATH npx --yes hyperframes@0.5.5 publish"
+  }
+}

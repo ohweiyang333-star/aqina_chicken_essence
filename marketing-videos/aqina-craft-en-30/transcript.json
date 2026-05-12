@@ -1,0 +1,432 @@
+[
+  {
+    "text": "Raised",
+    "start": 0.06,
+    "end": 0.6
+  },
+  {
+    "text": "by",
+    "start": 0.6,
+    "end": 0.8
+  },
+  {
+    "text": "us,",
+    "start": 0.8,
+    "end": 1.2
+  },
+  {
+    "text": "crafted",
+    "start": 1.2,
+    "end": 1.82
+  },
+  {
+    "text": "by",
+    "start": 1.85,
+    "end": 2.02
+  },
+  {
+    "text": "us,",
+    "start": 2.3,
+    "end": 2.52
+  },
+  {
+    "text": "Acana",
+    "start": 2.58,
+    "end": 2.84
+  },
+  {
+    "text": "begins",
+    "start": 2.94,
+    "end": 3.25
+  },
+  {
+    "text": "with",
+    "start": 3.25,
+    "end": 3.47
+  },
+  {
+    "text": "our",
+    "start": 3.56,
+    "end": 3.71
+  },
+  {
+    "text": "own",
+    "start": 3.71,
+    "end": 3.91
+  },
+  {
+    "text": "pineapple",
+    "start": 3.91,
+    "end": 4.5
+  },
+  {
+    "text": "enzyme",
+    "start": 4.5,
+    "end": 4.55
+  },
+  {
+    "text": "chickens,",
+    "start": 5.07,
+    "end": 5.48
+  },
+  {
+    "text": "raised",
+    "start": 5.53,
+    "end": 5.8
+  },
+  {
+    "text": "in",
+    "start": 5.9,
+    "end": 5.91
+  },
+  {
+    "text": "controlled",
+    "start": 5.98,
+    "end": 6.43
+  },
+  {
+    "text": "Malaysian",
+    "start": 6.55,
+    "end": 7.1
+  },
+  {
+    "text": "closed",
+    "start": 7.1,
+    "end": 7.45
+  },
+  {
+    "text": "houses",
+    "start": 7.45,
+    "end": 7.51
+  },
+  {
+    "text": "with",
+    "start": 7.89,
+    "end": 8.1
+  },
+  {
+    "text": "clean",
+    "start": 8.1,
+    "end": 8.43
+  },
+  {
+    "text": "airflow",
+    "start": 8.43,
+    "end": 8.78
+  },
+  {
+    "text": "and",
+    "start": 8.91,
+    "end": 9.06
+  },
+  {
+    "text": "Acana",
+    "start": 9.15,
+    "end": 9.4
+  },
+  {
+    "text": "managed",
+    "start": 9.4,
+    "end": 9.84
+  },
+  {
+    "text": "standards.",
+    "start": 10.39,
+    "end": 10.68
+  },
+  {
+    "text": "Their",
+    "start": 10.73,
+    "end": 11
+  },
+  {
+    "text": "feed",
+    "start": 11.1,
+    "end": 11.29
+  },
+  {
+    "text": "includes",
+    "start": 11.29,
+    "end": 11.84
+  },
+  {
+    "text": "MD2",
+    "start": 11.84,
+    "end": 12.17
+  },
+  {
+    "text": "pineapple",
+    "start": 12.17,
+    "end": 12.68
+  },
+  {
+    "text": "enzyme",
+    "start": 12.68,
+    "end": 13.23
+  },
+  {
+    "text": "nutrition",
+    "start": 13.23,
+    "end": 13.88
+  },
+  {
+    "text": "building",
+    "start": 13.93,
+    "end": 14.42
+  },
+  {
+    "text": "a",
+    "start": 14.42,
+    "end": 14.48
+  },
+  {
+    "text": "clean",
+    "start": 14.48,
+    "end": 14.82
+  },
+  {
+    "text": "profile",
+    "start": 14.82,
+    "end": 15.28
+  },
+  {
+    "text": "from",
+    "start": 15.35,
+    "end": 15.56
+  },
+  {
+    "text": "the",
+    "start": 15.56,
+    "end": 15.7
+  },
+  {
+    "text": "source.",
+    "start": 15.7,
+    "end": 16.2
+  },
+  {
+    "text": "Then",
+    "start": 16.26,
+    "end": 16.41
+  },
+  {
+    "text": "double",
+    "start": 16.41,
+    "end": 16.73
+  },
+  {
+    "text": "boil",
+    "start": 16.73,
+    "end": 16.94
+  },
+  {
+    "text": "steaming",
+    "start": 16.94,
+    "end": 17.4
+  },
+  {
+    "text": "slowly",
+    "start": 17.4,
+    "end": 17.85
+  },
+  {
+    "text": "draws",
+    "start": 17.85,
+    "end": 18.2
+  },
+  {
+    "text": "essence",
+    "start": 18.2,
+    "end": 18.65
+  },
+  {
+    "text": "from",
+    "start": 18.65,
+    "end": 18.85
+  },
+  {
+    "text": "chicken",
+    "start": 18.85,
+    "end": 19.29
+  },
+  {
+    "text": "meat",
+    "start": 19.29,
+    "end": 19.54
+  },
+  {
+    "text": "and",
+    "start": 19.54,
+    "end": 19.73
+  },
+  {
+    "text": "bone",
+    "start": 19.73,
+    "end": 19.98
+  },
+  {
+    "text": "with",
+    "start": 19.98,
+    "end": 20.23
+  },
+  {
+    "text": "no",
+    "start": 20.23,
+    "end": 20.35
+  },
+  {
+    "text": "added",
+    "start": 20.35,
+    "end": 20.61
+  },
+  {
+    "text": "water.",
+    "start": 20.97,
+    "end": 21.2
+  },
+  {
+    "text": "Every",
+    "start": 21.25,
+    "end": 21.48
+  },
+  {
+    "text": "batch",
+    "start": 21.48,
+    "end": 21.76
+  },
+  {
+    "text": "is",
+    "start": 21.76,
+    "end": 21.87
+  },
+  {
+    "text": "checked",
+    "start": 21.87,
+    "end": 22.14
+  },
+  {
+    "text": "before",
+    "start": 22.27,
+    "end": 22.6
+  },
+  {
+    "text": "packing,",
+    "start": 22.67,
+    "end": 23.04
+  },
+  {
+    "text": "so",
+    "start": 23.1,
+    "end": 23.18
+  },
+  {
+    "text": "each",
+    "start": 23.18,
+    "end": 23.36
+  },
+  {
+    "text": "pouch",
+    "start": 23.46,
+    "end": 23.81
+  },
+  {
+    "text": "is",
+    "start": 23.81,
+    "end": 23.87
+  },
+  {
+    "text": "clean",
+    "start": 23.95,
+    "end": 24.26
+  },
+  {
+    "text": "and",
+    "start": 24.35,
+    "end": 24.43
+  },
+  {
+    "text": "traceable,",
+    "start": 24.51,
+    "end": 25.32
+  },
+  {
+    "text": "natural",
+    "start": 25.59,
+    "end": 25.81
+  },
+  {
+    "text": "at",
+    "start": 25.81,
+    "end": 25.94
+  },
+  {
+    "text": "the",
+    "start": 25.99,
+    "end": 26.16
+  },
+  {
+    "text": "source.",
+    "start": 26.16,
+    "end": 26.8
+  },
+  {
+    "text": "Clean",
+    "start": 26.85,
+    "end": 27.12
+  },
+  {
+    "text": "in",
+    "start": 27.22,
+    "end": 27.4
+  },
+  {
+    "text": "the",
+    "start": 27.4,
+    "end": 27.63
+  },
+  {
+    "text": "process,",
+    "start": 27.72,
+    "end": 28.44
+  },
+  {
+    "text": "contact",
+    "start": 28.44,
+    "end": 28.81
+  },
+  {
+    "text": "us",
+    "start": 28.81,
+    "end": 29.35
+  },
+  {
+    "text": "on",
+    "start": 29.35,
+    "end": 29.38
+  },
+  {
+    "text": "what's",
+    "start": 29.38,
+    "end": 29.68
+  },
+  {
+    "text": "app",
+    "start": 29.68,
+    "end": 29.96
+  },
+  {
+    "text": "to",
+    "start": 29.96,
+    "end": 30.14
+  },
+  {
+    "text": "order",
+    "start": 30.14,
+    "end": 30.58
+  },
+  {
+    "text": "now.",
+    "start": 30.63,
+    "end": 30.88
+  }
+]

@@ -7,7 +7,11 @@ from datetime import timedelta
 from typing import Any
 
 from app.services.chatbot_settings import ChatbotSettingsService, FOLLOW_UP_STAGE_DELAYS
-from app.services.gemini_service import get_gemini_service
+from app.services.gemini_service import (
+    SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT,
+    SAFE_FOLLOW_UP_FALLBACK_TEXT,
+    get_gemini_service,
+)
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, stable_id, utcnow
 from app.services.meta_client import get_meta_client
@@ -204,8 +208,8 @@ class FollowUpEngine:
                 reminder = "请使用前面发送的 PayNow QR 图片付款，完成后把截图发回这里即可。"
                 if reminder not in reply_text:
                     reply_text = f"{reply_text}\n\n{reminder}".strip()
-            return reply_text, next_tag
-        return str(result).strip(), None
+            return _customer_safe_follow_up_text(reply_text, checkout_url=checkout_url), next_tag
+        return _customer_safe_follow_up_text(str(result).strip(), checkout_url=checkout_url), None
 
     @staticmethod
     def _parse_structured_result_string(value: str) -> dict[str, Any] | None:
@@ -276,3 +280,45 @@ def _extract_bool_field(text: str, field_name: str) -> bool | None:
     if not match:
         return None
     return match.group(1) == "True"
+
+
+def _customer_safe_follow_up_text(text: str, *, checkout_url: str | None) -> str:
+    normalized = str(text or "").strip()
+    if not normalized or normalized.casefold() in {"none", "null"}:
+        return _safe_follow_up_fallback_text(checkout_url=checkout_url)
+    if _looks_like_internal_follow_up_instruction(normalized):
+        return _safe_follow_up_fallback_text(checkout_url=checkout_url)
+    return normalized
+
+
+def _safe_follow_up_fallback_text(*, checkout_url: str | None) -> str:
+    if checkout_url:
+        return SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT
+    return SAFE_FOLLOW_UP_FALLBACK_TEXT
+
+
+def _looks_like_internal_follow_up_instruction(text: str) -> bool:
+    folded = text.casefold()
+    internal_markers = [
+        "stage instruction",
+        "follow-up stage",
+        "checkout_link_required",
+        "reply_text=",
+        "next_tag=",
+        "instruction",
+        "输出 json",
+        "字段固定",
+        "internal only",
+        "不要发送",
+        "不要介绍",
+        "不要重新",
+        "不要把",
+        "严禁",
+        "用一句话",
+        "直接帮顾客",
+        "语气简短",
+        "顾客若",
+    ]
+    if any(marker in folded for marker in internal_markers):
+        return True
+    return "提醒" in text and "询问" in text

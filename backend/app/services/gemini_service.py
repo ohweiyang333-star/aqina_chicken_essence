@@ -12,6 +12,8 @@ from app.services.chatbot_skill_router import ChatbotSkillRouter
 
 VALID_LEAD_GOALS = {"self_care", "pregnancy", "postpartum", "gift_elder", "unknown"}
 VALID_MARKETING_TAGS = {"lead_cold", "qualified_warm", "cart_hot", "handoff_pending"}
+SAFE_FOLLOW_UP_FALLBACK_TEXT = "Aqina 新加坡现货，2盒 SGD75 可免运。您想先 1盒试喝，还是直接拿 2盒免运？"
+SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT = "Aqina 新加坡现货已为您保留配套。您可以用前面发送的 PayNow QR 付款，完成后把截图发回这里即可。"
 
 
 class GeminiConversationService:
@@ -70,7 +72,7 @@ class GeminiConversationService:
             system_prompt=(runtime_settings or {}).get("system_prompt") or settings.gemini_system_prompt,
         )
         if payload is None:
-            return FollowUpTurnResult(reply_text=instruction)
+            return FollowUpTurnResult(reply_text=_safe_follow_up_fallback_text(checkout_url=checkout_url))
         return FollowUpTurnResult.model_validate(payload)
 
     def _generate_json(self, prompt: str, *, system_prompt: str) -> dict[str, Any] | None:
@@ -302,6 +304,8 @@ class GeminiConversationService:
             f"Checkout URL (internal only, do not send as text): {checkout_url or ''}\n"
             f"Stage instruction: {instruction}\n"
             f"Conversation history:\n{history}\n\n"
+            "Stage instruction 是内部客服策略，不是顾客文案；必须转写成自然、简短、可直接发送给顾客的 reply_text。\n"
+            "严禁逐字复制 Stage instruction，严禁在 reply_text 里输出“提醒、询问、不要发送、Stage instruction、instruction”等内部指令语气。\n"
             "输出 JSON，字段固定为：reply_text, next_tag, checkout_link_required, escalate, escalation_reason, opt_in_request。"
         )
 
@@ -315,3 +319,9 @@ def get_gemini_service() -> GeminiConversationService:
     if _gemini_service is None:
         _gemini_service = GeminiConversationService()
     return _gemini_service
+
+
+def _safe_follow_up_fallback_text(*, checkout_url: str | None) -> str:
+    if checkout_url:
+        return SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT
+    return SAFE_FOLLOW_UP_FALLBACK_TEXT
