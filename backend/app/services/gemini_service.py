@@ -12,8 +12,35 @@ from app.services.chatbot_skill_router import ChatbotSkillRouter
 
 VALID_LEAD_GOALS = {"self_care", "pregnancy", "postpartum", "gift_elder", "unknown"}
 VALID_MARKETING_TAGS = {"lead_cold", "qualified_warm", "cart_hot", "handoff_pending"}
-SAFE_FOLLOW_UP_FALLBACK_TEXT = "Aqina 新加坡现货，2盒 SGD75 可免运。您想先 1盒试喝，还是直接拿 2盒免运？"
+SAFE_FOLLOW_UP_FALLBACK_TEXT = "如果刚才的问题还不确定，我可以按您的情况帮您判断适不适合。请问是自己喝、送长辈，还是孕期/月子调理？"
 SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT = "Aqina 新加坡现货已为您保留配套。您可以用前面发送的 PayNow QR 付款，完成后把截图发回这里即可。"
+
+PRICE_OR_ORDER_INTENT_KEYWORDS = {
+    "多少钱",
+    "价钱",
+    "价格",
+    "贵",
+    "便宜",
+    "price",
+    "how much",
+    "discount",
+    "优惠",
+    "配套",
+    "套餐",
+    "运费",
+    "多久到",
+    "shipping",
+    "delivery",
+    "我要",
+    "下单",
+    "购买",
+    "订购",
+    "买",
+    "order",
+    "buy",
+    "拿一盒",
+    "拿两盒",
+}
 
 
 class GeminiConversationService:
@@ -239,6 +266,8 @@ class GeminiConversationService:
             f"{item.get('role', 'user')}: {item.get('text', '')}"
             for item in messages[-12:]
         )
+        recently_quoted_price = GeminiConversationService._recent_assistant_message_mentions_price(messages)
+        incoming_requests_price_or_order = GeminiConversationService._incoming_requests_price_or_order(incoming_text)
         available_packages = runtime_settings.get("packages", {})
         package_codes = sorted(str(code) for code in available_packages.keys())
         packages = json.dumps(available_packages, ensure_ascii=False)
@@ -264,11 +293,17 @@ class GeminiConversationService:
             f"Available packages: {packages}\n"
             f"Active chatbot skills: {active_skills_json}\n"
             f"Knowledge base: {knowledge_base}\n"
+            f"Recent assistant price quote: {'yes' if recently_quoted_price else 'no'}\n"
+            f"Incoming asks price/order/shipping: {'yes' if incoming_requests_price_or_order else 'no'}\n"
             f"Incoming message: {incoming_text}\n"
             f"Conversation history:\n{history}\n\n"
             "只使用 Active chatbot skills 作为当前场景 playbook；不要把未注入的 skill 规则写进回复。\n"
+            "默认使用 Pace -> Answer -> Diagnose -> Bridge -> Choice：先承接原话，先回答真实问题，再问一个必要问题，需求明确后才推荐。\n"
             "不要在 reply_text 里输出 skill_id、lead tag、package code、checkout_ready、escalate 或任何内部字段。\n"
             "图片会由系统作为媒体文件另发；不要把图片 URL 或 checkout URL 写进 reply_text。\n"
+            "严禁夸大痛点、制造焦虑、暗示治疗效果、假装稀缺或用操控式话术逼单。\n"
+            "如果 Recent assistant price quote 是 yes 且 Incoming asks price/order/shipping 是 no，"
+            "不要重复任何 SGD 价格，只回答顾客当前咨询并问一个低压场景问题。\n"
             "如果 Channel 是 whatsapp 且 Known order fields.phone 或 Known channel phone 已有号码，"
             "这个 WhatsApp 来讯号码已经可以作为联系电话；不要再询问联系电话，也不要把 phone 放进 missing_order_fields。\n"
             "如果 Channel 不是 whatsapp，仍必须向顾客收集联系电话。\n"
@@ -283,6 +318,20 @@ class GeminiConversationService:
             "WhatsApp channel 已有 Known channel phone 时可视为 phone 已收集；"
             "资料不齐时 checkout_ready=false，missing_order_fields 必须列出缺少字段。"
         )
+
+    @staticmethod
+    def _recent_assistant_message_mentions_price(messages: list[dict[str, Any]]) -> bool:
+        assistant_messages = [
+            str(item.get("text") or "")
+            for item in messages
+            if str(item.get("role") or "").casefold() == "assistant"
+        ]
+        return any("sgd" in text.casefold() for text in assistant_messages[-6:])
+
+    @staticmethod
+    def _incoming_requests_price_or_order(incoming_text: str) -> bool:
+        text = str(incoming_text or "").casefold()
+        return any(keyword in text for keyword in PRICE_OR_ORDER_INTENT_KEYWORDS)
 
     @staticmethod
     def _build_follow_up_prompt(

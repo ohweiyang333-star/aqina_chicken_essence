@@ -37,6 +37,8 @@ class ChatbotSkillRouter:
             add("maternity_consultation")
         if _contains_any(text, ELDER_KEYWORDS) or lead_goal == "gift_elder":
             add("elder_gift_recovery")
+        if _contains_any(text, USAGE_CONSULTATION_KEYWORDS):
+            add("usage_consultation")
         if _contains_any(text, TASTE_KEYWORDS):
             add("taste_objection")
         if _contains_any(text, PRICE_KEYWORDS):
@@ -86,6 +88,41 @@ PAYMENT_KEYWORDS = {
 MEDICAL_KEYWORDS = {"疾病", "治疗", "吃药", "药", "手术", "糖尿", "高血压", "癌", "医生", "肾", "病"}
 MATERNITY_KEYWORDS = {"孕", "怀孕", "待产", "月子", "产后", "坐月", "新手妈妈", "哺乳"}
 ELDER_KEYWORDS = {"长辈", "老人", "妈妈", "爸爸", "父母", "送礼", "术后", "恢复", "补身"}
+USAGE_CONSULTATION_KEYWORDS = {
+    "什么时候",
+    "怎么喝",
+    "怎样喝",
+    "怎么吃",
+    "喝法",
+    "服用",
+    "饮用",
+    "空腹",
+    "早上",
+    "早晨",
+    "晚上",
+    "适合",
+    "适不适合",
+    "可以喝",
+    "能喝",
+    "能不能喝",
+    "可以吗",
+    "人群",
+    "when to take",
+    "how to take",
+    "can i take",
+    "can take",
+    "can drink",
+    "suitable",
+    "who can drink",
+    "male",
+    "man",
+    "men",
+    "男",
+    "男性",
+    "便秘",
+    "肠胃",
+    "constipation",
+}
 TASTE_KEYWORDS = {"腥", "苦", "味道", "口感", "好喝", "难喝", "怕油"}
 PRICE_KEYWORDS = {"多少钱", "价钱", "价格", "贵", "便宜", "price", "how much", "discount", "优惠"}
 CHECKOUT_KEYWORDS = {
