@@ -20,12 +20,18 @@ type MetaPixelFunction = {
   version?: string;
 };
 
+type ClarityFunction = {
+  (...args: unknown[]): void;
+  q?: unknown[][];
+};
+
 declare global {
   interface Window {
     dataLayer?: DataLayerCommand[];
     gtag?: GtagFunction;
     fbq?: MetaPixelFunction;
     _fbq?: MetaPixelFunction;
+    clarity?: ClarityFunction;
   }
 }
 
@@ -68,6 +74,7 @@ export interface MarketingServerEventContext extends MarketingPageContext {
 
 let initializedGaMeasurementId = '';
 let initializedMetaPixelId = '';
+let initializedClarityProjectId = '';
 
 export function getGaMeasurementId() {
   return process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID?.trim() || '';
@@ -77,8 +84,12 @@ export function getMetaPixelId() {
   return process.env.NEXT_PUBLIC_META_PIXEL_ID?.trim() || '';
 }
 
+export function getClarityProjectId() {
+  return process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID?.trim() || '';
+}
+
 export function hasMarketingAnalyticsConfig() {
-  return Boolean(getGaMeasurementId() || getMetaPixelId());
+  return Boolean(getGaMeasurementId() || getMetaPixelId() || getClarityProjectId());
 }
 
 export function isTrackablePath(pathname: string | null | undefined) {
@@ -122,6 +133,7 @@ export function initializeMarketingAnalytics() {
 
   const gaMeasurementId = getGaMeasurementId();
   const metaPixelId = getMetaPixelId();
+  const clarityProjectId = getClarityProjectId();
 
   if (gaMeasurementId && initializedGaMeasurementId !== gaMeasurementId) {
     window.dataLayer = window.dataLayer || [];
@@ -159,6 +171,32 @@ export function initializeMarketingAnalytics() {
     window.fbq('init', metaPixelId);
     initializedMetaPixelId = metaPixelId;
   }
+
+  if (clarityProjectId && initializedClarityProjectId !== clarityProjectId) {
+    if (!window.clarity) {
+      const clarity: ClarityFunction = (...args) => {
+        clarity.q?.push(args);
+      };
+      clarity.q = [];
+      window.clarity = clarity;
+    }
+
+    const scriptId = `clarity-loader-${clarityProjectId}`;
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.async = true;
+      script.src = `https://www.clarity.ms/tag/${clarityProjectId}`;
+      script.setAttribute('data-clarity-project-id', clarityProjectId);
+      document.head.appendChild(script);
+    }
+
+    window.clarity('consentv2', {
+      ad_Storage: 'granted',
+      analytics_Storage: 'granted',
+    });
+    initializedClarityProjectId = clarityProjectId;
+  }
 }
 
 export function trackPageView(pathname: string) {
@@ -179,6 +217,7 @@ export function trackPageView(pathname: string) {
     page_location: window.location.href,
   });
   trackMetaEvent('PageView', { ...pageContext, ...attributionContext });
+  setClarityContext(pageContext);
 }
 
 export function trackBeginCheckout(product: MarketingProductEvent) {
@@ -257,6 +296,7 @@ export function trackLandingFunnelEvent(
   initializeMarketingAnalytics();
   trackGaEvent(eventName, eventParams);
   trackMetaEvent(eventName, eventParams, undefined, 'trackCustom');
+  trackClarityEvent(eventName);
 }
 
 export function getMarketingPageContext(pathname?: string): MarketingPageContext {
@@ -370,6 +410,23 @@ function trackMetaEvent(
   }
 
   window.fbq(command, eventName, params);
+}
+
+function trackClarityEvent(eventName: string) {
+  if (!getClarityProjectId() || !window.clarity) return;
+  window.clarity('event', eventName);
+}
+
+function setClarityContext(pageContext: MarketingPageContext) {
+  if (!getClarityProjectId() || !window.clarity) return;
+
+  window.clarity('set', 'page_path', pageContext.page_path);
+  if (pageContext.landing_version) {
+    window.clarity('set', 'landing_version', pageContext.landing_version);
+  }
+  if (pageContext.language) {
+    window.clarity('set', 'language', pageContext.language);
+  }
 }
 
 function getMarketingAttributionContext() {

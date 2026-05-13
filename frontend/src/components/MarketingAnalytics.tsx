@@ -91,8 +91,9 @@ export default function MarketingAnalytics() {
             <div className="space-y-2">
               <p className="text-sm font-bold text-primary">Cookie and analytics</p>
               <p className="text-sm leading-6 text-text-light/78">
-                We use cookies, GA4, and Meta Pixel to measure website performance and ad
-                effectiveness. Tracking starts only after you accept.
+                We use cookies, GA4, Meta Pixel, and Microsoft Clarity to measure website
+                performance, ad effectiveness, and page experience. Tracking starts only after
+                you accept.
               </p>
               <Link
                 id="marketing-consent-privacy-link"

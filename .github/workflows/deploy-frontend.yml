@@ -26,6 +26,7 @@ env:
   NEXT_PUBLIC_PAYMENT_ACCOUNT_NAME: 'Boong Poultry Pte Ltd'
   NEXT_PUBLIC_WHATSAPP_PREFILL: "Hi Aqina SG, I'm interested in your premium chicken essence."
   NEXT_PUBLIC_GA_MEASUREMENT_ID: 'G-VZZ98QFRFD'
+  NEXT_PUBLIC_CLARITY_PROJECT_ID: 'wqcojs5t01'
 
 jobs:
   deploy:
@@ -120,6 +121,7 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID || env.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
           NEXT_PUBLIC_META_PIXEL_ID: ${{ secrets.NEXT_PUBLIC_META_PIXEL_ID }}
+          NEXT_PUBLIC_CLARITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_CLARITY_PROJECT_ID || env.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
         run: npm run build
 
       - name: Google Auth
@@ -146,6 +148,7 @@ jobs:
           NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID || env.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
           NEXT_PUBLIC_META_PIXEL_ID: ${{ secrets.NEXT_PUBLIC_META_PIXEL_ID }}
+          NEXT_PUBLIC_CLARITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_CLARITY_PROJECT_ID || env.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
         run: |-
           docker build \
             --build-arg NEXT_PUBLIC_API_URL="${NEXT_PUBLIC_API_URL}" \
@@ -164,6 +167,7 @@ jobs:
             --build-arg NEXT_PUBLIC_WHATSAPP_PREFILL="${NEXT_PUBLIC_WHATSAPP_PREFILL}" \
             --build-arg NEXT_PUBLIC_GA_MEASUREMENT_ID="${NEXT_PUBLIC_GA_MEASUREMENT_ID}" \
             --build-arg NEXT_PUBLIC_META_PIXEL_ID="${NEXT_PUBLIC_META_PIXEL_ID}" \
+            --build-arg NEXT_PUBLIC_CLARITY_PROJECT_ID="${NEXT_PUBLIC_CLARITY_PROJECT_ID}" \
             -t ${{ steps.resolve.outputs.image }}:${{ github.sha }} ./frontend
           docker push ${{ steps.resolve.outputs.image }}:${{ github.sha }}
 
@@ -171,6 +175,7 @@ jobs:
         env:
           NEXT_PUBLIC_GA_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_GA_MEASUREMENT_ID || env.NEXT_PUBLIC_GA_MEASUREMENT_ID }}
           NEXT_PUBLIC_META_PIXEL_ID: ${{ secrets.NEXT_PUBLIC_META_PIXEL_ID }}
+          NEXT_PUBLIC_CLARITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_CLARITY_PROJECT_ID || env.NEXT_PUBLIC_CLARITY_PROJECT_ID }}
         run: |-
           FRONTEND_ENV_VARS="^|^NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}"
           FRONTEND_ENV_VARS="${FRONTEND_ENV_VARS}|NEXT_PUBLIC_WHATSAPP_DISPLAY=${NEXT_PUBLIC_WHATSAPP_DISPLAY}"
@@ -185,6 +190,9 @@ jobs:
           fi
           if [ -n "${NEXT_PUBLIC_META_PIXEL_ID}" ]; then
             FRONTEND_ENV_VARS="${FRONTEND_ENV_VARS}|NEXT_PUBLIC_META_PIXEL_ID=${NEXT_PUBLIC_META_PIXEL_ID}"
+          fi
+          if [ -n "${NEXT_PUBLIC_CLARITY_PROJECT_ID}" ]; then
+            FRONTEND_ENV_VARS="${FRONTEND_ENV_VARS}|NEXT_PUBLIC_CLARITY_PROJECT_ID=${NEXT_PUBLIC_CLARITY_PROJECT_ID}"
           fi
 
           gcloud run deploy ${{ steps.resolve.outputs.service }} \
