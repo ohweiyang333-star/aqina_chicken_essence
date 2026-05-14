@@ -17,6 +17,16 @@ FOLLOW_UP_STAGE_DELAYS = {
 }
 
 CONVERSION_OPTIMIZATION_VERSION = 2
+TERMINOLOGY_MIGRATION_VERSION = 1
+AQINA_NEW_PRODUCT_TERM = "纯鸡精"
+CHATBOT_PRODUCT_TERM_REPLACEMENTS = (
+    ("滴" + "雞精", AQINA_NEW_PRODUCT_TERM),
+    ("滴" + "鸡精", AQINA_NEW_PRODUCT_TERM),
+    ("黄梨鸡" + AQINA_NEW_PRODUCT_TERM, "黄梨酵素纯鸡精"),
+    ("黄梨" + AQINA_NEW_PRODUCT_TERM, "黄梨酵素纯鸡精"),
+    ("纯天然" + AQINA_NEW_PRODUCT_TERM, "纯天然鸡精"),
+    ("纯萃" + AQINA_NEW_PRODUCT_TERM, AQINA_NEW_PRODUCT_TERM),
+)
 
 # Keep retired copy assembled so broad keyword scans only flag active chatbot copy.
 RETIRED_TRIAL_PACKAGE_CODE = "trial" + "_3"
@@ -304,7 +314,7 @@ Conversation Rules (对话规则)
 - 顾客问“贵”时，不要辩解或施压；先承认预算考虑很正常，再说明 1盒适合确认口感、2盒适合日常补养且免运。
 - 顾客表达不满、退款、投诉、复杂医疗、批量采购或要求人工时，先安抚并 escalate=true，交给人工客服。
 
-Knowledge Base (Aqina 滴鸡精事实约束)
+Knowledge Base (Aqina 纯鸡精事实约束)
 
 核心卖点：
 - 自家农场养殖，全程可追溯。
@@ -340,7 +350,7 @@ Checkout Rules (下单规则)
 
 Medical Safety (医疗安全)
 
-如果用户问特定疾病、治疗期、药物、手术恢复是否能喝，必须回答：“Aqina 滴鸡精是天然食品补充剂，纯净无添加，但我们始终建议您在特殊治疗期间，带着我们的成分表咨询您的主治医生，这样最安心哦。”不要承诺治疗、改善疾病或替代医生建议。
+如果用户问特定疾病、治疗期、药物、手术恢复是否能喝，必须回答：“Aqina 纯鸡精是天然食品补充剂，纯净无添加，但我们始终建议您在特殊治疗期间，带着我们的成分表咨询您的主治医生，这样最安心哦。”不要承诺治疗、改善疾病或替代医生建议。
 
 输出必须为 JSON，字段固定为：
 reply_text, next_tag, lead_goal, recommended_package_code, upgrade_package_code, selected_package_code,
@@ -421,7 +431,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 {"question": "怎么喝最好？", "answer": "建议早晨空腹饮用吸收最好，可隔水加热 3-5 分钟后饮用。"},
                 {"question": "和传统鸡精有什么不同？", "answer": "Aqina 使用 MD2 黄金凤梨酵素喂养，不加一滴水，口感像鲜鸡汤一样回甘，较少传统腥苦感。"},
             ],
-            "medical_disclaimer": "Aqina 滴鸡精是天然食品补充剂，纯净无添加；特殊治疗期间建议带成分表咨询主治医生。",
+            "medical_disclaimer": "Aqina 纯鸡精是天然食品补充剂，纯净无添加；特殊治疗期间建议带成分表咨询主治医生。",
             "logistics": "新加坡现货供应，通常 1-3 个工作日送达；满 SGD 70 免运费，低于 SGD 70 需加 SGD 8 配送费。",
             "consumption": "建议早晨空腹饮用，可隔水加热或热水浸泡后即饮。",
             "comparisons": "相较传统鸡精，Aqina 更像家里炖煮的鲜鸡汤，入口回甘、较少腥苦味。",
@@ -432,7 +442,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                     "instruction": "哈喽 [顾客名字] 🌟，Aqina 新加坡现货资料已发到您的 Messenger Inbox。我会先按您的情况帮您判断适不适合，再建议配套。请查收哦 📩"
                 },
                 "private_opening": {
-                    "instruction": "您好 [顾客名字]！我先帮您判断 Aqina 滴鸡精适不适合您的情况。请问是自己日常喝、送长辈，还是孕期/月子调理？🎈"
+                    "instruction": "您好 [顾客名字]！我先帮您判断 Aqina 纯鸡精适不适合您的情况。请问是自己日常喝、送长辈，还是孕期/月子调理？🎈"
                 },
             },
             "t15m": {
@@ -530,8 +540,11 @@ class ChatbotSettingsService:
             normalized["payment"]["paynow"]["payment_qr_alt"] = defaults["payment"]["paynow"]["payment_qr_alt"]
         normalized["media_assets"] = _normalize_media_assets(normalized.get("media_assets", {}), defaults["media_assets"])
         normalized = _remove_retired_trial_package(normalized)
+        normalized = _replace_chatbot_product_terms(normalized)
         validated = ChatbotSettingsResponse.model_validate(normalized)
-        return validated.model_dump()
+        document = validated.model_dump()
+        document["terminology_migration_version"] = TERMINOLOGY_MIGRATION_VERSION
+        return document
 
     @staticmethod
     def _migrate_legacy(raw: dict[str, Any]) -> dict[str, Any]:
@@ -624,6 +637,35 @@ def _normalize_media_assets(media_assets: dict[str, Any], defaults: dict[str, An
         else:
             captions[key] = {"zh": default_value, "en": default_value}
     normalized["captions"] = captions
+    return normalized
+
+
+def _replace_chatbot_product_terms(value: Any) -> Any:
+    """Normalize user-facing chatbot copy without touching media file paths."""
+    if isinstance(value, str):
+        normalized = value
+        for old, new in CHATBOT_PRODUCT_TERM_REPLACEMENTS:
+            normalized = normalized.replace(old, new)
+        return normalized
+    if isinstance(value, list):
+        return [_replace_chatbot_product_terms(item) for item in value]
+    if isinstance(value, dict):
+        result: dict[str, Any] = {}
+        for key, item in value.items():
+            if key == "media_assets":
+                result[key] = _replace_media_asset_captions(item)
+            else:
+                result[key] = _replace_chatbot_product_terms(item)
+        return result
+    return deepcopy(value)
+
+
+def _replace_media_asset_captions(media_assets: Any) -> Any:
+    if not isinstance(media_assets, dict):
+        return deepcopy(media_assets)
+    normalized = deepcopy(media_assets)
+    if "captions" in normalized:
+        normalized["captions"] = _replace_chatbot_product_terms(normalized["captions"])
     return normalized
 
 

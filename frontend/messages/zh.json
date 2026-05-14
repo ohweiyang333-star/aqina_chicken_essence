@@ -1,18 +1,18 @@
 {
   "Index": {
-    "title": "Aqina 阿其纳滴鸡精",
+    "title": "Aqina 阿其纳纯鸡精",
     "subtitle": "纯萃取、轻负担、为现代家庭与日常补养而生",
     "loading": {
       "mediaPreparing": "正在准备完整画面"
     },
     "hero": {
-      "badge": "Aqina 黄梨酵素滴鸡精",
+      "badge": "Aqina 黄梨酵素纯鸡精",
       "title": "给身体最纯粹的能量，",
       "highlight": "从‘零负担’的吸收开始。",
-      "subheading": "真正的滋养，不该让身体费力。Aqina 黄梨酵素滴鸡精，一滴入魂，瞬间唤醒你流失的元气。",
+      "subheading": "真正的滋养，不该让身体费力。Aqina 黄梨酵素纯鸡精，一滴入魂，瞬间唤醒你流失的元气。",
       "cta": "选择你的日常/强化纯粹保养配套",
       "note": "好吸收 · 零负担 · 温热好入口",
-      "imageAlt": "Aqina 黄梨酵素滴鸡精主视觉",
+      "imageAlt": "Aqina 黄梨酵素纯鸡精主视觉",
       "photoWallLabel": "用户合照墙",
       "photoWallItemAlt": "用户合照 {index}"
     },
@@ -75,7 +75,7 @@
       "whatsappMessage": "Hi Aqina SG，我想确认自己适合 1盒试喝还是 2盒免运配套。",
       "featuresLabel": "方案重点",
       "currency": "SGD",
-      "detailFallbackOne": "纯萃滴鸡精，不额外加水",
+      "detailFallbackOne": "纯鸡精，不额外加水",
       "detailFallbackTwo": "更适合现代节奏的精简日常补养方式",
       "items": {
         "pack1": "7天启动装",
@@ -186,7 +186,7 @@
       "whatsappLabel": "咨询专员"
     },
     "footer": {
-      "tagline": "为现代家庭与日常补养节奏而打造的高级滴鸡精。",
+      "tagline": "为现代家庭与日常补养节奏而打造的高级纯鸡精。",
       "nav": {
         "story": "吸收故事",
         "reviews": "真实见证",
@@ -198,9 +198,9 @@
     "marketing": {
       "marquee": {
         "ariaLabel": "顶部促销信息",
-        "badge": "AQINA 黄梨酵素滴鸡精",
+        "badge": "AQINA 黄梨酵素纯鸡精",
         "items": [
-          "黄梨酵素滴鸡精",
+          "黄梨酵素纯鸡精",
           "零负担吸收",
           "新加坡 2-3 天送达",
           "满 SGD 70 免运费"
@@ -299,7 +299,7 @@
         },
         "currentBrand": "当前品牌命名",
         "resortWorldName": "Resorts World",
-        "resortWorldNote": "在云顶名胜世界可通过云顶会员积分兑换 Aqina 滴鸡精。",
+        "resortWorldNote": "在云顶名胜世界可通过云顶会员积分兑换 Aqina 纯鸡精。",
         "retailEyebrow": "线下零售渠道"
       },
       "shippingCountdown": {
@@ -665,7 +665,7 @@
       "storyTwo": {
         "eyebrow": "纯净对比",
         "title": "不要让‘补身体’，变成身体的沉重负担。",
-        "body": "传统的熬鸡汤，往往伴随着厚重的油脂和难以消化的肉渣。但在你身体最疲惫、最需要修复的时刻，你需要的不是负担，而是极致的纯净。Aqina 滴鸡精经过深度滴存去油，去除了所有腥味与油腻。只保留那一抹清澈透亮、滴滴金黄的纯鲜。喝下去的每一口，都是纯粹的爱与能量。"
+        "body": "传统的熬鸡汤，往往伴随着厚重的油脂和难以消化的肉渣。但在你身体最疲惫、最需要修复的时刻，你需要的不是负担，而是极致的纯净。Aqina 纯鸡精经过深度滴存去油，去除了所有腥味与油腻。只保留那一抹清澈透亮、滴滴金黄的纯鲜。喝下去的每一口，都是纯粹的爱与能量。"
       },
       "emotional": {
         "eyebrow": "情感关怀",
@@ -683,14 +683,14 @@
       "hero": {
         "eyebrow": "新加坡现货 · PayNow 下单",
         "title": "从 1 盒试喝，到 2 盒免运。",
-        "subtitle": "Aqina 黄梨酵素滴鸡精适合日常保养、送长辈、孕期与月子补养。新加坡现货供应，先 PayNow，上传付款截图后由团队核对配送。",
+        "subtitle": "Aqina 黄梨酵素纯鸡精适合日常保养、送长辈、孕期与月子补养。新加坡现货供应，先 PayNow，上传付款截图后由团队核对配送。",
         "primaryCta": "查看今天配套",
         "secondaryCta": "看真实场景",
         "whatsappCta": "先问 1盒/2盒",
         "whatsappMessage": "Hi Aqina SG，我想确认自己适合 1盒试喝还是 2盒免运配套。",
         "priceLabel": "试喝入门",
         "priceLine": "1盒 SGD 39.90 起",
-        "imageAlt": "Aqina 黄梨酵素滴鸡精外盒、单包和温热饮用场景",
+        "imageAlt": "Aqina 黄梨酵素纯鸡精外盒、单包和温热饮用场景",
         "badges": [
           "1盒试喝",
           "2盒免运",
@@ -783,9 +783,9 @@
       },
       "pineapple": {
         "eyebrow": "黄梨鸡故事",
-        "title": "从黄梨酵素概念开始，做一款更清爽的滴鸡精。",
+        "title": "从黄梨酵素概念开始，做一款更清爽的纯鸡精。",
         "body": "黄梨酵素是 Aqina 产品故事的重要线索。我们把重点放在清爽口感、温热饮用与日常易坚持上。",
-        "imageAlt": "Aqina 黄梨酵素滴鸡精工艺场景",
+        "imageAlt": "Aqina 黄梨酵素纯鸡精工艺场景",
         "caption": "黄梨鸡故事的核心，是让传统补养更适合现代人的日常节奏。",
         "points": [
           "从养殖与风味理念出发，强调清爽、干净、容易入口的方向。",
@@ -819,7 +819,7 @@
         "ritualEyebrow": "每日温热仪式",
         "ritualTitle": "一包、一杯、几分钟，把补养放回生活里。",
         "ritualBody": "不需要复杂准备，也不需要把厨房变成熬汤现场。Aqina 让补养成为可以被忙碌生活接住的小动作。",
-        "ritualImageAlt": "温热滴鸡精日常饮用场景"
+        "ritualImageAlt": "温热纯鸡精日常饮用场景"
       },
       "audience": {
         "eyebrow": "适合人群",
@@ -831,7 +831,7 @@
             "title": "忙碌上班族",
             "body": "适合希望在早晨或午后安排一份温热补给，又不想被厚重食物打断节奏的人。",
             "image": "/ugc/sg-young-indian-office-man.webp",
-            "alt": "上班族日常饮用滴鸡精"
+            "alt": "上班族日常饮用纯鸡精"
           },
           {
             "title": "家庭照护者",
@@ -911,7 +911,7 @@
             "context": "客厅日常",
             "quote": "家里常备几盒，想喝时加热一包，不需要重新熬汤。",
             "image": "/ugc/sg-middle-aged-chinese-man.webp",
-            "alt": "家庭客厅中的日常滴鸡精场景"
+            "alt": "家庭客厅中的日常纯鸡精场景"
           },
           {
             "name": "Riya",
@@ -944,7 +944,7 @@
           },
           {
             "question": "要怎么喝？",
-            "answer": "把一袋温热后饮用即可。它的定位是清爽、轻负担、容易坚持的日常滴鸡精，不是厚重的熬汤仪式。"
+            "answer": "把一袋温热后饮用即可。它的定位是清爽、轻负担、容易坚持的日常纯鸡精，不是厚重的熬汤仪式。"
           },
           {
             "question": "付款前可以先问客服吗？",
@@ -963,15 +963,15 @@
         "productsCta": "回到配套选择",
         "whatsappCta": "WhatsApp 确认配套",
         "whatsappMessage": "Hi Aqina SG，我想确认自己适合 1盒试喝、2盒免运，还是 4盒月度配套。",
-        "imageAlt": "Aqina 滴鸡精最终行动区产品场景"
+        "imageAlt": "Aqina 纯鸡精最终行动区产品场景"
       }
     },
     "v3": {
       "hero": {
-        "eyebrow": "MD2 黄梨酵素滴鸡精",
+        "eyebrow": "MD2 黄梨酵素纯鸡精",
         "kicker": "致每一位正在孕育奇迹的你：",
         "title": "孕育新生命，不该是一场强忍厚重鸡汤的修行。",
-        "subtitle": "喝不下油腻的鸡汤？受不了传统鸡精的重味？Aqina MD2 黄梨滴鸡精，用果香回甘的清透原汤，给你更轻盈、更容易入口的每日温热滋养。",
+        "subtitle": "喝不下油腻的鸡汤？受不了传统鸡精的重味？Aqina MD2 黄梨酵素纯鸡精，用果香回甘的清透原汤，给你更轻盈、更容易入口的每日温热滋养。",
         "primaryCta": "领取我的孕期滋养方案",
         "secondaryCta": "看看妈妈故事",
         "imageAlt": "孕妈妈在清晨餐桌享用温热清透金汤",
@@ -1126,7 +1126,7 @@
         "body": "选择适合你阶段的套餐，让 Aqina 把一杯清透黄金汤，放进你的孕期或月子日常里。",
         "productsCta": "选择我的套餐",
         "whatsappCta": "WhatsApp 咨询",
-        "whatsappMessage": "Hi Aqina SG，我想了解哪一个孕产滴鸡精套餐比较适合我。",
+        "whatsappMessage": "Hi Aqina SG，我想了解哪一个孕产纯鸡精套餐比较适合我。",
         "imageAlt": "伴侣为孕产照顾准备温热清透饮品",
         "productAlt": "Aqina 孕产 30 天黄金调理包",
         "productNote": "30 天调理包让你的温热节奏更简单，需要时随手一包，轻盈又方便。"

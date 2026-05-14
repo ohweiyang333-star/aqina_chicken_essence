@@ -31,14 +31,14 @@ export const v4CulinaryContent = {
     meta: {
       title: "Aqina 黄金原汤｜让滋补跟着美食一起入口",
       description:
-        "Aqina MD2 菠萝酵素滴鸡精，把营养融入日常美食。零腥味、鲜甜回甘，面线、蒸蛋、家宴料理都能自由发挥，让健康过程也吃得丰盛。",
+        "Aqina MD2 菠萝酵素纯鸡精，把营养融入日常美食。零腥味、鲜甜回甘，面线、蒸蛋、家宴料理都能自由发挥，让健康过程也吃得丰盛。",
     },
     loadingLabel: "正在准备黄金原汤餐桌",
     hero: {
-      eyebrow: "谁说滴鸡精只能捏着鼻子喝？",
-      title: "健康补给，也可以跟着丰盛美食一起入口。",
+      eyebrow: "谁说纯鸡精只能捏着鼻子喝？",
+      title: "健康补给，\n也可以跟着\n丰盛美食一起入口。",
       subtitle:
-        "Aqina MD2 菠萝酵素滴鸡精。不加一滴水的双重炖煮，萃取出零腥味、鲜甜回甘的黄金精华。营养不必只靠硬喝，也能融进你喜欢的面、蛋、汤与家常菜里，随着热腾腾的美食进入身体。",
+        "Aqina MD2 菠萝酵素纯鸡精。不加一滴水的双重炖煮，萃取出零腥味、鲜甜回甘的黄金精华。营养不必只靠硬喝，也能融进你喜欢的面、蛋、汤与家常菜里，随着热腾腾的美食进入身体。",
       cta: "询问套餐与下单协助",
       secondaryCta: "直接选择套餐",
       imageAlt: "热气腾腾的黄金海鲜面线汤",
@@ -49,7 +49,7 @@ export const v4CulinaryContent = {
       eyebrow: "下班后的厨房现实",
       title: "想补身体，也不一定要牺牲那一口好吃。",
       body:
-        "很多人一想到滴鸡精，就想到单独喝、忍味道、像完成任务。但真正能坚持的健康方式，应该是你本来就想吃的一餐：快手宵夜、孩子的蒸蛋、周末家宴，都能顺手加一点营养。",
+        "很多人一想到纯鸡精，就想到单独喝、忍味道、像完成任务。但真正能坚持的健康方式，应该是你本来就想吃的一餐：快手宵夜、孩子的蒸蛋、周末家宴，都能顺手加一点营养。",
       turn: "现在，撕开包装，把黄金原汤加入你正在做的菜里，美味不被牺牲，营养也不被浪费。",
       coldLabel: "妥协的一餐",
       coldTitle: "外卖、泡面、淡而无味的晚餐",
@@ -72,7 +72,7 @@ export const v4CulinaryContent = {
           label: "极致方便",
           title: "5分钟，把普通面线变成温暖补给",
           body:
-            "累了一天不想大动干戈？煮好一份面线，起锅前撕开一包 Aqina 滴鸡精加入汤里。黄金凤梨鸡（Ayam Nanas）的鲜甜随着热气散开，汤汁裹着面条入口，营养也跟着这一碗热食进入身体。这不是固定食谱，只是最轻松的吃法之一。",
+            "累了一天不想大动干戈？煮好一份面线，起锅前撕开一包 Aqina 纯鸡精加入汤里。黄金凤梨鸡（Ayam Nanas）的鲜甜随着热气散开，汤汁裹着面条入口，营养也跟着这一碗热食进入身体。这不是固定食谱，只是最轻松的吃法之一。",
           image: v4Media.noodleSoup,
           imageAlt: "深夜灵魂面线汤",
           productNote: "起锅前倒入一包，面线立刻有老火汤底的厚度。",
@@ -83,9 +83,9 @@ export const v4CulinaryContent = {
           label: "绝对健康",
           title: "把营养藏进家人本来就爱吃的蒸蛋",
           body:
-            "可以用滴鸡精代替部分清水来打鸡蛋，蒸出来的水蛋更嫩滑，带着自然鲜甜。0 脂肪、0 添加，满满高纯度优质蛋白，让营养不再像任务，而是变成家人愿意多吃一口的日常料理。",
+            "可以用纯鸡精代替部分清水来打鸡蛋，蒸出来的水蛋更嫩滑，带着自然鲜甜。0 脂肪、0 添加，满满高纯度优质蛋白，让营养不再像任务，而是变成家人愿意多吃一口的日常料理。",
           image: v4Media.steamedEgg,
-          imageAlt: "滴鸡精干贝蒸蛋",
+          imageAlt: "纯鸡精干贝蒸蛋",
           productNote: "用原汤取代清水，蒸蛋更滑、更鲜、更有底气。",
         },
         {
@@ -94,7 +94,7 @@ export const v4CulinaryContent = {
           label: "纯粹美味",
           title: "周末家宴，也能吃得丰盛又有营养",
           body:
-            "别把“滋补”想得太严肃。清蒸田鸡、鱼片、菇类、青菜或家里常做的热菜，都可以在出炉前趁热加入 Aqina 菠萝滴鸡精。金黄鸡汁渗进食材，鲜甜更完整，营养也随着丰盛的一餐被好好吃进去。众口难调，所以重点不是照抄食谱，而是按你家的口味自由发挥。",
+            "别把“滋补”想得太严肃。清蒸田鸡、鱼片、菇类、青菜或家里常做的热菜，都可以在出炉前趁热加入 Aqina 菠萝酵素纯鸡精。金黄鸡汁渗进食材，鲜甜更完整，营养也随着丰盛的一餐被好好吃进去。众口难调，所以重点不是照抄食谱，而是按你家的口味自由发挥。",
           image: v4Media.frogLegs,
           imageAlt: "鸡精蒸田鸡",
           productNote: "出炉趁热淋上，金黄鸡汁直接渗进滑嫩肉质。",
@@ -124,7 +124,7 @@ export const v4CulinaryContent = {
           after:
             "日常补给更方便、更好入口，也更容易放进固定饮食节奏。",
           image: v4Media.fitnessAudience,
-          imageAlt: "健身后轻食餐桌上的 Aqina 滴鸡精",
+          imageAlt: "健身后轻食餐桌上的 Aqina 纯鸡精",
         },
         {
           id: "homeCook",
@@ -135,7 +135,7 @@ export const v4CulinaryContent = {
           after:
             "不需要特别仪式，餐桌上多一道温暖、清爽、容易坚持的选择。",
           image: v4Media.homeCookAudience,
-          imageAlt: "家庭晚餐餐桌上的 Aqina 滴鸡精料理",
+          imageAlt: "家庭晚餐餐桌上的 Aqina 纯鸡精料理",
         },
         {
           id: "maternity",
@@ -146,7 +146,7 @@ export const v4CulinaryContent = {
           after:
             "回到每天这一餐的温和、舒适与方便，吃得轻一点也有补给感。",
           image: v4Media.maternityAudience,
-          imageAlt: "期待妈妈在暖色厨房享用 Aqina 滴鸡精热食",
+          imageAlt: "期待妈妈在暖色厨房享用 Aqina 纯鸡精热食",
         },
       ],
     },
@@ -187,7 +187,7 @@ export const v4CulinaryContent = {
           packKey: "pack1",
           title: "深夜食堂体验装",
           subtitle: "1盒7包 · SGD 39.90",
-          body: "先试 7 包，把滴鸡精加入面、蛋、汤或你熟悉的热菜里。",
+          body: "先试 7 包，把纯鸡精加入面、蛋、汤或你熟悉的热菜里。",
           badge: "尝鲜首选",
           features: ["7 包独立包装", "适合先试味道和入菜方式", "面线、蒸蛋、汤底、热菜都能自由发挥"],
         },
@@ -225,7 +225,7 @@ export const v4CulinaryContent = {
         "不必等周末、不必熬 3 小时，也不必照着复杂食谱。撕开一包，加入热腾腾的料理里，健康过程也可以吃得丰盛。",
       productsCta: "选择我的黄金原汤套餐",
       whatsappCta: "WhatsApp 询问套餐 / 下单协助",
-      whatsappMessage: "Hi Aqina SG，我想了解 Aqina 滴鸡精套餐、下单协助和简单烹饪灵感。",
+      whatsappMessage: "Hi Aqina SG，我想了解 Aqina 纯鸡精套餐、下单协助和简单烹饪灵感。",
       imageAlt: "Aqina 黄金原汤家庭厨房美食场景",
       productAlt: "Aqina 黄金原汤家庭囤货装",
     },

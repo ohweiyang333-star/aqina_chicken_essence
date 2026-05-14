@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 # Create FastAPI app
 app = FastAPI(
     title="Aqina Backend API",
-    description="Backend API for Aqina 滴鸡精 E-commerce Platform",
+    description="Backend API for Aqina 纯鸡精 E-commerce Platform",
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",

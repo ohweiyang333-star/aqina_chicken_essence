@@ -24,7 +24,7 @@ export async function generateMetadata({
 
   return {
     title: isZh
-      ? "Aqina V3｜孕产专属黄梨酵素滴鸡精"
+      ? "Aqina V3｜孕产专属黄梨酵素纯鸡精"
       : "Aqina V3 | Maternity Pineapple Enzyme Chicken Essence",
     description: isZh
       ? "Aqina V3 孕产专属页面，以清爽果香、零油清汤感与温柔日常补给，陪伴怀孕与月子阶段的妈妈。"

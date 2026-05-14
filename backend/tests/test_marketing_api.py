@@ -192,6 +192,52 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn(RETIRED_PACKAGE_NAME_EN, serialized_payload)
         self.assertNotIn(RETIRED_PACKAGE_PRICE_TEXT, serialized_payload)
 
+    def test_chatbot_settings_normalizes_legacy_product_term_without_overwriting_custom_copy(self) -> None:
+        legacy_term = "滴" + "鸡精"
+        legacy_asset_path = f"/chatbot/产后妈妈喝{legacy_term}.jpg"
+        self.db.seed(
+            "chatbotSettings/default",
+            {
+                "conversion_optimization_version": 2,
+                "system_prompt": f"Aqina {legacy_term} advisor prompt",
+                "knowledge_base": {
+                    "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
+                    "faq": [{"question": "适合谁？", "answer": f"Aqina {legacy_term}适合日常补养。"}],
+                },
+                "crm_follow_up_rules": {
+                    "t15m": {
+                        "lead_cold": {"instruction": f"询问顾客想了解 Aqina {legacy_term} 的哪个场景。"}
+                    }
+                },
+                "media_assets": {
+                    "package_images": {"pack1": {"zh": legacy_asset_path, "en": "/chatbot/pack1-en.jpg"}},
+                    "captions": {"pack1": f"Aqina {legacy_term} 1盒体验。"},
+                },
+            },
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/chatbot/settings",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertIn("Aqina 纯鸡精 advisor prompt", payload["system_prompt"])
+        self.assertIn("Aqina 纯鸡精是食品补充剂", payload["knowledge_base"]["medical_disclaimer"])
+        self.assertIn("Aqina 纯鸡精适合日常补养", payload["knowledge_base"]["faq"][0]["answer"])
+        self.assertIn("Aqina 纯鸡精", payload["crm_follow_up_rules"]["t15m"]["lead_cold"]["instruction"])
+        self.assertEqual(payload["media_assets"]["package_images"]["pack1"]["zh"], legacy_asset_path)
+        self.assertEqual(payload["media_assets"]["captions"]["pack1"]["zh"], "Aqina 纯鸡精 1盒体验。")
+        self.assertEqual(payload["media_assets"]["captions"]["pack1"]["en"], "Aqina 纯鸡精 1盒体验。")
+
+        saved = self.db.collection("chatbotSettings").document("default").get().to_dict()
+        self.assertEqual(saved["terminology_migration_version"], 1)
+        self.assertEqual(saved["media_assets"]["package_images"]["pack1"]["zh"], legacy_asset_path)
+        self.assertEqual(saved["media_assets"]["captions"]["pack1"]["zh"], "Aqina 纯鸡精 1盒体验。")
+        self.assertEqual(saved["media_assets"]["captions"]["pack1"]["en"], "Aqina 纯鸡精 1盒体验。")
+
     def test_chatbot_settings_applies_conversion_playbook_without_overwriting_payment_or_handoff(self) -> None:
         self.db.seed(
             "chatbotSettings/default",
@@ -2193,14 +2239,14 @@ class MarketingApiTests(unittest.TestCase):
         from app.services.follow_up import FollowUpEngine
 
         reply_text, next_tag = FollowUpEngine._normalize_follow_up_result(
-            "reply_text='想象一下，早晨起来撕开一包 Aqina 滴鸡精，倒出来是清澈透亮的金黄色。它完全没有传统鸡精的腥苦味，喝起来像一碗精华鸡汤。' next_tag='lead_cold' checkout_link_required=False escalate=False escalation_reason=None opt_in_request=False",
+            "reply_text='想象一下，早晨起来撕开一包 Aqina 纯鸡精，倒出来是清澈透亮的金黄色。它完全没有传统鸡精的腥苦味，喝起来像一碗精华鸡汤。' next_tag='lead_cold' checkout_link_required=False escalate=False escalation_reason=None opt_in_request=False",
             checkout_url=None,
         )
 
         self.assertEqual(next_tag, "lead_cold")
         self.assertEqual(
             reply_text,
-            "想象一下，早晨起来撕开一包 Aqina 滴鸡精，倒出来是清澈透亮的金黄色。它完全没有传统鸡精的腥苦味，喝起来像一碗精华鸡汤。",
+            "想象一下，早晨起来撕开一包 Aqina 纯鸡精，倒出来是清澈透亮的金黄色。它完全没有传统鸡精的腥苦味，喝起来像一碗精华鸡汤。",
         )
         self.assertNotIn("reply_text=", reply_text)
         self.assertNotIn("next_tag=", reply_text)
@@ -2426,7 +2472,7 @@ class MarketingApiTests(unittest.TestCase):
 
     def test_follow_up_job_sends_only_reply_text_from_string_repr(self) -> None:
         self.gemini_service = FakeGeminiService(
-            follow_up_result="reply_text='想象一下，早晨起来撕开一包 Aqina 滴鸡精，喝起来像一碗精华鸡汤。' next_tag='lead_cold' checkout_link_required=False escalate=False escalation_reason=None opt_in_request=False"
+            follow_up_result="reply_text='想象一下，早晨起来撕开一包 Aqina 纯鸡精，喝起来像一碗精华鸡汤。' next_tag='lead_cold' checkout_link_required=False escalate=False escalation_reason=None opt_in_request=False"
         )
         self._seed_runtime_settings()
         self.db.seed(
@@ -2493,7 +2539,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(len(message_calls), 1)
         self.assertEqual(
             message_calls[0][1]["text"],
-            "想象一下，早晨起来撕开一包 Aqina 滴鸡精，喝起来像一碗精华鸡汤。",
+            "想象一下，早晨起来撕开一包 Aqina 纯鸡精，喝起来像一碗精华鸡汤。",
         )
         self.assertNotIn("reply_text=", message_calls[0][1]["text"])
         self.assertNotIn("next_tag=", message_calls[0][1]["text"])
@@ -2529,7 +2575,7 @@ class MarketingApiTests(unittest.TestCase):
             conversation_id="conv-window-closed",
             event_id="event-window-closed",
             channel="whatsapp",
-            incoming_text="之前想了解滴鸡精",
+            incoming_text="之前想了解纯鸡精",
             identifier_key="wa_id",
             identifier_value="6591000002",
         )

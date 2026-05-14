@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "2-3 days delivery",
     "Customer Reviews",
     "鸡精",
-    "滴鸡精",
+    "纯鸡精",
   ],
 };
 

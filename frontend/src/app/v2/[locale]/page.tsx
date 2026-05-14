@@ -24,10 +24,10 @@ export async function generateMetadata({
 
   return {
     title: isZh
-      ? 'Aqina V2｜黄梨酵素滴鸡精｜轻负担详情页'
+      ? 'Aqina V2｜黄梨酵素纯鸡精｜轻负担详情页'
       : 'Aqina V2 | Pineapple Enzyme Chicken Essence Singapore',
     description: isZh
-      ? 'Aqina V2 黄梨酵素滴鸡精详情页，以暖米金视觉呈现清爽汤感、即热即饮、真实场景与日常补养套餐。'
+      ? 'Aqina V2 黄梨酵素纯鸡精详情页，以暖米金视觉呈现清爽汤感、即热即饮、真实场景与日常补养套餐。'
       : 'Aqina V2 presents pineapple enzyme chicken essence with a lighter warm routine, clean soup-like taste, real usage scenes, and Singapore delivery.',
     alternates: {
       canonical: `/v2/${locale}`,

@@ -27,7 +27,7 @@ const defaultSettings: ChatbotSettings = {
     {
       keywords: ['price', 'pricing', 'how much', '价钱', '价格'],
       response_en: 'Our chicken essence starts from SGD 75 per box. We offer bundle discounts for larger orders!',
-      response_zh: '我们的滴鸡精从每盒 SGD 75 起。大订单有折扣优惠！',
+      response_zh: '我们的纯鸡精从每盒 SGD 75 起。大订单有折扣优惠！',
     },
     {
       keywords: ['shipping', 'delivery', '运费', '配送'],
@@ -41,14 +41,14 @@ const defaultSettings: ChatbotSettings = {
     },
   ],
   payment_followup_message: {
-    template: 'Hi [Name]! 您的 Aqina 滴鸡精订单还没完成付款。请使用 PayNow QR 付款后回传截图，我们会尽快安排处理。',
+    template: 'Hi [Name]! 您的 Aqina 纯鸡精订单还没完成付款。请使用 PayNow QR 付款后回传截图，我们会尽快安排处理。',
     discountCode: 'HEALTHY10',
     delayMinutes: 15,
   },
   replenishment_reminder: {
     enabled: true,
     template_en: 'Hi [Name]! Your Aqina chicken essence is running low. Stock up now for continued wellness!',
-    template_zh: 'Hi [Name]! 您的滴鸡精库存快用完啦。现在订购，持续健康！',
+    template_zh: 'Hi [Name]! 您的纯鸡精库存快用完啦。现在订购，持续健康！',
     triggerDays: [12, 25],
   },
 };

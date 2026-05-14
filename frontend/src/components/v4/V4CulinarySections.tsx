@@ -160,10 +160,10 @@ export function V4HeroSection({ content }: V4SectionProps) {
           </Reveal>
 
           <Reveal delay={0.08} className="space-y-5">
-            <h1 className="font-heading text-5xl font-semibold leading-[1.02] text-[#fff8e8] md:text-7xl">
+            <h1 className="max-w-full whitespace-pre-line break-words font-heading text-[2.35rem] font-semibold leading-[1.08] text-[#fff8e8] [overflow-wrap:anywhere] sm:text-5xl md:text-7xl">
               {content.hero.title}
             </h1>
-            <p className="max-w-2xl text-base leading-8 text-[#f2d9ae]/86 md:text-xl">
+            <p className="max-w-[22em] break-words text-base leading-8 text-[#f2d9ae]/86 [overflow-wrap:anywhere] md:max-w-2xl md:text-xl">
               {content.hero.subtitle}
             </p>
           </Reveal>

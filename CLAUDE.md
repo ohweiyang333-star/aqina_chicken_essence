@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-E-commerce and admin platform for Aqina 滴鸡精 (chicken essence health supplement), targeting the Singapore market. Consists of a bilingual (English/Simplified Chinese) marketing landing page with checkout, and an admin console for order management.
+E-commerce and admin platform for Aqina 纯鸡精 (chicken essence health supplement), targeting the Singapore market. Consists of a bilingual (English/Simplified Chinese) marketing landing page with checkout, and an admin console for order management.
 
 ## Repository Structure
 

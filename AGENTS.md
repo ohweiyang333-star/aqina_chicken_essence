@@ -25,3 +25,9 @@ Release flow:
 2. Commit
 3. Push to `main`
 4. Monitor GitHub Actions until deployment success
+
+## Product Terminology (Mandatory)
+
+Use `纯鸡精` as the Chinese product term for Aqina customer-facing copy, chatbot replies, SEO metadata, and marketing materials.
+
+Do not use the old Chinese product term that starts with `滴` and ends with `鸡精` as a product name in new user-facing text. Keep existing technical asset filenames, Firebase Storage object paths, and historical local reference paths unchanged unless a separate asset/path migration is explicitly requested.
