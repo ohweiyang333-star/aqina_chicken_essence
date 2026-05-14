@@ -176,9 +176,9 @@
       },
       "support": {
         "title": "Need help before paying?",
-        "body": "If you are unsure before PayNow, ask us to confirm whether 1 box, the 2-box free delivery pack, or the 4-box monthly pack fits better.",
-        "cta": "Confirm this pack",
-        "message": "Hi Aqina SG, I want to confirm if {product} suits me, or if I should switch to the 2-box free delivery pack before PayNow."
+        "body": "If you are not ready to PayNow yet, send this pack to support first. We will help you confirm based on pregnancy, confinement, gifting, or family care.",
+        "cta": "Confirm on WhatsApp first",
+        "message": "Hi Aqina SG, I am looking at {product}. Please help me confirm if this pack suits me, or if I should choose the 2-box free delivery, 4-box monthly, or 6-box family pack."
       }
     },
     "mobileCta": {
@@ -972,13 +972,14 @@
         "kicker": "For every mum growing a little miracle:",
         "title": "Pregnancy should not feel like forcing down heavy broth.",
         "subtitle": "When oily soup feels too much and the usual chicken essence smells too strong, Aqina MD2 Pineapple Chicken Essence brings a clean, fruit-sweet finish in a clear golden broth made for light daily nourishment.",
-        "primaryCta": "Get My Maternity Care Plan",
-        "secondaryCta": "Read Mum Stories",
+        "primaryCta": "Get Maternity Pack Advice on WhatsApp",
+        "secondaryCta": "View Packs & Order",
+        "whatsappMessage": "Hi Aqina SG, I would like maternity or confinement chicken essence pack advice. Please help me choose between the 2-box free delivery pack, the 4-box monthly pack, or a 1-box trial.",
         "imageAlt": "Pregnant mum enjoying a warm clear golden drink at a calm morning table",
         "notes": [
-          "Clean, light, easy to sip",
-          "Zero-oil clear broth texture",
-          "Warm daily care for mum"
+          "Singapore ready-stock delivery",
+          "Halal / HACCP / JPH certified",
+          "Manual verification after PayNow"
         ]
       },
       "empathy": {
@@ -1088,45 +1089,75 @@
       },
       "offer": {
         "eyebrow": "Maternity Care Plans",
-        "title": "A warm golden cup for the season when your body deserves gentleness.",
-        "body": "Start with a 7-day taste trial, or choose the 30-day care pack for late pregnancy and confinement routines.",
+        "title": "Choose the pack for your stage, then decide whether to ask first or order.",
+        "body": "Cold ad traffic should not be forced into PayNow immediately. First-time buyers can start with the 2-box free delivery pack; late pregnancy and confinement buyers should compare the 4-box monthly pack.",
         "freeShipping": "Free shipping",
+        "unitPrice": "Approx. SGD {price} / pouch",
         "items": [
           {
             "packKey": "pack1",
             "eyebrow": "1 box · 7 packs",
-            "title": "Pregnancy Gentle Trial Pack",
+            "title": "7-Day Taste Trial Pack",
             "subtitle": "For the first taste of Aqina's clean, fruit-sweet finish.",
-            "cta": "Try the first cup",
+            "cta": "Start with 1 box",
             "features": [
               "7 individual packs for an easy first week",
+              "1-box orders add SGD 8 Singapore delivery",
               "Light clear-broth taste for sensitive days",
               "Best for trying before a longer routine"
             ]
           },
           {
+            "packKey": "pack2",
+            "eyebrow": "2 boxes · 14 packs",
+            "title": "14-Day Free Delivery Starter",
+            "subtitle": "The easiest first order for mums or family members coming in from ads.",
+            "originalPrice": "SGD 79.80",
+            "badge": "2-box free delivery pick",
+            "cta": "Choose 2 boxes",
+            "features": [
+              "2 boxes at SGD 75 and qualifies for free delivery",
+              "Good for confirming taste and daily rhythm before confinement",
+              "More practical than 1 box without committing to a full month"
+            ]
+          },
+          {
             "packKey": "pack4",
             "eyebrow": "4 boxes · 28 packs",
-            "title": "Maternity 30-Day Golden Care Pack",
+            "title": "Maternity 28-Day Monthly Pack",
             "subtitle": "A full month of warm daily care for late pregnancy or confinement rhythm.",
             "originalPrice": "SGD 159.60",
             "badge": "Most Popular",
-            "cta": "Start my lighter maternity routine",
+            "cta": "Choose 4-box monthly pack",
             "features": [
               "One warm pack a day for a steady routine",
               "Covers almost a full confinement month",
               "Clean, light, zero-oil texture with free shipping"
+            ]
+          },
+          {
+            "packKey": "pack6",
+            "eyebrow": "6 boxes · 42 packs",
+            "title": "Family 42-Day Reserve Pack",
+            "subtitle": "For families who want to share, gift, or keep a longer care cycle at home.",
+            "originalPrice": "SGD 239.40",
+            "badge": "Family Stock",
+            "cta": "Choose 6-box family pack",
+            "features": [
+              "42 pouches for shared family care or longer routines",
+              "Suitable for maternity, elder care, and household reserve",
+              "Free delivery with fewer repeat orders"
             ]
           }
         ]
       },
       "finalCta": {
         "eyebrow": "A softer daily ritual",
-        "title": "Let warm nourishment feel easier from today.",
-        "body": "Choose the plan that fits your season, and let Aqina bring a clean golden cup into your pregnancy or confinement routine.",
+        "title": "Ask first if unsure. PayNow only when the pack is clear.",
+        "body": "Tell us whether this is for pregnancy, confinement, gifting, or family care. We will help you confirm the 2-box, 4-box, or 6-box option.",
         "productsCta": "Choose My Plan",
-        "whatsappCta": "Ask on WhatsApp",
-        "whatsappMessage": "Hi Aqina SG, I would like to know which maternity chicken essence plan is suitable for me.",
+        "whatsappCta": "Get WhatsApp Advice",
+        "whatsappMessage": "Hi Aqina SG, I would like to confirm which maternity chicken essence pack suits me best. Please help me choose between 2 boxes, 4 boxes, or 6 boxes.",
         "imageAlt": "Partner preparing a warm clear drink for maternity care",
         "productAlt": "Aqina 30-day maternity care pack",
         "productNote": "The 30-day pack keeps your warm routine close, simple, and ready when your body wants something light."

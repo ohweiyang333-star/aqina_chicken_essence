@@ -8,22 +8,22 @@ import { trackLandingFunnelEvent } from '@/lib/marketing-analytics';
 export default function MobileFloatingCTA() {
   const t = useTranslations('Index');
   const pathname = usePathname();
-  const isV2Landing = pathname?.startsWith('/v2/');
-  const [isV2HeroVisible, setIsV2HeroVisible] = useState(true);
+  const heroId = getLandingHeroId(pathname);
+  const [isHeroVisible, setIsHeroVisible] = useState(Boolean(heroId));
 
   useEffect(() => {
-    if (!isV2Landing) {
+    if (!heroId) {
       return;
     }
 
-    const hero = document.getElementById('v2-hero');
+    const hero = document.getElementById(heroId);
     if (!hero) {
       return;
     }
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsV2HeroVisible(Boolean(entry?.isIntersecting));
+        setIsHeroVisible(Boolean(entry?.isIntersecting));
       },
       { threshold: 0.08 },
     );
@@ -31,9 +31,9 @@ export default function MobileFloatingCTA() {
     observer.observe(hero);
 
     return () => observer.disconnect();
-  }, [isV2Landing]);
+  }, [heroId]);
 
-  if (isV2Landing && isV2HeroVisible) {
+  if (heroId && isHeroVisible) {
     return null;
   }
 
@@ -56,4 +56,11 @@ export default function MobileFloatingCTA() {
       </div>
     </div>
   );
+}
+
+function getLandingHeroId(pathname: string | null) {
+  if (pathname?.startsWith('/v2/')) return 'v2-hero';
+  if (pathname?.startsWith('/v3/')) return 'v3-hero';
+  if (pathname?.startsWith('/v4/')) return 'v4-hero';
+  return null;
 }

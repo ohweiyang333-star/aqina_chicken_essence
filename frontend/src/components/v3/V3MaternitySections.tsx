@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BadgeCheck,
   Droplets,
-  HeartHandshake,
   Leaf,
   MessageCircle,
   ShieldCheck,
@@ -14,6 +13,7 @@ import {
 import { useTranslations } from "next-intl";
 import { getWhatsAppHref } from "@/lib/site-config";
 import { IMAGES } from "@/lib/image-utils";
+import { trackLandingFunnelEvent } from "@/lib/marketing-analytics";
 
 interface PainItem {
   title: string;
@@ -57,6 +57,20 @@ const certificationSources = {
 export function V3HeroSection() {
   const t = useTranslations("Index.v3.hero");
   const notes = t.raw("notes") as string[];
+  const handleWhatsAppClick = () => {
+    trackLandingFunnelEvent("hero_cta_click", {
+      source: "v3_hero_whatsapp",
+      destination: "whatsapp",
+      funnel_path: "maternity_consultation",
+    });
+  };
+  const handleProductsClick = () => {
+    trackLandingFunnelEvent("hero_cta_click", {
+      source: "v3_hero_products",
+      destination: "products",
+      funnel_path: "direct_order",
+    });
+  };
 
   return (
     <section
@@ -85,29 +99,33 @@ export function V3HeroSection() {
             <p className="font-heading text-2xl font-semibold leading-tight text-[#8b6122]">
               {t("kicker")}
             </p>
-            <h1 className="font-heading text-5xl font-semibold leading-[1.02] text-[#2f2418] md:text-7xl">
+            <h1 className="max-w-[11ch] break-words font-heading text-4xl font-semibold leading-[1.08] text-[#2f2418] sm:text-5xl md:max-w-none md:text-7xl">
               {t("title")}
             </h1>
-            <p className="max-w-2xl text-base leading-8 text-[#6c5848] md:text-xl">
+            <p className="max-w-[21rem] break-words text-base leading-8 text-[#6c5848] [overflow-wrap:anywhere] md:max-w-2xl md:text-xl">
               {t("subtitle")}
             </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <a
-              id="v3-hero-products-cta"
-              href="#products"
+              id="v3-hero-whatsapp-cta"
+              href={getWhatsAppHref(t("whatsappMessage"))}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={handleWhatsAppClick}
               className="v3-breathing-cta inline-flex min-h-14 items-center justify-center gap-2 rounded-lg bg-[#2f2418] px-6 text-sm font-bold text-[#fffaf1] shadow-[0_18px_38px_rgba(47,36,24,0.24)] hover:bg-[#8b6122]"
             >
               <span>{t("primaryCta")}</span>
-              <ArrowRight size={17} />
+              <MessageCircle size={17} />
             </a>
             <a
-              id="v3-hero-stories-cta"
-              href="#v3-stories"
+              id="v3-hero-products-cta"
+              href="#products"
+              onClick={handleProductsClick}
               className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg border border-[#b9852e] bg-white/70 px-6 text-sm font-bold text-[#6f4b1d] backdrop-blur hover:bg-white"
             >
-              <HeartHandshake size={17} />
+              <ArrowRight size={17} />
               <span>{t("secondaryCta")}</span>
             </a>
           </div>
@@ -345,6 +363,20 @@ export function V3StoriesSection() {
 
 export function V3FinalCtaSection() {
   const t = useTranslations("Index.v3.finalCta");
+  const handleProductsClick = () => {
+    trackLandingFunnelEvent("hero_cta_click", {
+      source: "v3_final_products",
+      destination: "products",
+      funnel_path: "direct_order",
+    });
+  };
+  const handleWhatsAppClick = () => {
+    trackLandingFunnelEvent("whatsapp_cta_click", {
+      source: "v3_final_whatsapp",
+      destination: "whatsapp",
+      funnel_path: "maternity_consultation",
+    });
+  };
 
   return (
     <section className="relative overflow-hidden bg-[#fffaf1] py-16 text-[#2f2418] md:py-24">
@@ -365,6 +397,7 @@ export function V3FinalCtaSection() {
             <a
               id="v3-final-products-cta"
               href="#products"
+              onClick={handleProductsClick}
               className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg bg-[#2f2418] px-6 text-sm font-bold text-[#fffaf1] hover:bg-[#8b6122]"
             >
               <span>{t("productsCta")}</span>
@@ -375,6 +408,7 @@ export function V3FinalCtaSection() {
               href={getWhatsAppHref(t("whatsappMessage"))}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={handleWhatsAppClick}
               className="inline-flex min-h-14 items-center justify-center gap-2 rounded-lg border border-[#b9852e] bg-white px-6 text-sm font-bold text-[#6f4b1d] hover:bg-[#fff5e2]"
             >
               <MessageCircle size={17} />

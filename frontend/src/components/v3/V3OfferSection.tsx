@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowRight, CheckCircle2, Crown, Sparkles } from "lucide-react";
+import { ArrowRight, CheckCircle2, Crown, Sparkles, Truck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { DisplayProduct } from "@/lib/product-service";
 import { resolveFixedPackKeyByMeta } from "@/lib/product-service";
+import type { FixedPackKey } from "@/lib/product-display";
 
 interface V3OfferSectionProps {
   products: DisplayProduct[];
@@ -13,7 +14,7 @@ interface V3OfferSectionProps {
 }
 
 interface OfferCopy {
-  packKey: "pack1" | "pack4";
+  packKey: FixedPackKey;
   eyebrow: string;
   title: string;
   subtitle: string;
@@ -22,6 +23,13 @@ interface OfferCopy {
   cta: string;
   features: string[];
 }
+
+const packBoxCount: Record<FixedPackKey, number> = {
+  pack1: 1,
+  pack2: 2,
+  pack4: 4,
+  pack6: 6,
+};
 
 function getPackKey(product: DisplayProduct) {
   return resolveFixedPackKeyByMeta({
@@ -69,8 +77,8 @@ export default function V3OfferSection({
         </div>
 
         {isLoading ? (
-          <div className="grid gap-5 md:grid-cols-2">
-            {Array.from({ length: 2 }).map((_, index) => (
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
                 className="min-h-[32rem] animate-pulse rounded-lg border border-[#d8c5a6] bg-white/70 p-5"
@@ -87,19 +95,18 @@ export default function V3OfferSection({
             ))}
           </div>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
             {displayProducts.map(({ copy, product }) => {
-              const isPopular = copy.packKey === "pack4";
+              const isPopular = copy.packKey === "pack2" || copy.packKey === "pack4";
               const freeShipping = Number(product.price) >= 70;
+              const unitPrice = Number(product.price) / packBoxCount[copy.packKey] / 7;
 
               return (
                 <article
                   key={copy.packKey}
                   className={[
                     "relative flex h-full flex-col overflow-hidden rounded-lg border bg-[#fffaf1] p-5 shadow-[0_22px_60px_rgba(103,70,28,0.12)]",
-                    isPopular
-                      ? "border-[#b9852e] lg:-mt-4 lg:mb-4"
-                      : "border-[#dfcfb7]",
+                    isPopular ? "border-[#b9852e]" : "border-[#dfcfb7]",
                   ].join(" ")}
                 >
                   {copy.badge ? (
@@ -114,7 +121,7 @@ export default function V3OfferSection({
                       src={product.image}
                       alt={copy.title}
                       fill
-                      sizes="(max-width: 768px) 92vw, 44vw"
+                      sizes="(max-width: 768px) 92vw, (max-width: 1280px) 44vw, 22vw"
                       className="object-contain p-7"
                     />
                   </div>
@@ -146,11 +153,17 @@ export default function V3OfferSection({
                       ) : null}
                     </div>
 
-                    {freeShipping ? (
-                      <span className="inline-flex items-center rounded-full border border-[#7f9c7b]/45 bg-[#e8f0e4] px-3 py-2 text-xs font-bold text-[#2f5c46]">
-                        {t("freeShipping")}
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-[#725f4d]">
+                      <span className="rounded-full border border-[#d9c6a9] bg-white px-3 py-2">
+                        {t("unitPrice", { price: unitPrice.toFixed(2) })}
                       </span>
-                    ) : null}
+                      {freeShipping ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-[#7f9c7b]/45 bg-[#e8f0e4] px-3 py-2 text-[#2f5c46]">
+                          <Truck size={14} />
+                          {t("freeShipping")}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
 
                   <ul className="mb-6 flex-1 space-y-3 border-t border-[#d9c6a9] pt-5">

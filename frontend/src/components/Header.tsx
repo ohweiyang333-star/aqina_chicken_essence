@@ -55,17 +55,17 @@ export default function Header() {
           : 'border-transparent bg-background-dark/60 backdrop-blur-sm',
       ].join(' ')}
     >
-      <div className="section-shell flex h-16 items-center justify-between gap-4">
+      <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4">
         <Link href={homeHref} className="flex items-center">
-          <div className="relative h-12 w-28">
+          <div className="relative h-10 w-24 sm:h-12 sm:w-28">
             <Image src={IMAGES.logo} alt="Aqina Logo" fill className="object-contain" priority sizes="120px" />
           </div>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <a
             href="#products"
-            className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/28 bg-surface px-4 text-xs font-bold uppercase tracking-[0.16em] text-text-light shadow-[0_12px_28px_rgba(0,0,0,0.28)] transition hover:border-primary/48 hover:text-primary"
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/28 bg-surface px-3 text-xs font-bold uppercase tracking-[0.08em] text-text-light shadow-[0_12px_28px_rgba(0,0,0,0.28)] transition hover:border-primary/48 hover:text-primary sm:px-4 sm:tracking-[0.16em]"
           >
             {locale === 'zh' ? '选配套' : 'Plans'}
           </a>
@@ -74,7 +74,7 @@ export default function Header() {
             id="header-language-switch"
             href={languageHref}
             aria-label={locale === 'en' ? 'Switch to Chinese' : 'Switch to English'}
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full border border-primary/28 bg-surface px-3 text-xs font-bold uppercase tracking-[0.16em] text-text-light shadow-[0_12px_28px_rgba(0,0,0,0.28)] transition hover:border-primary/48 hover:text-primary sm:px-4"
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border border-primary/28 bg-surface px-3 text-xs font-bold uppercase tracking-[0.08em] text-text-light shadow-[0_12px_28px_rgba(0,0,0,0.28)] transition hover:border-primary/48 hover:text-primary sm:gap-2 sm:px-4 sm:tracking-[0.16em]"
           >
             <Globe2 size={15} />
             <span>{locale === 'en' ? '中文' : 'EN'}</span>

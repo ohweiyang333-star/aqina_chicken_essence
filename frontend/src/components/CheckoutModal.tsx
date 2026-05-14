@@ -3,13 +3,12 @@
 import { useState } from 'react';
 import { X, CheckCircle, Loader2, MessageCircle, QrCode, UploadCloud } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
-import { usePathname } from 'next/navigation';
 import {
   CheckoutOrderError,
   createOrder,
   type CheckoutOrderErrorCode,
 } from '@/lib/order-service';
-import { aqinaSiteConfig, getV2WhatsAppHref } from '@/lib/site-config';
+import { aqinaSiteConfig, getWhatsAppHref } from '@/lib/site-config';
 import {
   createMarketingEventId,
   getMarketingServerEventContext,
@@ -54,7 +53,6 @@ function normalizePhone(value: string) {
 export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModalProps) {
   const ct = useTranslations('Index.Checkout');
   const locale = useLocale();
-  const pathname = usePathname();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
@@ -72,8 +70,9 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
   const shippingFee = selectedPackage.boxCount >= 2 ? 0 : 8;
   const subtotal = Number(product.price);
   const total = subtotal + shippingFee;
-  const isV2Landing = pathname?.startsWith('/v2/');
-  const v2CheckoutWhatsAppHref = getV2WhatsAppHref(locale, product.name);
+  const checkoutWhatsAppHref = getWhatsAppHref(
+    ct('support.message', { product: product.name }),
+  );
   const rawPaymentSteps = ct.raw('payment.steps');
   const paymentSteps = Array.isArray(rawPaymentSteps)
     ? rawPaymentSteps.filter((step): step is string => typeof step === 'string')
@@ -151,11 +150,12 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
 
   const handleCheckoutWhatsAppClick = () => {
     trackLandingFunnelEvent('checkout_whatsapp_fallback_click', {
-      source: 'v2_checkout_whatsapp_fallback',
+      source: 'checkout_whatsapp_fallback',
       destination: 'whatsapp',
       product_id: selectedPackage.productId,
       product_name: product.name,
       product_value: subtotal,
+      language: locale,
     });
   };
 
@@ -342,29 +342,27 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               </ol>
             )}
 
-            {isV2Landing && (
-              <div className="rounded-2xl border border-green-200 bg-green-50 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
-                <div>
-                  <p className="text-sm font-black text-green-900">
-                    {ct('support.title') || 'Need help before paying?'}
-                  </p>
-                  <p className="mt-1 text-sm leading-6 text-green-800/80">
-                    {ct('support.body') || 'Ask us on WhatsApp if you are unsure about this plan.'}
-                  </p>
-                </div>
-                <a
-                  id="v2-checkout-whatsapp-fallback"
-                  href={v2CheckoutWhatsAppHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={handleCheckoutWhatsAppClick}
-                  className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition hover:-translate-y-0.5 sm:mt-0"
-                >
-                  <MessageCircle size={17} />
-                  <span>{ct('support.cta') || 'Ask about this plan'}</span>
-                </a>
+            <div className="rounded-2xl border border-green-200 bg-green-50 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">
+              <div>
+                <p className="text-sm font-black text-green-900">
+                  {ct('support.title') || 'Need help before paying?'}
+                </p>
+                <p className="mt-1 text-sm leading-6 text-green-800/80">
+                  {ct('support.body') || 'Ask us on WhatsApp if you are unsure about this plan.'}
+                </p>
               </div>
-            )}
+              <a
+                id="checkout-whatsapp-fallback"
+                href={checkoutWhatsAppHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={handleCheckoutWhatsAppClick}
+                className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-sm font-bold text-white shadow-[0_10px_24px_rgba(37,211,102,0.24)] transition hover:-translate-y-0.5 sm:mt-0 sm:min-w-36"
+              >
+                <MessageCircle size={17} />
+                <span>{ct('support.cta') || 'Ask about this plan'}</span>
+              </a>
+            </div>
           </div>
 
           <div className="space-y-2">

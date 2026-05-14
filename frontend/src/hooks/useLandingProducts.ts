@@ -3,7 +3,10 @@
 import { useLocale, useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { IMAGES } from '@/lib/image-utils';
-import { trackBeginCheckout } from '@/lib/marketing-analytics';
+import {
+  trackBeginCheckout,
+  trackLandingFunnelEvent,
+} from '@/lib/marketing-analytics';
 import type { DisplayProduct } from '@/lib/product-display';
 
 interface UseLandingProductsOptions {
@@ -79,35 +82,47 @@ export default function useLandingProducts({
           const fallbackProductsByPack = new Map(
             fallbackProducts.map((product) => [product.id, product]),
           );
+          const productsByPack = new Map<string, DisplayProduct>();
+          fetchedProducts.forEach((product) => {
+            const displayProduct = toDisplayProduct(product, locale);
+            const packKey = resolveFixedPackKeyByMeta({
+              id: displayProduct.id,
+              packSize: displayProduct.label,
+              nameEn: displayProduct.name,
+              nameZh: displayProduct.name,
+              price: displayProduct.price,
+            });
+            const fallbackProduct = fallbackProductsByPack.get(packKey);
+
+            if (!fallbackProduct) {
+              productsByPack.set(packKey, displayProduct);
+              return;
+            }
+
+            productsByPack.set(packKey, {
+              ...displayProduct,
+              name:
+                displayProduct.name === displayProduct.id
+                  ? fallbackProduct.name
+                  : displayProduct.name || fallbackProduct.name,
+              label:
+                displayProduct.label === packKey
+                  ? fallbackProduct.label
+                  : displayProduct.label,
+              badge: displayProduct.badge ?? fallbackProduct.badge,
+            });
+          });
+
+          fallbackProducts.forEach((fallbackProduct) => {
+            if (!productsByPack.has(fallbackProduct.id)) {
+              productsByPack.set(fallbackProduct.id, fallbackProduct);
+            }
+          });
+
           setProducts(
-            fetchedProducts.map((product) => {
-              const displayProduct = toDisplayProduct(product, locale);
-              const packKey = resolveFixedPackKeyByMeta({
-                id: displayProduct.id,
-                packSize: displayProduct.label,
-                nameEn: displayProduct.name,
-                nameZh: displayProduct.name,
-                price: displayProduct.price,
-              });
-              const fallbackProduct = fallbackProductsByPack.get(packKey);
-
-              if (!fallbackProduct) {
-                return displayProduct;
-              }
-
-              return {
-                ...displayProduct,
-                name:
-                  displayProduct.name === displayProduct.id
-                    ? fallbackProduct.name
-                    : displayProduct.name || fallbackProduct.name,
-                label:
-                  displayProduct.label === packKey
-                    ? fallbackProduct.label
-                    : displayProduct.label,
-                badge: displayProduct.badge ?? fallbackProduct.badge,
-              };
-            }),
+            ['pack1', 'pack2', 'pack4', 'pack6']
+              .map((packKey) => productsByPack.get(packKey))
+              .filter((product): product is DisplayProduct => Boolean(product)),
           );
         } else {
           setProducts(fallbackProducts);
@@ -124,12 +139,21 @@ export default function useLandingProducts({
   }, [fallbackProducts, locale, useStaticProducts]);
 
   const handleBuyNow = (product: DisplayProduct) => {
+    const productPayload = {
+      source: 'product_offer',
+      product_id: product.id,
+      product_name: product.name,
+      product_value: Number(product.price),
+      package_label: product.label,
+    };
+    trackLandingFunnelEvent('product_buy_click', productPayload);
     trackBeginCheckout({
       productId: product.id,
       productName: product.name,
       value: Number(product.price),
       packageLabel: product.label,
     });
+    trackLandingFunnelEvent('checkout_open', productPayload);
     setSelectedProduct(product);
     setIsCheckoutOpen(true);
   };

@@ -224,10 +224,12 @@ export function trackBeginCheckout(product: MarketingProductEvent) {
   if (!canTrackMarketingEvent()) return;
 
   const pageContext = getMarketingPageContext();
+  const attributionContext = getMarketingAttributionContext();
   const params = productEventParams(product);
   initializeMarketingAnalytics();
   trackGaEvent('begin_checkout', {
     ...pageContext,
+    ...attributionContext,
     currency: params.currency,
     value: params.value,
     items: [params.gaItem],
@@ -235,6 +237,7 @@ export function trackBeginCheckout(product: MarketingProductEvent) {
   trackMetaEvent('InitiateCheckout', {
     ...params.meta,
     ...pageContext,
+    ...attributionContext,
   });
 }
 
@@ -242,10 +245,12 @@ export function trackReceiptSubmittedAsAddToCart(product: MarketingProductEvent)
   if (!canTrackMarketingEvent()) return;
 
   const pageContext = getMarketingPageContext();
+  const attributionContext = getMarketingAttributionContext();
   const params = productEventParams(product);
   initializeMarketingAnalytics();
   trackGaEvent('add_to_cart', {
     ...pageContext,
+    ...attributionContext,
     currency: params.currency,
     value: params.value,
     items: [params.gaItem],
@@ -255,6 +260,7 @@ export function trackReceiptSubmittedAsAddToCart(product: MarketingProductEvent)
   trackMetaEvent('AddToCart', {
     ...params.meta,
     ...pageContext,
+    ...attributionContext,
     order_id: product.orderId,
   }, product.eventId);
 }
@@ -275,6 +281,12 @@ export function trackWhatsAppContact(source = 'whatsapp_link') {
     ...pageContext,
     ...attributionContext,
     content_name: 'WhatsApp',
+    source,
+  });
+  trackMetaEvent('Lead', {
+    ...pageContext,
+    ...attributionContext,
+    content_name: 'WhatsApp consultation',
     source,
   });
 }
