@@ -13,7 +13,10 @@ from app.services.chatbot_skill_router import ChatbotSkillRouter
 VALID_LEAD_GOALS = {"self_care", "pregnancy", "postpartum", "gift_elder", "unknown"}
 VALID_MARKETING_TAGS = {"lead_cold", "qualified_warm", "cart_hot", "handoff_pending"}
 SAFE_FOLLOW_UP_FALLBACK_TEXT = "如果刚才的问题还不确定，我可以按您的情况帮您判断适不适合。请问是自己喝、送长辈，还是孕期/月子调理？"
-SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT = "Aqina 新加坡现货已为您保留配套。您可以用前面发送的 PayNow QR 付款，完成后把截图发回这里即可。"
+SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT = (
+    "您好，我帮您保留刚才的配套。您可以直接把收件人姓名、联系电话和新加坡地址发来；"
+    "如果已经 PayNow 付款，也可以把付款截图发回来，我会让客服帮您确认订单。"
+)
 
 PRICE_OR_ORDER_INTENT_KEYWORDS = {
     "多少钱",
@@ -99,7 +102,12 @@ class GeminiConversationService:
             system_prompt=(runtime_settings or {}).get("system_prompt") or settings.gemini_system_prompt,
         )
         if payload is None:
-            return FollowUpTurnResult(reply_text=_safe_follow_up_fallback_text(checkout_url=checkout_url))
+            return FollowUpTurnResult(
+                reply_text=_safe_follow_up_fallback_text(
+                    checkout_url=checkout_url,
+                    cart_hot=str(contact.get("current_tag") or "").casefold() == "cart_hot",
+                )
+            )
         return FollowUpTurnResult.model_validate(payload)
 
     def _generate_json(self, prompt: str, *, system_prompt: str) -> dict[str, Any] | None:
@@ -370,7 +378,7 @@ def get_gemini_service() -> GeminiConversationService:
     return _gemini_service
 
 
-def _safe_follow_up_fallback_text(*, checkout_url: str | None) -> str:
-    if checkout_url:
+def _safe_follow_up_fallback_text(*, checkout_url: str | None, cart_hot: bool = False) -> str:
+    if checkout_url or cart_hot:
         return SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT
     return SAFE_FOLLOW_UP_FALLBACK_TEXT

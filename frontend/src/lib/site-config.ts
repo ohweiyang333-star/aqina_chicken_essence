@@ -6,6 +6,7 @@ const DEFAULT_PAYNOW_QR_IMAGE =
 const DEFAULT_PAYNOW_ACCOUNT_NAME = "Boong Poultry Pte Ltd";
 const DEFAULT_WHATSAPP_MESSAGE =
   "Hi Aqina SG, I'm interested in your premium chicken essence.";
+const DEFAULT_MESSENGER_LINK = "https://m.me/aqinafarmmy";
 
 function readPublicEnv(value: string | undefined, fallback = "") {
   const trimmed = value?.trim();
@@ -56,6 +57,10 @@ export const aqinaSiteConfig = {
       process.env.NEXT_PUBLIC_WHATSAPP_PREFILL,
       DEFAULT_WHATSAPP_MESSAGE,
     ),
+    messengerHref: readPublicEnv(
+      process.env.NEXT_PUBLIC_MESSENGER_LINK,
+      DEFAULT_MESSENGER_LINK,
+    ),
   },
 };
 
@@ -82,4 +87,8 @@ export function getV2WhatsAppPrefill(locale: string, productName?: string) {
 
 export function getV2WhatsAppHref(locale: string, productName?: string) {
   return getWhatsAppHref(getV2WhatsAppPrefill(locale, productName));
+}
+
+export function getMessengerHref() {
+  return aqinaSiteConfig.messaging.messengerHref;
 }

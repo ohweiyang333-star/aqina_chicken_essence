@@ -19,6 +19,7 @@ RETIRED_PACKAGE_NAME_ZH = "新手" + "体验装"
 RETIRED_PACKAGE_NAME_EN = "Trial " + "Pack"
 RETIRED_PACKAGE_PRICE_TEXT = "SGD " + "18.00"
 RETIRED_PACKAGE_PACK_COUNT_TEXT = f"{3}包"
+LEGACY_ENERGY_PACK_NAME_ZH = "活力" + "升级装"
 
 
 class MarketingApiTests(unittest.TestCase):
@@ -116,7 +117,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["packages"])
         for code in ["pack1", "pack2", "pack4", "pack6"]:
             self.assertIn(code, payload["packages"])
-        self.assertEqual(payload["packages"]["pack1"]["name_zh"], "日常滋养装")
+        self.assertEqual(payload["packages"]["pack1"]["name_zh"], "7天启动装")
         self.assertEqual(payload["faq"][0]["keywords"], ["delivery"])
         self.assertEqual(payload["payment"]["paynow"]["enabled"], True)
         self.assertEqual(payload["escalation"]["pause_automation_on_handoff"], True)
@@ -163,7 +164,7 @@ class MarketingApiTests(unittest.TestCase):
                 "chatbot_skills": {
                     "price_objection": {
                         "recommended_package_code": RETIRED_PACKAGE_CODE,
-                        "required_questions": [f"您会想先用{RETIRED_PACKAGE_NAME_ZH}试口感，还是直接拿免运的活力升级装？"],
+                        "required_questions": [f"您会想先用{RETIRED_PACKAGE_NAME_ZH}试口感，还是直接拿免运的{LEGACY_ENERGY_PACK_NAME_ZH}？"],
                     },
                     "taste_objection": {"recommended_package_code": RETIRED_PACKAGE_CODE},
                 },
@@ -313,6 +314,20 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("不要重复价格", settings_doc["crm_follow_up_rules"]["t15m"]["qualified_warm"]["instruction"])
         self.assertIn("不要发送长篇感官描述", settings_doc["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
         self.assertIn("回复 YES", settings_doc["crm_follow_up_rules"]["t23h"]["default"]["instruction"])
+
+    def test_chatbot_settings_includes_cart_hot_checkout_skill(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+
+        settings_doc = get_default_chatbot_settings()
+        checkout_skill = settings_doc["chatbot_skills"]["cart_hot_checkout"]
+        serialized = json.dumps(checkout_skill, ensure_ascii=False)
+
+        for expected in ["确认配套", "收件人姓名", "联系电话", "新加坡收货地址", "PayNow", "付款截图", "真人客服"]:
+            self.assertIn(expected, serialized)
+        self.assertIn("好的，我先帮您确认", serialized)
+        self.assertIn("目前我们没有货到付款", serialized)
+        self.assertIn("cart_hot", settings_doc["crm_follow_up_rules"]["t15m"])
+        self.assertIn("收件人姓名", settings_doc["crm_follow_up_rules"]["t15m"]["cart_hot"]["instruction"])
 
     def test_facebook_comment_webhook_processes_keyword_comment_to_private_reply(self) -> None:
         self._seed_runtime_settings()
@@ -1003,6 +1018,32 @@ class MarketingApiTests(unittest.TestCase):
             ),
         )
 
+    def test_chatbot_skill_router_selects_cart_hot_checkout_for_buying_intent(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.chatbot_skill_router import ChatbotSkillRouter
+
+        router = ChatbotSkillRouter(get_default_chatbot_settings())
+        hot_messages = [
+            "二盒",
+            "我要两盒",
+            "2 boxes",
+            "how to order",
+            "是货到付款吗？",
+            "PayNow 怎么付？",
+            "下单后多久收到？",
+            "可以送货吗？",
+        ]
+
+        for message in hot_messages:
+            with self.subTest(message=message):
+                selected = router.select_active_skill_ids(
+                    contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+                    incoming_text=message,
+                    max_skills=4,
+                )
+                self.assertIn("cart_hot_checkout", selected)
+                self.assertNotEqual(selected, ["usage_consultation"])
+
     def test_gemini_chat_prompt_injects_only_active_skill_playbooks(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
         from app.services.gemini_service import GeminiConversationService
@@ -1086,7 +1127,7 @@ class MarketingApiTests(unittest.TestCase):
             conversation_id="conv-1",
             event_id="event-1",
             channel="whatsapp",
-            incoming_text="我要买孕产妇30天调理套餐",
+            incoming_text="我要买28天月度装",
             identifier_key="wa_id",
             identifier_value="6591112222",
         )
@@ -1105,6 +1146,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["payment_method"], "paynow")
         self.assertEqual(order["customer"]["name"], "Alice Tan")
         self.assertTrue(order["customer"].get("email") in (None, ""))
+        self.assertEqual(order["marketing_contact_id"], "contact-1")
+        self.assertEqual(order["conversation_id"], "conv-1")
+        self.assertEqual(order["channel"], "whatsapp")
         self.assertEqual(order["subtotal_amount"], 149.0)
         self.assertEqual(order["shipping_fee"], 0.0)
         self.assertEqual(order["total_amount"], 149.0)
@@ -1217,6 +1261,50 @@ class MarketingApiTests(unittest.TestCase):
         ]
         self.assertIn("paynow_qr_media", {item["source"] for item in outbound_images})
 
+    def test_create_order_preserves_marketing_conversation_attribution(self) -> None:
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/orders",
+            json={
+                "marketing_contact_id": "contact_dd588779c551c8bf1a3c",
+                "conversation_id": "conversation_af0fe19285b39b372938",
+                "channel": "messenger",
+                "customer": {
+                    "name": "Test Buyer",
+                    "whatsapp": "+6500000000",
+                    "address": "1 Orchard Road, Singapore 238823",
+                },
+                "items": [
+                    {
+                        "product_id": "pack2",
+                        "product_name": "14-Day Care Pack",
+                        "product_name_zh": "14天常备装",
+                        "quantity": 1,
+                        "unit_price": 75.0,
+                        "total_price": 75.0,
+                    }
+                ],
+                "total_amount": 75.0,
+                "payment_method": "paynow",
+                "utm_source": "facebook",
+                "utm_campaign": "may-offer",
+                "meta_campaign_id": "cmp_1",
+                "meta_adset_id": "adset_1",
+                "meta_ad_id": "ad_1",
+            },
+        )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertEqual(payload["marketing_contact_id"], "contact_dd588779c551c8bf1a3c")
+        self.assertEqual(payload["conversation_id"], "conversation_af0fe19285b39b372938")
+        self.assertEqual(payload["channel"], "messenger")
+        self.assertEqual(payload["source"], "marketing_inbox")
+        order = self.db.collection("orders").stream()[0].to_dict()
+        self.assertEqual(order["created_from"], "marketing_inbox")
+        self.assertEqual(order["utm_source"], "facebook")
+        self.assertEqual(order["meta_ad_id"], "ad_1")
+
     def test_process_inbound_message_blocks_messenger_checkout_without_phone(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
@@ -1280,7 +1368,7 @@ class MarketingApiTests(unittest.TestCase):
     def test_process_inbound_message_creates_pack1_checkout_with_shipping(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
-                "reply_text": "可以的，我先帮您安排日常滋养装，适合先试口感 🎈",
+                "reply_text": "可以的，我先帮您安排7天启动装，适合先试口感 🎈",
                 "next_tag": "cart_hot",
                 "lead_goal": "self_care",
                 "recommended_package_code": "pack1",
@@ -1333,7 +1421,7 @@ class MarketingApiTests(unittest.TestCase):
     def test_process_inbound_message_sends_brand_and_package_images_without_url_text(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
-                "reply_text": "懂您，经常熬夜确实很容易白天没精神。我更建议您看【活力升级装】，刚好两盒免运费。",
+                "reply_text": "懂您，忙起来确实会想找简单一点的温热补给。我更建议您看【14天常备装】，刚好两盒免运费。",
                 "next_tag": "qualified_warm",
                 "lead_goal": "self_care",
                 "recommended_package_code": "pack2",
@@ -1451,7 +1539,7 @@ class MarketingApiTests(unittest.TestCase):
     def test_process_inbound_message_does_not_resend_seen_chatbot_images(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
-                "reply_text": "我继续建议您拿【活力升级装】，两盒刚好免运费。",
+                "reply_text": "我继续建议您拿【14天常备装】，两盒刚好免运费。",
                 "next_tag": "qualified_warm",
                 "lead_goal": "self_care",
                 "recommended_package_code": "pack2",
@@ -1496,6 +1584,99 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
         self.assertEqual(len(image_calls), 0)
+
+    def test_process_inbound_message_marks_hot_quantity_as_cart_hot_when_model_underclassifies(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "您想了解 2 盒的话，我可以帮您确认。",
+                "next_tag": "qualified_warm",
+                "lead_goal": "unknown",
+                "recommended_package_code": None,
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-hot-quantity",
+            conversation_id="conv-hot-quantity",
+            event_id="event-hot-quantity",
+            channel="messenger",
+            incoming_text="二盒",
+            identifier_key="psid",
+            identifier_value="273700003322",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-hot-quantity"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        contact = self.db.collection("marketing_contacts").document("contact-hot-quantity").get().to_dict()
+        self.assertEqual(contact["current_tag"], "cart_hot")
+
+    def test_process_inbound_message_marks_hot_checkout_handoff_recommended_without_pausing(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "我帮您确认两盒。",
+                "next_tag": "qualified_warm",
+                "lead_goal": "unknown",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-hot-handoff",
+            conversation_id="conv-hot-handoff",
+            event_id="event-hot-handoff",
+            channel="messenger",
+            incoming_text="二盒",
+            identifier_key="psid",
+            identifier_value="273700004444",
+        )
+        self.db.seed(
+            "marketing_conversations/conv-hot-handoff/messages/msg-price",
+            {
+                "direction": "inbound",
+                "role": "user",
+                "text": "运费多少？可以 COD 吗？",
+                "source": "messenger_webhook",
+                "created_at": "2026-04-10T00:00:01Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-hot-handoff"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        contact = self.db.collection("marketing_contacts").document("contact-hot-handoff").get().to_dict()
+        self.assertEqual(contact["current_tag"], "cart_hot")
+        self.assertTrue(contact["handoff_recommended"])
+        self.assertEqual(contact["handoff_reason"], "high_intent_checkout")
+        self.assertFalse(contact.get("automation_paused", False))
 
     def test_landing_order_with_receipt_charges_shipping_for_one_box(self) -> None:
         client = self._build_client()
@@ -1774,8 +1955,8 @@ class MarketingApiTests(unittest.TestCase):
                 "items": [
                     {
                         "product_id": "energy_14",
-                        "product_name": "活力升级装",
-                        "product_name_zh": "活力升级装",
+                        "product_name": "14天常备装",
+                        "product_name_zh": "14天常备装",
                         "quantity": 1,
                         "unit_price": 75.0,
                         "total_price": 75.0,
@@ -2390,6 +2571,81 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(len(outbound_messages), 1)
         self.assertEqual(outbound_messages[0]["text"], "哈喽~ 您是不是刚好在忙呀？没关系的。")
 
+    def test_cart_hot_follow_up_uses_checkout_fallback_not_generic_consultation(self) -> None:
+        class NullFollowUpGemini(FakeGeminiService):
+            def generate_follow_up_reply(self, **kwargs):
+                self.calls.append(("generate_follow_up_reply", kwargs))
+                return None
+
+        self.gemini_service = NullFollowUpGemini()
+        self._seed_runtime_settings()
+        self.db.seed(
+            "marketing_contacts/contact-cart-hot-followup",
+            {
+                "channel": "whatsapp",
+                "identifiers": {"wa_id": "6595552222"},
+                "current_tag": "cart_hot",
+                "follow_up_stage": "none",
+                "last_interaction_time": "2026-04-10T00:00:00Z",
+                "window_expires_at": "2099-01-01T00:00:00Z",
+                "latest_conversation_id": "conv-cart-hot-followup",
+                "status": "active",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-cart-hot-followup",
+            {
+                "contact_id": "contact-cart-hot-followup",
+                "channel": "whatsapp",
+                "status": "open",
+                "message_count": 1,
+                "opened_at": "2026-04-10T00:00:00Z",
+                "last_message_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_conversations/conv-cart-hot-followup/messages/msg-1",
+            {
+                "direction": "inbound",
+                "role": "user",
+                "text": "二盒，PayNow 怎么付？",
+                "source": "whatsapp_webhook",
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_follow_up_jobs/job-cart-hot-followup",
+            {
+                "contact_id": "contact-cart-hot-followup",
+                "conversation_id": "conv-cart-hot-followup",
+                "stage": "t15m",
+                "anchor_interaction_time": "2026-04-10T00:00:00Z",
+                "due_at": "2026-04-10T00:15:00Z",
+                "eligible_tags": ["lead_cold", "qualified_warm", "cart_hot"],
+                "status": "scheduled",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-follow-up-job",
+            json={"job_id": "job-cart-hot-followup"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "completed")
+        message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        self.assertEqual(len(message_calls), 1)
+        reply = message_calls[0][1]["text"]
+        self.assertIn("收件人姓名", reply)
+        self.assertIn("付款截图", reply)
+        self.assertNotIn("自己喝、送长辈", reply)
+
     def test_t3h_follow_up_job_uses_safe_fallback_when_gemini_returns_none(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
         from app.services.gemini_service import SAFE_FOLLOW_UP_FALLBACK_TEXT
@@ -2672,6 +2928,43 @@ class MarketingApiTests(unittest.TestCase):
         self.assertTrue(payload["window"]["is_open"])
         self.assertEqual(payload["messages"][0]["text"], "我要买给妈妈")
         self.assertEqual(payload["contact"]["contact_id"], "contact-detail-msgr")
+
+    def test_unified_conversation_detail_flags_cart_hot_handoff_without_order(self) -> None:
+        self._seed_contact_and_event(
+            contact_id="contact-detail-hot",
+            conversation_id="conv-detail-hot",
+            event_id="event-detail-hot",
+            channel="messenger",
+            incoming_text="二盒，PayNow 怎么付？可以送货吗？",
+            identifier_key="psid",
+            identifier_value="273700003322",
+        )
+        self.db.collection("marketing_contacts").document("contact-detail-hot").set(
+            {
+                "current_tag": "cart_hot",
+                "handoff_recommended": True,
+                "handoff_reason": "high_intent_checkout",
+            },
+            merge=True,
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/marketing/conversations/conv-detail-hot",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        summary = response.json()["conversation"]
+        self.assertEqual(summary["current_tag"], "cart_hot")
+        self.assertTrue(summary["handoff_recommended"])
+        self.assertEqual(summary["handoff_reason"], "high_intent_checkout")
+        self.assertEqual(summary["matched_order_count"], 0)
+        self.assertIsNone(summary["latest_order_status"])
+        self.assertIsNone(summary["latest_payment_status"])
+        self.assertIn("price_or_package", summary["latest_blockers"])
+        self.assertIn("payment", summary["latest_blockers"])
+        self.assertIn("delivery", summary["latest_blockers"])
 
     def test_unified_conversations_api_sends_messenger_manual_reply_inside_window(self) -> None:
         self._seed_contact_and_event(
@@ -3443,8 +3736,8 @@ class MarketingApiTests(unittest.TestCase):
                 "packages": {
                     "pack1": {
                         "code": "pack1",
-                        "name_zh": "日常滋养装",
-                        "name_en": "Daily Nourishment Pack",
+                        "name_zh": "7天启动装",
+                        "name_en": "7-Day Starter Pack",
                         "price_sgd": 39.9,
                         "pack_count": 7,
                         "box_count": 1,
@@ -3454,8 +3747,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "pack2": {
                         "code": "pack2",
-                        "name_zh": "活力升级装",
-                        "name_en": "Energy Upgrade Pack",
+                        "name_zh": "14天常备装",
+                        "name_en": "14-Day Care Pack",
                         "price_sgd": 75.0,
                         "pack_count": 14,
                         "box_count": 2,
@@ -3465,8 +3758,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "pack4": {
                         "code": "pack4",
-                        "name_zh": "孕产妇30天调理套餐",
-                        "name_en": "Maternity 30-Day Pack",
+                        "name_zh": "28天月度装",
+                        "name_en": "28-Day Monthly Pack",
                         "price_sgd": 149.0,
                         "pack_count": 28,
                         "box_count": 4,
@@ -3476,8 +3769,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "pack6": {
                         "code": "pack6",
-                        "name_zh": "家庭月度订阅包",
-                        "name_en": "Family Monthly Subscription Pack",
+                        "name_zh": "42天家庭装",
+                        "name_en": "42-Day Family Pack",
                         "price_sgd": 219.0,
                         "pack_count": 42,
                         "box_count": 6,
@@ -3497,8 +3790,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "energy_14": {
                         "code": "energy_14",
-                        "name_zh": "活力升级装",
-                        "name_en": "Energy Upgrade Pack",
+                        "name_zh": "14天常备装",
+                        "name_en": "14-Day Care Pack",
                         "price_sgd": 75.0,
                         "pack_count": 14,
                         "target_audience": ["self_care"],
@@ -3507,8 +3800,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "maternal_28": {
                         "code": "maternal_28",
-                        "name_zh": "孕产妇30天调理套餐",
-                        "name_en": "Maternal 30-Day Pack",
+                        "name_zh": "28天月度装",
+                        "name_en": "28-Day Monthly Pack",
                         "price_sgd": 149.0,
                         "pack_count": 28,
                         "target_audience": ["pregnancy", "postpartum"],
@@ -3517,8 +3810,8 @@ class MarketingApiTests(unittest.TestCase):
                     },
                     "family_42": {
                         "code": "family_42",
-                        "name_zh": "家庭月度订阅包",
-                        "name_en": "Family Monthly Pack",
+                        "name_zh": "42天家庭装",
+                        "name_en": "42-Day Family Pack",
                         "price_sgd": 219.0,
                         "pack_count": 42,
                         "target_audience": ["gift_elder", "self_care"],

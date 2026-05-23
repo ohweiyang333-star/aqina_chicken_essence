@@ -11,6 +11,11 @@ from app.services.meta_media_assets import MetaMediaAssetService
 
 SUPPORTED_INBOX_CHANNELS = {"messenger", "whatsapp"}
 VALID_MARKETING_TAGS = {"lead_cold", "qualified_warm", "cart_hot", "handoff_pending"}
+BLOCKER_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "price_or_package": ("price", "how much", "多少钱", "价钱", "价格", "配套", "package", "pack", "盒"),
+    "delivery": ("delivery", "deliver", "shipping", "运费", "配送", "送货", "多久收到", "几天到", "免运"),
+    "payment": ("paynow", "payment", "付款", "货到付款", "cod", "cash on delivery", "截图"),
+}
 
 
 class MarketingConversationConsoleService:
@@ -194,6 +199,11 @@ class MarketingConversationConsoleService:
         latest_messages = self._messages_for(conversation_id, limit=1, descending=True)
         latest = latest_messages[0] if latest_messages else None
         platform_id = self._platform_id(contact_payload, conversation.get("channel", ""))
+        orders = self._orders_for_contact(contact_payload, conversation_id=conversation_id)
+        latest_blockers = self._latest_blockers(conversation_id)
+        handoff_recommended = bool(contact_payload.get("handoff_recommended")) or (
+            contact_payload.get("current_tag") == "cart_hot" and not orders
+        )
         return {
             "conversation_id": conversation_id,
             "contact_id": conversation["contact_id"],
@@ -207,7 +217,15 @@ class MarketingConversationConsoleService:
             "last_message_at": conversation.get("last_message_at"),
             "latest_message": latest,
             "window": self._window_payload(contact_payload),
-            "orders": self._orders_for_contact(contact_payload)[:3],
+            "latest_blockers": latest_blockers,
+            "handoff_recommended": handoff_recommended,
+            "handoff_reason": contact_payload.get("handoff_reason") or (
+                "Customer selected quantity or asked payment/delivery" if handoff_recommended else None
+            ),
+            "matched_order_count": len(orders),
+            "latest_order_status": orders[0].get("order_status") if orders else None,
+            "latest_payment_status": orders[0].get("payment_status") if orders else None,
+            "orders": orders[:3],
         }
 
     def _get_conversation(self, conversation_id: str) -> dict[str, Any]:
@@ -235,7 +253,7 @@ class MarketingConversationConsoleService:
             messages.append(message)
         return messages
 
-    def _orders_for_contact(self, contact: dict[str, Any]) -> list[dict[str, Any]]:
+    def _orders_for_contact(self, contact: dict[str, Any], *, conversation_id: str | None = None) -> list[dict[str, Any]]:
         contact_id = contact.get("contact_id")
         identifiers = contact.get("identifiers") or {}
         wa_id = identifiers.get("wa_id") or identifiers.get("phone_e164")
@@ -243,11 +261,29 @@ class MarketingConversationConsoleService:
         for doc in self.db.collection("orders").stream():
             order = doc.to_dict()
             customer = order.get("customer", {})
-            if order.get("marketing_contact_id") == contact_id or (wa_id and customer.get("whatsapp") == wa_id):
+            if (
+                order.get("marketing_contact_id") == contact_id
+                or (conversation_id and order.get("conversation_id") == conversation_id)
+                or (wa_id and customer.get("whatsapp") == wa_id)
+            ):
                 order["order_id"] = doc.id
                 orders.append(order)
         orders.sort(key=lambda item: str(item.get("created_at", "")), reverse=True)
         return orders
+
+    def _latest_blockers(self, conversation_id: str) -> list[str]:
+        messages = self._messages_for(conversation_id, limit=12, descending=True)
+        inbound_text = "\n".join(
+            str(message.get("text") or "").casefold()
+            for message in messages
+            if message.get("direction") == "inbound"
+        )
+        blockers = [
+            label
+            for label, keywords in BLOCKER_KEYWORDS.items()
+            if any(keyword in inbound_text for keyword in keywords)
+        ]
+        return blockers
 
     def _window_payload(self, contact: dict[str, Any]) -> dict[str, Any]:
         expires_at = ensure_datetime(contact.get("window_expires_at"))

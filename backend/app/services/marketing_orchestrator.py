@@ -12,6 +12,7 @@ from app.models.chatbot import SalesConversationTurn
 from app.models.marketing import NormalizedMarketingEvent
 from app.services.meta_media_assets import MetaMediaAssetService
 from app.services.chatbot_settings import ChatbotSettingsService, DEFAULT_FACEBOOK_COMMENT_KEYWORDS
+from app.services.chatbot_skill_router import is_cart_hot_checkout_intent
 from app.services.follow_up import FollowUpEngine
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, excerpt, payload_hash, stable_id, utcnow
@@ -678,6 +679,10 @@ class MarketingAutomationOrchestrator:
         runtime_settings = self.settings_service.get_settings()
         conversation_id = event["conversation_id"]
         messages = self.contact_service.get_recent_messages(conversation_id)
+        hot_checkout_intent = is_cart_hot_checkout_intent(
+            incoming_text,
+            current_tag=contact.get("current_tag"),
+        )
         customer_locale = _detect_customer_locale(incoming_text, contact)
         turn = self._normalize_turn(
             self.gemini_service.generate_chat_reply(
@@ -708,7 +713,7 @@ class MarketingAutomationOrchestrator:
             missing_order_fields=missing_order_fields,
             phone_defaulted=prompt_phone_defaulted or runtime_phone_defaulted,
         )
-        effective_next_tag = "cart_hot" if checkout_ready else turn.next_tag
+        effective_next_tag = "cart_hot" if checkout_ready or hot_checkout_intent else turn.next_tag
         update_fields = {
             "lead_goal": turn.lead_goal,
             "recommended_package_code": turn.recommended_package_code,
@@ -719,6 +724,9 @@ class MarketingAutomationOrchestrator:
             "future_contact_opt_in": bool(turn.opt_in_granted),
             "chatbot_locale": customer_locale,
         }
+        if hot_checkout_intent or checkout_ready:
+            update_fields["handoff_recommended"] = True
+            update_fields["handoff_reason"] = "high_intent_checkout"
         self.contact_service.update_contact_profile(contact_id, update_fields)
         if turn.opt_in_granted:
             self.contact_service.grant_marketing_opt_in(contact_id, source="chatbot_opt_in")
@@ -897,8 +905,11 @@ class MarketingAutomationOrchestrator:
             "order_status": "pending",
             "payment_receipt_url": None,
             "source": "marketing_chatbot",
+            "created_from": "marketing_inbox",
             "source_channel": contact.get("channel"),
             "marketing_contact_id": contact_id,
+            "conversation_id": conversation_id,
+            "channel": contact.get("channel"),
             "checkout_session_id": None,
             "created_at": now,
             "updated_at": now,

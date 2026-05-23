@@ -387,9 +387,11 @@ function InboxPanel({
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-[#6b746f]">
                   <span className="rounded bg-[#f2eee7] px-2 py-1">{channelLabel(item.channel)}</span>
-                  <span className="rounded bg-[#f2eee7] px-2 py-1">{item.current_tag || "untagged"}</span>
+                  <TagBadge tag={item.current_tag} />
+                  {item.handoff_recommended && <HandoffBadge />}
                   <span className="rounded bg-[#f2eee7] px-2 py-1">{item.acquisition.source}</span>
                 </div>
+                <BlockerPills blockers={item.latest_blockers || []} compact />
               </button>
             ))
           )}
@@ -539,6 +541,17 @@ function InboxPanel({
               <InfoRow label="Platform ID" value={maskPlatformId(conversationDetail.conversation.platform_id)} />
               <InfoRow label="Marketing" value={conversationDetail.conversation.marketing_status || "-"} />
               <InfoRow label="窗口" value={conversationDetail.window.is_open ? "可自由回复" : "已关闭"} />
+              <InfoRow
+                label="Handoff"
+                value={conversationDetail.conversation.handoff_recommended ? "Needs human follow-up" : "No"}
+              />
+              {conversationDetail.conversation.handoff_reason && (
+                <InfoRow label="Reason" value={conversationDetail.conversation.handoff_reason} />
+              )}
+              <div className="grid gap-2">
+                <span className="text-xs font-semibold text-[#6b746f]">Blockers</span>
+                <BlockerPills blockers={conversationDetail.conversation.latest_blockers || []} />
+              </div>
               <label className="grid gap-1 text-xs font-semibold text-[#6b746f]">
                 Lead Tag
                 <select
@@ -585,6 +598,26 @@ function InboxPanel({
 
         <Panel title="关联订单">
           <div className="space-y-3">
+            {conversationDetail && (
+              <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="rounded-md bg-[#f2eee7] p-2">
+                  <p className="font-bold text-[#10251d]">{conversationDetail.conversation.matched_order_count || 0}</p>
+                  <p className="text-[#6b746f]">Matched</p>
+                </div>
+                <div className="rounded-md bg-[#f2eee7] p-2">
+                  <p className="truncate font-bold text-[#10251d]">
+                    {conversationDetail.conversation.latest_order_status || "-"}
+                  </p>
+                  <p className="text-[#6b746f]">Order</p>
+                </div>
+                <div className="rounded-md bg-[#f2eee7] p-2">
+                  <p className="truncate font-bold text-[#10251d]">
+                    {conversationDetail.conversation.latest_payment_status || "-"}
+                  </p>
+                  <p className="text-[#6b746f]">Payment</p>
+                </div>
+              </div>
+            )}
             {conversationDetail?.orders.length ? (
               conversationDetail.orders.map((order) => (
                 <div key={order.order_id} className="rounded-md border border-[#e5ddd1] bg-[#faf8f3] p-3 text-sm">
@@ -612,6 +645,45 @@ function MetricPill({ label, value }: { label: string; value: number }) {
     <div className="inline-flex items-center gap-2 rounded-md border border-[#d7d0c5] bg-white px-4 py-2 text-sm font-semibold text-[#294239]">
       <span className="text-[#6b746f]">{label}</span>
       <span>{value}</span>
+    </div>
+  );
+}
+
+function TagBadge({ tag }: { tag: MarketingConversationSummary["current_tag"] }) {
+  const isHot = tag === "cart_hot";
+  return (
+    <span
+      className={`rounded px-2 py-1 ${
+        isHot ? "bg-[#fff2d8] font-bold text-[#8a4a00]" : "bg-[#f2eee7] text-[#6b746f]"
+      }`}
+    >
+      {tag || "untagged"}
+    </span>
+  );
+}
+
+function HandoffBadge() {
+  return (
+    <span className="rounded bg-[#ffe8e2] px-2 py-1 font-bold text-[#9b321c]">
+      Needs human follow-up
+    </span>
+  );
+}
+
+function BlockerPills({ blockers, compact = false }: { blockers: string[]; compact?: boolean }) {
+  if (!blockers.length) {
+    return compact ? null : <p className="text-xs text-[#8a938e]">No active blocker</p>;
+  }
+  return (
+    <div className={`flex flex-wrap gap-1.5 ${compact ? "mt-2" : ""}`}>
+      {blockers.map((blocker) => (
+        <span
+          key={blocker}
+          className="rounded border border-[#e0c9ae] bg-[#fffaf0] px-2 py-1 text-[11px] font-bold text-[#7a5128]"
+        >
+          {blockerLabel(blocker)}
+        </span>
+      ))}
     </div>
   );
 }
@@ -653,6 +725,15 @@ function ChannelIcon({ channel }: { channel: MarketingConversationSummary["chann
 
 function channelLabel(channel: MarketingConversationSummary["channel"]) {
   return channel === "messenger" ? "Messenger" : "WhatsApp";
+}
+
+function blockerLabel(value: string) {
+  const labels: Record<string, string> = {
+    price_or_package: "Price/package",
+    delivery: "Delivery",
+    payment: "Payment",
+  };
+  return labels[value] || value;
 }
 
 function maskPlatformId(value: string) {

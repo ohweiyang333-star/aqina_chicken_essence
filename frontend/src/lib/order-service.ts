@@ -63,7 +63,14 @@ export interface Order {
   source?: string;
   sourceChannel?: string;
   marketingContactId?: string;
+  conversationId?: string;
+  channel?: string;
   checkoutSessionId?: string;
+  utmSource?: string;
+  utmCampaign?: string;
+  metaCampaignId?: string;
+  metaAdsetId?: string;
+  metaAdId?: string;
   expectedShipDate?: string;
   lastCustomerContactAt?: unknown;
   lastCustomerContactMethod?: string;
@@ -387,7 +394,14 @@ function normalizeOrder(id: string, data: RawRecord): Order {
     source: stringOrUndefined(data.source) ?? 'landing_page',
     sourceChannel: stringOrUndefined(data.source_channel),
     marketingContactId: stringOrUndefined(data.marketing_contact_id),
+    conversationId: stringOrUndefined(data.conversation_id),
+    channel: stringOrUndefined(data.channel),
     checkoutSessionId: stringOrUndefined(data.checkout_session_id),
+    utmSource: stringOrUndefined(data.utm_source),
+    utmCampaign: stringOrUndefined(data.utm_campaign),
+    metaCampaignId: stringOrUndefined(data.meta_campaign_id),
+    metaAdsetId: stringOrUndefined(data.meta_adset_id),
+    metaAdId: stringOrUndefined(data.meta_ad_id),
     expectedShipDate: stringOrUndefined(data.expected_ship_date),
     lastCustomerContactAt: data.last_customer_contact_at,
     lastCustomerContactMethod: stringOrUndefined(data.last_customer_contact_method),

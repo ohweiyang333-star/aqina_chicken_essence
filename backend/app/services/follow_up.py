@@ -124,7 +124,11 @@ class FollowUpEngine:
             runtime_settings=runtime_settings,
             checkout_url=checkout_url,
         )
-        reply_text, next_tag = self._normalize_follow_up_result(result, checkout_url=checkout_url)
+        reply_text, next_tag = self._normalize_follow_up_result(
+            result,
+            checkout_url=checkout_url,
+            cart_hot=current_tag == "cart_hot",
+        )
         self._send_reply(contact, reply_text)
         self.contact_service.append_message(
             contact_id=job["contact_id"],
@@ -184,7 +188,12 @@ class FollowUpEngine:
         raise ValueError(f"Unsupported follow-up channel: {channel}")
 
     @staticmethod
-    def _normalize_follow_up_result(result: Any, *, checkout_url: str | None) -> tuple[str, str | None]:
+    def _normalize_follow_up_result(
+        result: Any,
+        *,
+        checkout_url: str | None,
+        cart_hot: bool = False,
+    ) -> tuple[str, str | None]:
         payload: dict[str, Any] | None = None
         if isinstance(result, dict):
             payload = result
@@ -208,8 +217,8 @@ class FollowUpEngine:
                 reminder = "请使用前面发送的 PayNow QR 图片付款，完成后把截图发回这里即可。"
                 if reminder not in reply_text:
                     reply_text = f"{reply_text}\n\n{reminder}".strip()
-            return _customer_safe_follow_up_text(reply_text, checkout_url=checkout_url), next_tag
-        return _customer_safe_follow_up_text(str(result).strip(), checkout_url=checkout_url), None
+            return _customer_safe_follow_up_text(reply_text, checkout_url=checkout_url, cart_hot=cart_hot), next_tag
+        return _customer_safe_follow_up_text(str(result).strip(), checkout_url=checkout_url, cart_hot=cart_hot), None
 
     @staticmethod
     def _parse_structured_result_string(value: str) -> dict[str, Any] | None:
@@ -282,17 +291,17 @@ def _extract_bool_field(text: str, field_name: str) -> bool | None:
     return match.group(1) == "True"
 
 
-def _customer_safe_follow_up_text(text: str, *, checkout_url: str | None) -> str:
+def _customer_safe_follow_up_text(text: str, *, checkout_url: str | None, cart_hot: bool = False) -> str:
     normalized = str(text or "").strip()
     if not normalized or normalized.casefold() in {"none", "null"}:
-        return _safe_follow_up_fallback_text(checkout_url=checkout_url)
+        return _safe_follow_up_fallback_text(checkout_url=checkout_url, cart_hot=cart_hot)
     if _looks_like_internal_follow_up_instruction(normalized):
-        return _safe_follow_up_fallback_text(checkout_url=checkout_url)
+        return _safe_follow_up_fallback_text(checkout_url=checkout_url, cart_hot=cart_hot)
     return normalized
 
 
-def _safe_follow_up_fallback_text(*, checkout_url: str | None) -> str:
-    if checkout_url:
+def _safe_follow_up_fallback_text(*, checkout_url: str | None, cart_hot: bool = False) -> str:
+    if checkout_url or cart_hot:
         return SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT
     return SAFE_FOLLOW_UP_FALLBACK_TEXT
 

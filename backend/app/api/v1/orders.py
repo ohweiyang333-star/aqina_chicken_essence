@@ -411,6 +411,14 @@ async def create_order(order_data: CreateOrderRequest, db: DB):
         for item in order_data.items
     )
     shipping_fee = _shipping_fee_for(box_count)
+    has_marketing_attribution = bool(
+        order_data.marketing_contact_id or order_data.conversation_id or order_data.channel
+    )
+    order_source = (
+        "marketing_inbox"
+        if has_marketing_attribution and (not order_data.source or order_data.source == "web_checkout")
+        else order_data.source
+    )
 
     # Prepare order document
     order_dict = {
@@ -425,9 +433,18 @@ async def create_order(order_data: CreateOrderRequest, db: DB):
         "order_status": "pending",
         "payment_receipt_url": None,
         "notes": order_data.notes,
-        "source": order_data.source,
+        "source": order_source,
+        "created_from": "marketing_inbox" if has_marketing_attribution else order_source,
         "marketing_contact_id": order_data.marketing_contact_id,
+        "conversation_id": order_data.conversation_id,
+        "channel": order_data.channel,
+        "source_channel": order_data.channel,
         "checkout_session_id": order_data.checkout_session_id,
+        "utm_source": order_data.utm_source,
+        "utm_campaign": order_data.utm_campaign,
+        "meta_campaign_id": order_data.meta_campaign_id,
+        "meta_adset_id": order_data.meta_adset_id,
+        "meta_ad_id": order_data.meta_ad_id,
         "created_at": SERVER_TIMESTAMP,
         "updated_at": SERVER_TIMESTAMP,
     }

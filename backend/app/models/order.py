@@ -34,7 +34,14 @@ class CreateOrderRequest(BaseModel):
     notes: Optional[str] = Field(None, max_length=1000)
     source: Optional[str] = Field(default="web_checkout", max_length=100)
     marketing_contact_id: Optional[str] = Field(default=None, max_length=200)
+    conversation_id: Optional[str] = Field(default=None, max_length=200)
+    channel: Optional[str] = Field(default=None, max_length=50)
     checkout_session_id: Optional[str] = Field(default=None, max_length=200)
+    utm_source: Optional[str] = Field(default=None, max_length=200)
+    utm_campaign: Optional[str] = Field(default=None, max_length=200)
+    meta_campaign_id: Optional[str] = Field(default=None, max_length=200)
+    meta_adset_id: Optional[str] = Field(default=None, max_length=200)
+    meta_ad_id: Optional[str] = Field(default=None, max_length=200)
 
 
 class OrderResponse(BaseModel):
@@ -58,7 +65,15 @@ class OrderResponse(BaseModel):
     source: Optional[str] = None
     source_channel: Optional[str] = None
     marketing_contact_id: Optional[str] = None
+    conversation_id: Optional[str] = None
+    channel: Optional[str] = None
     checkout_session_id: Optional[str] = None
+    created_from: Optional[str] = None
+    utm_source: Optional[str] = None
+    utm_campaign: Optional[str] = None
+    meta_campaign_id: Optional[str] = None
+    meta_adset_id: Optional[str] = None
+    meta_ad_id: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 

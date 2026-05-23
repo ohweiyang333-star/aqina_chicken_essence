@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import MobileFloatingCTA from '@/components/MobileFloatingCTA';
 import MediaLoadGate from '@/components/MediaLoadGate';
 import ProductPricingSection from '@/components/ProductPricingSection';
+import V2BofuOrderSection from '@/components/v2/V2BofuOrderSection';
 import V2ComparisonSection from '@/components/v2/V2ComparisonSection';
 import V2CraftLightnessSection from '@/components/v2/V2CraftLightnessSection';
 import V2HeroSection from '@/components/v2/V2HeroSection';
@@ -73,6 +74,7 @@ export default function V2LandingPage() {
             showWhatsAppFallback
           />
         </V2ProductPricingBand>
+        <V2BofuOrderSection />
         <V2QuickTrustStrip />
         <V2FAQSection />
         <V2ComparisonSection />

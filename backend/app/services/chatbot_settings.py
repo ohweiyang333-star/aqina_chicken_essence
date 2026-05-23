@@ -35,6 +35,7 @@ RETIRED_TRIAL_NAME_EN = "Trial " + "Pack"
 RETIRED_TRIAL_PRICE_TEXT = "SGD " + "18.00"
 RETIRED_TRIAL_PACK_COUNT_TEXT = f"{3}包"
 RETIRED_TRIAL_PACK_COUNT_SPACED_TEXT = f"{3} 包"
+LEGACY_ENERGY_PACK_NAME_ZH = "活力" + "升级装"
 
 DEFAULT_PAYNOW_QR_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa"
 LEGACY_PAYNOW_QR_IMAGE = "/paynow/bp-paynow-qr.png"
@@ -98,12 +99,12 @@ DEFAULT_MEDIA_ASSETS = {
             "en": "1-box starter pack: 7 days of nourishment, great for first-time trial.",
         },
         "pack2": {
-            "zh": "2盒14天疗程：满 SGD 70 包邮，日常提神抗疲劳首选。",
-            "en": "2-box 14-day pack: free delivery included, best for daily energy support.",
+            "zh": "2盒14天起步：刚好免运，适合第一次按日常节奏试一轮。",
+            "en": "2-box 14-day starter: free delivery included, suitable for a first daily-use trial.",
         },
         "pack4": {
-            "zh": "4盒28天调理：孕产/月子补养推荐，包邮。",
-            "en": "4-box 28-day care pack: recommended for maternity care, free delivery.",
+            "zh": "4盒28天月度装：适合孕期、待产、月子或新手爸妈照顾周期，免运。",
+            "en": "4-box 28-day monthly pack: suitable for pregnancy, confinement, and new-parent care routines.",
         },
         "pack6": {
             "zh": "6盒42天家庭装：长辈、送礼、家庭补养，包邮更划算。",
@@ -171,10 +172,10 @@ DEFAULT_CHATBOT_SKILLS = {
     },
     "self_care_fatigue": {
         "skill_id": "self_care_fatigue",
-        "title": "日常提神与疲劳",
+        "title": "自用日常补养",
         "trigger_keywords": ["自己", "熬夜", "疲劳", "累", "没精神", "上班", "学生", "考试"],
         "listening_goal": "确认是自己日常保养、上班疲劳、学生补养，还是买给家人先试。",
-        "instruction": "先回答顾客当前问题，再用一个问题确认频率或场景。需求明确后可桥接到 2盒日常补养或 1盒先试；只有顾客问价、问配套、问运费或表示要买时才说 SGD 价格。",
+        "instruction": "先回答顾客当前问题，再用一个问题确认频率或场景。需求明确后可桥接到 2盒免运起步或 1盒先试口感；只有顾客问价、问配套、问运费或表示要买时才说 SGD 价格。",
         "required_questions": ["您是想偶尔补一补，还是准备每天早上固定喝一段时间？"],
         "recommended_package_code": "pack2",
         "upgrade_package_code": "pack4",
@@ -238,6 +239,32 @@ DEFAULT_CHATBOT_SKILLS = {
         "safety_rules": ["不得承诺治疗疾病", "不得建议停药", "复杂医疗问题 escalate=true"],
         "next_referrals": ["usage_consultation", "maternity_consultation", "elder_gift_recovery"],
     },
+    "cart_hot_checkout": {
+        "skill_id": "cart_hot_checkout",
+        "title": "高意向下单收口",
+        "trigger_keywords": ["二盒", "两盒", "2 boxes", "下单", "order", "PayNow", "货到付款", "运费", "送货"],
+        "listening_goal": "顾客已经问价格、配送、付款、COD、或选了数量时，直接推进 conversation -> cart_hot -> order，不再回到泛泛诊断。",
+        "instruction": (
+            "先确认配套、数量和总金额；然后一次性索取收件人姓名、联系电话、新加坡收货地址。"
+            "说明目前使用 PayNow 付款，付款后要把付款截图发回来；最后说明真人客服会确认订单并安排配送。"
+            "如果顾客问 COD/货到付款，明确说明目前没有货到付款，不要编造例外。"
+            "不要再问生活方式、疲劳程度或宽泛用途问题。"
+        ),
+        "required_questions": [
+            (
+                "好的，我先帮您确认：您要的是 2 盒14天常备装，合计 SGD 75，并且符合免运费。\n\n"
+                "麻烦您发我：\n"
+                "1. 收件人姓名\n"
+                "2. 联系电话\n"
+                "3. 新加坡收货地址\n\n"
+                "我们目前是 PayNow 付款。您付款后把截图发回来，我会让客服帮您确认订单并安排配送。"
+            ),
+            "目前我们没有货到付款哦。我们是用 PayNow 先付款，付款截图发回来后，客服会帮您确认订单并安排新加坡配送。",
+        ],
+        "recommended_package_code": "pack2",
+        "media_keys": ["pack2_product"],
+        "next_referrals": ["payment_receipt"],
+    },
     "checkout_collect": {
         "skill_id": "checkout_collect",
         "title": "收集下单资料",
@@ -270,7 +297,7 @@ DEFAULT_CHATBOT_SKILLS = {
 AQINA_SYSTEM_PROMPT = """
 Role Definition (角色定义)
 
-你是一位名为“Aqina 健康顾问”的线上销售顾问。你代表新加坡 Aqina Drip Chicken Essence。
+你是一位名为“Aqina 健康顾问”的线上销售顾问。你代表新加坡 Aqina 纯鸡精。
 你的任务不是硬销，而是先真实帮助从广告、Messenger 或 WhatsApp 进来的顾客判断是否适合，再在需求明确时自然推进到：选定配套、完成 PayNow、回传付款截图。
 Checkout 规则不变：顾客必须先 PayNow 付款，并回传付款截图，订单才算完成提交。
 
@@ -307,7 +334,7 @@ Conversation Rules (对话规则)
 - skill_id、内部 referral、lead tag、package code、checkout_ready、escalate 等内部字段绝不能写进 reply_text。
 - 系统会在合适时另外发送品牌图、套餐图和 PayNow QR；reply_text 不要贴图片 URL 或 checkout URL。
 - 若顾客是孕妇或产后妈妈，先安抚并问阶段；说明是食品补养，不做医疗承诺。阶段明确后可推荐 4盒月度装，预算犹豫则建议 2盒起步。
-- 若顾客是上班族、学生或自己喝，先问饮用频率或疲劳场景；需求明确后可推荐 2盒日常补养，犹豫则建议 1盒先确认口感。
+- 若顾客是上班族、学生或自己喝，先问饮用频率或具体生活场景；需求明确后可推荐 2盒免运起步，犹豫则建议 1盒先确认口感。
 - 若顾客是长辈或送礼，先确认是试喝、恢复期日常食品补养，还是家庭长期常备；不要默认推最大配套。
 - 若顾客问运费/多久到，直接回答：2盒或以上免运；1盒加 SGD 8；新加坡现货通常 1-3 个工作日送达。然后问是否需要按他的情况选配套。
 - 若顾客给出地址、电话、付款截图、说“我要/下单/order/buy/拿一盒/拿两盒”，不要继续介绍产品，直接进入收单检查。
@@ -323,21 +350,21 @@ Knowledge Base (Aqina 纯鸡精事实约束)
 - 双重炖煮蒸汽萃取，保留原汁精华。
 - Halal 认证。
 - 零胆固醇、零反式脂肪。
-- 适合孕产妇及新手爸妈、上班熬夜族、长辈日常保健、术后恢复期日常补养、学生补养等场景。
+- 适合孕产妇及新手爸妈、忙碌上班族、长辈日常保健、恢复期日常食品补养、学生补养等场景。
 
 产品定价与套餐 (新加坡区 - 币种 SGD)：
-- 【日常滋养装】1盒/7包 = SGD 39.90，适合基础补充，未满免运门槛。
-- 【活力升级装】2盒/14包 = SGD 75.00，适合日常提神抗疲劳，满足免运费。
-- 【孕产妇30天调理套餐】4盒/28包 = SGD 149.00，适合孕期、待产、坐月子与新手爸妈补养，满足免运费。
-- 【家庭月度订阅包】6盒/42包 = SGD 219.00，适合长辈、送礼与家庭长期补养，满足免运费。
+- 【7天启动装】1盒/7包 = SGD 39.90，适合先确认口感，未满免运门槛。
+- 【14天常备装】2盒/14包 = SGD 75.00，适合第一次按日常节奏试一轮，满足免运费。
+- 【28天月度装】4盒/28包 = SGD 149.00，适合孕期、待产、坐月子与新手爸妈照顾周期，满足免运费。
+- 【42天家庭装】6盒/42包 = SGD 219.00，适合长辈、送礼与家庭长期常备，满足免运费。
 - 满 SGD 70 免运费；低于 SGD 70 的订单需加 SGD 8 新加坡配送费。
 - PayNow 收款户名：Boong Poultry Pte Ltd。顾客付款后必须发送付款截图，才算完成提交。
 - 严禁推荐三包体验装或任何不存在的套餐。
 
 推荐规则：
-- 日常提神/上班族/学生：需求明确后可先给【活力升级装】作为日常补养起步；只是确认口感时给【日常滋养装】。
-- 孕期/产后/月子：阶段明确后优先推荐【孕产妇30天调理套餐】；预算犹豫时给【活力升级装】作为起步。
-- 长辈/送礼/家庭共享：先推荐【活力升级装】作为稳妥起步；若顾客要长期家庭常备再升级到【家庭月度订阅包】。
+- 自己喝/上班族/学生：需求明确后可先给【14天常备装】作为免运起步；只是确认口感时给【7天启动装】。
+- 孕期/产后/月子：阶段明确后优先推荐【28天月度装】；预算犹豫时给【14天常备装】作为起步。
+- 长辈/送礼/家庭共享：先推荐【14天常备装】作为稳妥起步；若顾客要长期家庭常备再升级到【42天家庭装】。
 - 只使用 Available packages 里存在的 package code，不要自行发明套餐 code。
 
 Checkout Rules (下单规则)
@@ -367,10 +394,10 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         "packages": {
             "pack1": {
                 "code": "pack1",
-                "name_zh": "日常滋养装",
-                "name_en": "Daily Nourishment Pack",
-                "description_zh": "1盒/7包基础补充装；未满 SGD 70 免运门槛，需加 SGD 8 配送费。",
-                "description_en": "1-box daily nourishment pack; below the SGD 70 free-shipping threshold and adds SGD 8 delivery.",
+                "name_zh": "7天启动装",
+                "name_en": "7-Day Starter Pack",
+                "description_zh": "1盒/7包，适合第一次先确认口感；未满 SGD 70 免运门槛，需加 SGD 8 配送费。",
+                "description_en": "1-box 7-day starter pack for first taste trial; below the SGD 70 free-shipping threshold and adds SGD 8 delivery.",
                 "price_sgd": 39.9,
                 "pack_count": 7,
                 "box_count": 1,
@@ -380,10 +407,10 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             },
             "pack2": {
                 "code": "pack2",
-                "name_zh": "活力升级装",
-                "name_en": "Energy Upgrade Pack",
-                "description_zh": "2盒/14包，适合日常提神抗疲劳与上班族补养，满足 SGD 70 免运门槛。",
-                "description_en": "2-box energy upgrade pack for daily fatigue support; qualifies for free shipping.",
+                "name_zh": "14天常备装",
+                "name_en": "14-Day Care Pack",
+                "description_zh": "2盒/14包，适合第一次按日常节奏试一轮，满足 SGD 70 免运门槛。",
+                "description_en": "2-box 14-day care pack for a first daily-use trial; qualifies for free shipping.",
                 "price_sgd": 75.0,
                 "pack_count": 14,
                 "box_count": 2,
@@ -393,10 +420,10 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             },
             "pack4": {
                 "code": "pack4",
-                "name_zh": "孕产妇30天调理套餐",
-                "name_en": "Maternity 30-Day Pack",
-                "description_zh": "4盒/28包，适合孕期、待产、坐月子与新手爸妈补养，满足 SGD 70 免运门槛。",
-                "description_en": "4-box maternity pack for pregnancy and postpartum nourishment; qualifies for free shipping.",
+                "name_zh": "28天月度装",
+                "name_en": "28-Day Monthly Pack",
+                "description_zh": "4盒/28包，适合孕期、待产、坐月子与新手爸妈照顾周期，满足 SGD 70 免运门槛。",
+                "description_en": "4-box 28-day monthly pack for pregnancy, confinement, and new-parent care routines; qualifies for free shipping.",
                 "price_sgd": 149.0,
                 "pack_count": 28,
                 "box_count": 4,
@@ -406,10 +433,10 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             },
             "pack6": {
                 "code": "pack6",
-                "name_zh": "家庭月度订阅包",
-                "name_en": "Family Monthly Subscription Pack",
-                "description_zh": "6盒/42包，适合长辈、送礼与家庭长期补养，满足 SGD 70 免运门槛。",
-                "description_en": "6-box family monthly pack for elders, gifting, and long-term family nourishment; qualifies for free shipping.",
+                "name_zh": "42天家庭装",
+                "name_en": "42-Day Family Pack",
+                "description_zh": "6盒/42包，适合长辈、送礼与家庭长期常备，满足 SGD 70 免运门槛。",
+                "description_en": "6-box 42-day family pack for elders, gifting, and long-term family use; qualifies for free shipping.",
                 "price_sgd": 219.0,
                 "pack_count": 42,
                 "box_count": 6,
@@ -448,14 +475,17 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             "t15m": {
                 "lead_cold": {"instruction": "用一句话低压跟进，延续刚才顾客的问题，请他告诉你是自己喝、送长辈还是孕期/月子；不要介绍产品长文，不要报价。"},
                 "qualified_warm": {"instruction": "如果顾客刚才的问题还没确定，邀请他补充饮用场景或顾虑；先帮助判断，不要重复价格。"},
+                "cart_hot": {"instruction": "顾客已经进入下单状态；提醒他可以直接发收件人姓名、联系电话、新加坡地址，若已经 PayNow 付款则把付款截图发回来；不要再问泛泛用途问题。"},
             },
             "t3h": {
+                "cart_hot": {"instruction": "顾客已问配套、配送或付款但还没完成订单；简短提醒继续完成收件资料或 PayNow 付款截图，必要时说明客服会确认。"},
                 "default": {"instruction": "低压提醒：如果刚才的喝法、适合性或配套还不确定，可以继续发来，我会按他的情况帮忙判断；不要重复报价，不要发送长篇感官描述。"}
             },
             "t12h": {
                 "cart_hot": {"instruction": "顾客若已选配套或给过资料，提醒使用 PayNow QR 付款后回传截图；语气简短，强调收到截图后团队才会核对配送。"}
             },
             "t23h": {
+                "cart_hot": {"instruction": "如果 23 小时窗口快结束，先提醒他现在仍可直接发收件资料或付款截图；若要稍后继续提醒才回复 YES 保持聊天开启。"},
                 "default": {"instruction": "只在 23 小时窗口结束前提醒回复 YES 保留联系；不要重新讲产品故事。"}
             },
         },
@@ -706,26 +736,26 @@ TRIAL_TEXT_REPLACEMENTS = (
     ),
     (
         f"【{RETIRED_TRIAL_NAME_ZH}】{RETIRED_TRIAL_PACK_COUNT_TEXT} = {RETIRED_TRIAL_PRICE_TEXT}，适合先试口感，未满免运门槛。",
-        "【日常滋养装】1盒/7包 = SGD 39.90，适合基础补充，未满免运门槛。",
+        "【7天启动装】1盒/7包 = SGD 39.90，适合先确认口感，未满免运门槛。",
     ),
     (
         f"可先给【{RETIRED_TRIAL_NAME_ZH}】作为低门槛选择",
-        "可先给【日常滋养装】1盒/7包作为低门槛选择",
+        "可先给【7天启动装】1盒/7包作为低门槛选择",
     ),
     (
-        f"您会想先用{RETIRED_TRIAL_NAME_ZH}试口感，还是直接拿免运的活力升级装？",
-        "您会想先用1盒日常滋养装试口感，还是直接拿免运的活力升级装？",
+        f"您会想先用{RETIRED_TRIAL_NAME_ZH}试口感，还是直接拿免运的{LEGACY_ENERGY_PACK_NAME_ZH}？",
+        "您会想先用1盒7天启动装试口感，还是直接拿2盒14天常备装免运？",
     ),
     (
-        f"您会更想先试【{RETIRED_TRIAL_NAME_ZH}】还是直接拿免运的【活力升级装】呢？",
-        "您会更想先试【日常滋养装】1盒，还是直接拿免运的【活力升级装】呢？",
+        f"您会更想先试【{RETIRED_TRIAL_NAME_ZH}】还是直接拿免运的【{LEGACY_ENERGY_PACK_NAME_ZH}】呢？",
+        "您会更想先试【7天启动装】1盒，还是直接拿免运的【14天常备装】呢？",
     ),
-    (f"{RETIRED_TRIAL_NAME_ZH}：{RETIRED_TRIAL_PACK_COUNT_SPACED_TEXT}先试口感。", "日常滋养装：1盒/7包先试口感。"),
-    ("Trial pack: 3 packs to try the taste first.", "Daily nourishment pack: 1 box / 7 packs to start."),
-    ("Low-entry 3-pack trial", "1-box daily nourishment pack"),
-    (f"{RETIRED_TRIAL_PACK_COUNT_TEXT}低门槛体验装", "1盒/7包低门槛日常滋养装"),
-    (RETIRED_TRIAL_NAME_ZH, "日常滋养装"),
-    (RETIRED_TRIAL_NAME_EN, "Daily Nourishment Pack"),
+    (f"{RETIRED_TRIAL_NAME_ZH}：{RETIRED_TRIAL_PACK_COUNT_SPACED_TEXT}先试口感。", "7天启动装：1盒/7包先试口感。"),
+    ("Trial pack: 3 packs to try the taste first.", "7-day starter pack: 1 box / 7 packs to start."),
+    ("Low-entry 3-pack trial", "1-box 7-day starter pack"),
+    (f"{RETIRED_TRIAL_PACK_COUNT_TEXT}低门槛体验装", "1盒/7包低门槛7天启动装"),
+    (RETIRED_TRIAL_NAME_ZH, "7天启动装"),
+    (RETIRED_TRIAL_NAME_EN, "7-Day Starter Pack"),
     (RETIRED_TRIAL_PRICE_TEXT, "SGD 39.90"),
     (RETIRED_TRIAL_PACKAGE_CODE, "pack1"),
     (RETIRED_TRIAL_PACK_COUNT_SPACED_TEXT, "1盒/7包"),

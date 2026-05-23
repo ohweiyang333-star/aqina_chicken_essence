@@ -44,6 +44,12 @@ export interface MarketingConversationSummary {
     is_open: boolean;
     expires_at?: string | null;
   };
+  latest_blockers?: string[];
+  handoff_recommended?: boolean;
+  handoff_reason?: string | null;
+  matched_order_count?: number;
+  latest_order_status?: string | null;
+  latest_payment_status?: string | null;
   orders: Array<{
     order_id: string;
     payment_status?: string;

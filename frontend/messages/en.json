@@ -311,8 +311,8 @@
         "seconds": "Seconds"
       },
       "ugcReviews": {
-        "eyebrow": "Real Testimonials",
-        "title": "Different people, same priority: easy taste, easy absorption, quick recovery feel.",
+        "eyebrow": "Scene References",
+        "title": "Different buying situations should be judged by use case, taste concern, and pack choice. These are not verified customer testimonials.",
         "items": [
           {
             "name": "Mrs. Lim",
@@ -726,16 +726,16 @@
       },
       "comparison": {
         "eyebrow": "Ordinary Chicken Essence vs Aqina",
-        "title": "Nourishment does not need to feel heavy to become a routine.",
-        "body": "Compare taste, preparation, consistency, and trust signals to see how Aqina makes traditional nourishment feel lighter for daily life.",
+        "title": "Do not start with the heaviest claim. Start with who you are buying for.",
+        "body": "Compare taste, preparation, pack choice, and consultation support to make the first purchase clearer.",
         "criteriaLabel": "Criteria",
         "ordinaryTitle": "Ordinary impression",
         "aqinaTitle": "Aqina direction",
         "visualTitle": "This is not ordinary chicken essence",
         "ordinaryImageAlt": "Grayscale ordinary chicken essence impression",
         "aqinaImageAlt": "Aqina clean golden essence impression",
-        "dailyTitle": "This is chicken essence you can drink every day",
-        "dailyBody": "Simple, clean, and easy to drink. The point is not to make nourishment feel heavier, but to make the routine realistic for the family.",
+        "dailyTitle": "Tell us the use case first",
+        "dailyBody": "Self-use, gifting to mum, pregnancy/confinement, and family reserve need different pack logic. Aqina helps you choose between 1, 2, 4, or 6 boxes.",
         "ordinaryBullets": [
           {
             "text": "Added seasoning"
@@ -762,41 +762,41 @@
           {
             "label": "Drinking feel",
             "ordinary": "Traditional chicken soup or essence can feel rich, oily, or hard to repeat daily.",
-            "aqina": "A cleaner soup-like taste and single pouch format make the routine easier to keep."
+            "aqina": "A cleaner soup-like taste and single pouch format answer the first concern: will I drink it?"
           },
           {
             "label": "Preparation",
             "ordinary": "Boiling, filtering, and cleaning can make the habit easy to drop on busy days.",
-            "aqina": "Warm and drink at breakfast, in the office, or while caring for family at night."
+            "aqina": "Warm and drink, whether it is arranged by family, for yourself, or inside a workday."
           },
           {
-            "label": "Consistency",
-            "ordinary": "Heavy taste and preparation time often become the real barrier.",
-            "aqina": "The product is framed as a small warm ritual with lower daily friction."
+            "label": "Pack choice",
+            "ordinary": "Choosing only by price can lead to overbuying, wrong gifting, or taste mismatch.",
+            "aqina": "1 box to taste, 2 boxes for free delivery, 4 boxes for maternity/confinement, 6 boxes for family reserve."
           },
           {
             "label": "Trust signals",
             "ordinary": "Common promotions can stack outcome language without making the basis clear.",
-            "aqina": "Aqina puts more weight on packaging, certifications, channels, and real-life scenes."
+            "aqina": "Packaging, certifications, sourcing, and WhatsApp support make the next step clearer."
           }
         ]
       },
       "pineapple": {
         "eyebrow": "Pineapple Chicken Story",
         "title": "Starting from the pineapple enzyme concept, Aqina is presented as a cleaner chicken essence.",
-        "body": "Pineapple enzyme is part of Aqina's product story. The focus stays on a cleaner taste, warm drinking experience, and a routine that is easier to keep.",
+        "body": "Pineapple enzyme is part of Aqina's product story. The focus stays on cleaner taste, warm drinking, and choosing the right pack.",
         "imageAlt": "Aqina pineapple enzyme chicken essence craft scene",
-        "caption": "The story is about making traditional nourishment easier to fit into modern routines.",
+        "caption": "The story helps customers understand why Aqina is different and how many boxes to start with.",
         "points": [
           "The product direction emphasizes clean taste, warmth, and approachability.",
           "Fresh savoriness and lighter drinking feel are presented together, without heavy layering.",
-          "Every pouch supports daily use instead of a complicated ritual."
+          "Every pouch should connect to a clear use case, not an abstract nourishment claim."
         ]
       },
       "craft": {
         "eyebrow": "Craft / Lightness",
         "title": "Keep the craft detailed, and keep the drinking routine simple.",
-        "body": "Aqina is not positioned as stronger medicine, but as warm nourishment that is easier to execute and repeat.",
+        "body": "Aqina is not positioned as stronger medicine, but as warm nourishment that is easier to arrange and choose by situation.",
         "note": "Daily nourishment works best when it suits your routine. Please consult a qualified professional for specific health concerns.",
         "steps": [
           {
@@ -809,7 +809,7 @@
           },
           {
             "title": "Lighter Intake",
-            "body": "A cleaner, less oily drinking feel helps make consistency easier."
+            "body": "A cleaner, less oily drinking feel helps first-time buyers confirm whether the taste suits them."
           },
           {
             "title": "Single Pouches",
@@ -881,9 +881,9 @@
         "retailNote": "Existing retail logos are retained as trust cues. Actual selling points and stock should follow stores, platforms, or official support replies."
       },
       "ugc": {
-        "eyebrow": "UGC Evidence Wall",
-        "title": "See the product inside real daily contexts.",
-        "body": "Daily drinking habits in real contexts are often more useful than exaggerated descriptions.",
+        "eyebrow": "Usage Scene References",
+        "title": "See which buying situation feels closest to yours.",
+        "body": "These examples show common purchase and drinking scenarios. They are not verified customer testimonials; real feedback should be collected and approved after purchase.",
         "items": [
           {
             "name": "Alicia",
@@ -928,10 +928,97 @@
             "alt": "Family table warm drink scene"
           }
         ],
-        "disclaimer": "UGC content reflects personal daily scenes only. It is not medical advice or a promise of results. Please consult a qualified professional for specific health concerns."
+        "disclaimer": "Scene content is not medical advice, a promise of results, or verified customer testimony. Please consult a qualified professional for specific health concerns."
       },
       "pricingBand": {
         "ariaLabel": "Aqina product plan selection"
+      },
+      "bofu": {
+        "eyebrow": "30-second order decision",
+        "title": "Decide the pack, payment, and taste risk before you order.",
+        "body": "Visitors from ads should not have to guess. This section puts pack choice, free delivery, PayNow, and taste confidence into one buying decision area.",
+        "decisionTitle": "Recommended path",
+        "decisionBody": "Choose 1 box if you only want to taste first. Choose 2 boxes to unlock free delivery and a real daily rhythm. Choose 4 boxes for maternity, confinement, or family care.",
+        "packages": [
+          {
+            "id": "pack1",
+            "badge": "Taste first",
+            "title": "1 box · 7 pouches",
+            "price": "SGD 39.90",
+            "subtitle": "Best for first trial",
+            "body": "Start small and confirm the clean soup-like taste and warm drinking routine.",
+            "points": [
+              "Low-commitment first order",
+              "One-box orders add SGD 8 Singapore delivery",
+              "Best when you only want to test the taste"
+            ]
+          },
+          {
+            "id": "pack2",
+            "badge": "Free delivery pick",
+            "title": "2 boxes · 14 pouches",
+            "price": "SGD 75",
+            "subtitle": "Recommended first daily pack",
+            "body": "This reaches the free delivery threshold and better matches a real daily routine.",
+            "points": [
+              "Free Singapore delivery for 2 boxes or above",
+              "Good for self-use, elder gifting, or daily habit building",
+              "Ask support before payment if you are unsure"
+            ]
+          },
+          {
+            "id": "pack4",
+            "badge": "Monthly care",
+            "title": "4 boxes · 28 pouches",
+            "price": "SGD 149",
+            "subtitle": "For maternity, confinement, or family use",
+            "body": "Plan around a 28-day cycle when family support needs to be more consistent.",
+            "points": [
+              "Monthly stock reduces mid-routine gaps",
+              "Fits maternity, confinement, elder care, or household reserve",
+              "Qualifies for free delivery with a clearer delivery plan"
+            ]
+          }
+        ],
+        "tasteEyebrow": "Taste proof",
+        "tasteTitle": "Clear, chicken-soup-like, not oily.",
+        "tasteImageAlt": "Close-up of Aqina chicken essence clear golden soup texture",
+        "tasteRiskTitle": "Worried you may not like the taste?",
+        "tasteRiskBody": "Aqina is not positioned as a thick soup. The focus is warm, clear, and easy to drink so first-time buyers can start with more confidence.",
+        "tasteBullets": [
+          "Single pouch format, warm and drink",
+          "Taste direction is closer to clear chicken soup, not oily heaviness",
+          "For special conditions or timing, ask on WhatsApp before ordering"
+        ],
+        "proofPoints": [
+          "Single-pouch routine",
+          "Better warm intake",
+          "Pack choice can be confirmed by support"
+        ],
+        "faqItems": [
+          {
+            "title": "Free delivery threshold",
+            "body": "2 boxes or above get free Singapore delivery. One-box orders add SGD 8 delivery."
+          },
+          {
+            "title": "Delivery timing",
+            "body": "Singapore ready stock is usually arranged within 1-3 working days, subject to support confirmation and delivery conditions."
+          },
+          {
+            "title": "Payment method",
+            "body": "This page uses PayNow. After payment, upload the screenshot and the team will verify manually before arranging your order."
+          },
+          {
+            "title": "COD / cash on delivery",
+            "body": "The default page flow is PayNow. If you need another payment method, confirm with WhatsApp or Messenger first."
+          }
+        ],
+        "ctaEyebrow": "Connect to inbox",
+        "ctaTitle": "Ask first if unsure; send the pack to support if ready.",
+        "ctaBody": "We can help you choose 1, 2, or 4 boxes based on self-use, elder gifting, pregnancy, confinement, or family care.",
+        "askCta": "Ask about 2-box free delivery",
+        "whatsappCta": "WhatsApp us to order",
+        "messengerCta": "Message us on Messenger"
       },
       "faq": {
         "eyebrow": "Before You Order",
@@ -1053,34 +1140,34 @@
         ]
       },
       "stories": {
-        "eyebrow": "Real Mum Stories",
-        "title": "What mums like you are saying.",
-        "body": "Small daily routines can become the quiet support that makes pregnancy and confinement feel more manageable.",
+        "eyebrow": "Maternity Usage Scene References",
+        "title": "See which buying situation feels closest to yours.",
+        "body": "These are pregnancy, confinement, and family-care scene directions. They are not verified customer testimonials; real feedback should be collected and approved after purchase.",
         "items": [
           {
-            "name": "Elaine",
-            "role": "First-time mum",
+            "name": "Scene 1",
+            "role": "First-trimester heavy-soup sensitivity",
             "quote": "In the first trimester, I could not handle heavy soup. Aqina tasted clearer than I expected, with a light sweetness at the end, so it became my morning warm drink.",
             "image": "/v3/ugc-new-mum.jpg",
             "alt": "New mum enjoying a warm drink at home"
           },
           {
-            "name": "Aishah",
-            "role": "Pregnancy routine",
+            "name": "Scene 2",
+            "role": "Pregnancy breakfast routine",
             "quote": "I like that it does not feel oily. I warm one pack before breakfast and it feels like a simple care moment I can actually keep.",
             "image": "/v3/ugc-morning-mum.jpg",
             "alt": "Pregnant mum with warm drink at a home dining table"
           },
           {
-            "name": "Jia Wen",
-            "role": "Working mum",
+            "name": "Scene 3",
+            "role": "Working pregnant mum",
             "quote": "Between calls, I need something quick and gentle. One warm cup gives me that quiet pause without cooking a full pot of soup.",
             "image": "/v3/ugc-working-mum.jpg",
             "alt": "Working pregnant mum with warm drink beside a laptop"
           },
           {
-            "name": "Mei Ling",
-            "role": "Confinement care",
+            "name": "Scene 4",
+            "role": "Family confinement care",
             "quote": "My husband warms it for me in the morning. It feels like a small bowl of clear soup, simple and comforting.",
             "image": "/v3/ugc-partner-care.jpg",
             "alt": "Partner preparing a warm drink in a bright home kitchen"
@@ -1159,8 +1246,8 @@
         "whatsappCta": "Get WhatsApp Advice",
         "whatsappMessage": "Hi Aqina SG, I would like to confirm which maternity chicken essence pack suits me best. Please help me choose between 2 boxes, 4 boxes, or 6 boxes.",
         "imageAlt": "Partner preparing a warm clear drink for maternity care",
-        "productAlt": "Aqina 30-day maternity care pack",
-        "productNote": "The 30-day pack keeps your warm routine close, simple, and ready when your body wants something light."
+        "productAlt": "Aqina 4-box 28-day monthly maternity pack",
+        "productNote": "The 4-box 28-day monthly pack makes pregnancy, confinement, or family care easier to arrange. If unsure, confirm your stage on WhatsApp first."
       }
     }
   }

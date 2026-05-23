@@ -21,6 +21,10 @@ class ChatbotSkillRouter:
         text = _normalize(incoming_text)
         lead_goal = _normalize(contact.get("lead_goal", ""))
         current_tag = _normalize(contact.get("current_tag", ""))
+        hot_checkout_intent = is_cart_hot_checkout_intent(
+            incoming_text,
+            current_tag=current_tag,
+        )
         selected: list[str] = []
 
         def add(skill_id: str) -> None:
@@ -29,7 +33,8 @@ class ChatbotSkillRouter:
 
         if _contains_any(text, PAYMENT_KEYWORDS):
             add("payment_receipt")
-            return selected
+        if hot_checkout_intent:
+            add("cart_hot_checkout")
 
         if _contains_any(text, MEDICAL_KEYWORDS):
             add("medical_safety")
@@ -43,7 +48,7 @@ class ChatbotSkillRouter:
             add("taste_objection")
         if _contains_any(text, PRICE_KEYWORDS):
             add("price_objection")
-        if _contains_any(text, CHECKOUT_KEYWORDS) or current_tag == "cart_hot":
+        if hot_checkout_intent or _contains_any(text, CHECKOUT_KEYWORDS) or current_tag == "cart_hot":
             add("checkout_collect")
         if _contains_any(text, SELF_CARE_KEYWORDS) or lead_goal == "self_care":
             add("self_care_fatigue")
@@ -79,11 +84,54 @@ PAYMENT_KEYWORDS = {
     "已付款",
     "已经付",
     "付了",
+    "货到付款",
+    "cod",
+    "cash on delivery",
     "paynow",
     "paid",
     "receipt",
     "payment",
     "截图",
+}
+DELIVERY_KEYWORDS = {
+    "运费",
+    "配送",
+    "送货",
+    "可以送",
+    "多久收到",
+    "几天到",
+    "shipping",
+    "delivery",
+    "deliver",
+}
+QUANTITY_BUYING_KEYWORDS = {
+    "二盒",
+    "两盒",
+    "2盒",
+    "2 box",
+    "2 boxes",
+    "一盒",
+    "1盒",
+    "1 box",
+    "四盒",
+    "4盒",
+    "4 box",
+    "4 boxes",
+    "六盒",
+    "6盒",
+    "6 box",
+    "6 boxes",
+    "拿一盒",
+    "拿两盒",
+    "我要",
+    "要买",
+    "想买",
+    "下单",
+    "购买",
+    "订购",
+    "how to order",
+    "order",
+    "buy",
 }
 MEDICAL_KEYWORDS = {"疾病", "治疗", "吃药", "药", "手术", "糖尿", "高血压", "癌", "医生", "肾", "病"}
 MATERNITY_KEYWORDS = {"孕", "怀孕", "待产", "月子", "产后", "坐月", "新手妈妈", "哺乳"}
@@ -143,6 +191,21 @@ CHECKOUT_KEYWORDS = {
     "shipping",
 }
 SELF_CARE_KEYWORDS = {"自己", "熬夜", "疲劳", "很累", "累", "没精神", "上班", "学生", "考试", "提神", "日常"}
+
+
+def is_cart_hot_checkout_intent(
+    incoming_text: str,
+    *,
+    current_tag: str | None = None,
+) -> bool:
+    text = _normalize(incoming_text)
+    if _normalize(current_tag) == "cart_hot":
+        return True
+    return (
+        _contains_any(text, QUANTITY_BUYING_KEYWORDS)
+        or _contains_any(text, PAYMENT_KEYWORDS)
+        or _contains_any(text, DELIVERY_KEYWORDS)
+    )
 
 
 def _contains_any(text: str, keywords: set[str]) -> bool:
