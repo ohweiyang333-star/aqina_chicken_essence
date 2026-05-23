@@ -1305,7 +1305,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["utm_source"], "facebook")
         self.assertEqual(order["meta_ad_id"], "ad_1")
 
-    def test_process_inbound_message_blocks_messenger_checkout_without_phone(self) -> None:
+    def test_process_inbound_message_sends_paynow_qr_before_messenger_phone_checkout(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
                 "reply_text": "我帮您安排，请再发联系电话。",
@@ -1355,10 +1355,74 @@ class MarketingApiTests(unittest.TestCase):
         message_calls = [call for call in self.meta_client.calls if call[0] == "send_messenger_text"]
         self.assertEqual(len(message_calls), 1)
         self.assertIn("联系电话", message_calls[0][1]["text"])
+        image_calls = [
+            call
+            for call in self.meta_client.calls
+            if call[0] in {"send_messenger_image_attachment", "send_messenger_image_url"}
+        ]
+        self.assertGreaterEqual(len(image_calls), 1)
         outbound_images = [
             snapshot.to_dict()
             for snapshot in self.db.collection("marketing_conversations")
             .document("conv-messenger-missing-phone")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("message_type") == "image"
+        ]
+        self.assertIn("paynow_qr_media", {item["source"] for item in outbound_images})
+        contact = self.db.collection("marketing_contacts").document("contact-messenger-missing-phone").get().to_dict()
+        self.assertTrue(contact.get("precheckout_paynow_qr_sent"))
+
+    def test_process_inbound_message_does_not_repeat_precheckout_paynow_qr(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "没问题，我等您的姓名、联系电话和新加坡地址。",
+                "next_tag": "cart_hot",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": "pack2",
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": ["name", "phone", "address"],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-precheckout-qr-sent",
+            conversation_id="conv-precheckout-qr-sent",
+            event_id="event-precheckout-qr-sent",
+            channel="messenger",
+            incoming_text="好的，谢谢",
+            identifier_key="psid",
+            identifier_value="psid-precheckout-qr-sent",
+        )
+        self.db.collection("marketing_contacts").document("contact-precheckout-qr-sent").set(
+            {
+                "current_tag": "cart_hot",
+                "selected_package_code": "pack2",
+                "precheckout_paynow_qr_sent": True,
+            },
+            merge=True,
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-precheckout-qr-sent"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.json()["checkout_session_id"])
+        outbound_images = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-precheckout-qr-sent")
             .collection("messages")
             .stream()
             if snapshot.to_dict().get("message_type") == "image"

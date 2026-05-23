@@ -12,7 +12,7 @@ from app.models.chatbot import SalesConversationTurn
 from app.models.marketing import NormalizedMarketingEvent
 from app.services.meta_media_assets import MetaMediaAssetService
 from app.services.chatbot_settings import ChatbotSettingsService, DEFAULT_FACEBOOK_COMMENT_KEYWORDS
-from app.services.chatbot_skill_router import is_cart_hot_checkout_intent
+from app.services.chatbot_skill_router import is_cart_hot_checkout_intent, should_send_paynow_qr_for_checkout_intent
 from app.services.follow_up import FollowUpEngine
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, excerpt, payload_hash, stable_id, utcnow
@@ -695,6 +695,7 @@ class MarketingAutomationOrchestrator:
         )
 
         turn_order_fields = turn.order_fields.model_dump()
+        precheckout_qr_selected_package_code = turn.selected_package_code or contact.get("selected_package_code")
         merged_order_fields = self._merge_order_fields(contact.get("order_fields", {}), turn_order_fields)
         merged_order_fields, runtime_phone_defaulted = self._apply_whatsapp_phone_default(
             channel=event["channel"],
@@ -815,6 +816,41 @@ class MarketingAutomationOrchestrator:
             runtime_settings=runtime_settings,
             customer_locale=customer_locale,
         )
+        if self._should_send_precheckout_paynow_qr(
+            contact=self.contact_service.get_contact(contact_id),
+            incoming_text=incoming_text,
+            selected_package_code=precheckout_qr_selected_package_code,
+            checkout_session=checkout_session,
+        ):
+            try:
+                qr_result = self._send_precheckout_paynow_qr_image(
+                    channel=event["channel"],
+                    contact=self.contact_service.get_contact(contact_id),
+                    paynow_settings=runtime_settings.get("payment", {}).get("paynow", {}),
+                    customer_locale=customer_locale,
+                )
+                qr_provider_message_id = self._extract_provider_message_id(event["channel"], qr_result)
+                self.contact_service.append_message(
+                    contact_id=contact_id,
+                    channel=event["channel"],
+                    direction="outbound",
+                    role="assistant",
+                    text="Pre-checkout PayNow QR image sent",
+                    source="paynow_qr_media",
+                    provider_message_id=qr_provider_message_id,
+                    message_type="image",
+                    created_at=utcnow(),
+                    delivery_status="sent",
+                )
+                self.contact_service.update_contact_profile(
+                    contact_id,
+                    {
+                        "precheckout_paynow_qr_sent": True,
+                        "precheckout_paynow_qr_sent_at": utcnow(),
+                    },
+                )
+            except Exception as exc:  # noqa: BLE001 - keep checkout conversation moving if media fails.
+                logger.warning("precheckout_paynow_qr_media_failed contact_id=%s error=%s", contact_id, exc)
         if checkout_session:
             qr_result = self._send_checkout_qr_image(
                 channel=event["channel"],
@@ -1021,6 +1057,51 @@ class MarketingAutomationOrchestrator:
             f"Amount: SGD {float(checkout_session.get('total_amount', 0)):.2f}\n"
             f"Reference: {reference}"
         )
+        media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
+        return media_service.send_paynow_qr(
+            channel=channel,
+            contact=contact,
+            paynow_settings=paynow_settings,
+            caption=caption,
+        )
+
+    def _should_send_precheckout_paynow_qr(
+        self,
+        *,
+        contact: dict[str, Any],
+        incoming_text: str,
+        selected_package_code: str | None,
+        checkout_session: dict[str, Any] | None,
+    ) -> bool:
+        if checkout_session:
+            return False
+        if contact.get("checkout_session_id") or contact.get("precheckout_paynow_qr_sent"):
+            return False
+        return should_send_paynow_qr_for_checkout_intent(
+            incoming_text,
+            current_tag=contact.get("current_tag"),
+            selected_package_code=selected_package_code,
+        )
+
+    def _send_precheckout_paynow_qr_image(
+        self,
+        *,
+        channel: str,
+        contact: dict[str, Any],
+        paynow_settings: dict[str, Any],
+        customer_locale: str,
+    ) -> dict[str, Any]:
+        account_name = paynow_settings.get("account_name", "Boong Poultry Pte Ltd")
+        if customer_locale == "en":
+            caption = (
+                f"PayNow: {account_name}\n"
+                "Please send the payment screenshot here after payment. Also share the recipient name, phone number, and Singapore address so our team can confirm the order."
+            )
+        else:
+            caption = (
+                f"PayNow 收款户名：{account_name}\n"
+                "付款后请把截图发回这里。也请留下收件人姓名、联系电话和新加坡地址，客服会帮您确认订单。"
+            )
         media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
         return media_service.send_paynow_qr(
             channel=channel,

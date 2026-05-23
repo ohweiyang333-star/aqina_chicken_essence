@@ -133,6 +133,48 @@ QUANTITY_BUYING_KEYWORDS = {
     "order",
     "buy",
 }
+PAYNOW_QR_DIRECT_ORDER_KEYWORDS = {
+    "拿一盒",
+    "拿两盒",
+    "我要",
+    "要买",
+    "想买",
+    "下单",
+    "购买",
+    "订购",
+    "how to order",
+    "order",
+    "buy",
+}
+PAYNOW_QR_BARE_QUANTITY_KEYWORDS = {
+    "二盒",
+    "两盒",
+    "2盒",
+    "2 box",
+    "2 boxes",
+    "一盒",
+    "1盒",
+    "1 box",
+    "四盒",
+    "4盒",
+    "4 box",
+    "4 boxes",
+    "六盒",
+    "6盒",
+    "6 box",
+    "6 boxes",
+}
+PAYNOW_QR_CONSIDERATION_KEYWORDS = {
+    "如何",
+    "怎样",
+    "怎么",
+    "可以吗",
+    "适合吗",
+    "好吗",
+    "?",
+    "？",
+    "how about",
+}
 MEDICAL_KEYWORDS = {"疾病", "治疗", "吃药", "药", "手术", "糖尿", "高血压", "癌", "医生", "肾", "病"}
 MATERNITY_KEYWORDS = {"孕", "怀孕", "待产", "月子", "产后", "坐月", "新手妈妈", "哺乳"}
 ELDER_KEYWORDS = {"长辈", "老人", "妈妈", "爸爸", "父母", "送礼", "术后", "恢复", "补身"}
@@ -206,6 +248,22 @@ def is_cart_hot_checkout_intent(
         or _contains_any(text, PAYMENT_KEYWORDS)
         or _contains_any(text, DELIVERY_KEYWORDS)
     )
+
+
+def should_send_paynow_qr_for_checkout_intent(
+    incoming_text: str,
+    *,
+    current_tag: str | None = None,
+    selected_package_code: str | None = None,
+) -> bool:
+    text = _normalize(incoming_text)
+    if selected_package_code:
+        return True
+    if _normalize(current_tag) == "cart_hot" and _contains_any(text, PAYMENT_KEYWORDS):
+        return True
+    if _contains_any(text, PAYMENT_KEYWORDS) or _contains_any(text, PAYNOW_QR_DIRECT_ORDER_KEYWORDS):
+        return True
+    return _contains_any(text, PAYNOW_QR_BARE_QUANTITY_KEYWORDS) and not _contains_any(text, PAYNOW_QR_CONSIDERATION_KEYWORDS)
 
 
 def _contains_any(text: str, keywords: set[str]) -> bool:
