@@ -753,13 +753,13 @@ git add backend/app backend/tests backend/scripts frontend/src frontend/messages
 git commit -m "feat: improve Aqina chat conversion tracking"
 ```
 
-- [ ] **Step 3: Push to `main`**
+- [x] **Step 3: Push to `main`**
 
 ```bash
 git push origin main
 ```
 
-- [ ] **Step 4: Monitor GitHub Actions**
+- [x] **Step 4: Monitor GitHub Actions**
 
 Do not run local production deploy.
 
