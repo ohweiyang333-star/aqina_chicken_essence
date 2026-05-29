@@ -246,11 +246,14 @@ export default function AdminCRMPage() {
 
               <SectionShell
                 icon={<Bot size={18} />}
-                title="品牌人格与主 Prompt"
-                subtitle="正式系统提示词、客服转人工安抚话术，都从这里统一下发。"
+                title="Engine Prompt 与品牌规则"
+                subtitle="这里的主 Prompt 会直接作为 Gemini system instruction；默认用英文写模型执行规则，中文只保留在顾客可见话术和产品文案里。"
               >
                 <div className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-                  <FieldBlock label="System Prompt">
+                  <FieldBlock label="Engine Prompt (EN)">
+                    <p className="mb-3 rounded-2xl border border-[#e7d8c7] bg-[#fffaf4] px-4 py-3 text-sm leading-6 text-[#6c5849]">
+                      这是 production chatbot 的核心执行指令。修改后会影响 Messenger / WhatsApp 回复、下单收口、PayNow 和人工升级判断。
+                    </p>
                     <textarea
                       id="crm-system-prompt"
                       value={settings.system_prompt}
@@ -645,7 +648,7 @@ export default function AdminCRMPage() {
               <SectionShell
                 icon={<Brain size={18} />}
                 title="CRM 跟进规则矩阵"
-                subtitle="每个触发节点都是独立文案入口，后端会把这些规则与对话上下文一起喂给 Gemini。"
+                subtitle="跟进节点是喂给 Gemini 的内部策略，默认用英文；贴文公开回复和 Messenger 破冰私信是顾客可见文案，可以继续用中文。"
               >
                 <div className="grid gap-4 lg:grid-cols-2">
                   {RULE_FIELDS.map(([stage, key, label]) => (

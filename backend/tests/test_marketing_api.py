@@ -110,10 +110,11 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 3)
+        self.assertEqual(payload["conversion_optimization_version"], 4)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
-        self.assertIn("先 PayNow 付款", payload["system_prompt"])
-        self.assertIn("主治医生", payload["system_prompt"])
+        self.assertIn("You are Aqina Health Advisor", payload["system_prompt"])
+        self.assertIn("PayNow first and send back the payment screenshot", payload["system_prompt"])
+        self.assertIn("Aqina 纯鸡精是天然食品补充剂", payload["system_prompt"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["packages"])
         for code in ["pack1", "pack2", "pack4", "pack6"]:
             self.assertIn(code, payload["packages"])
@@ -130,7 +131,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("ice_breaking", payload["chatbot_skills"])
         self.assertIn("usage_consultation", payload["chatbot_skills"])
         self.assertIn("确认口感", payload["chatbot_skills"]["price_objection"]["required_questions"][0])
-        self.assertIn("不要重复报价", payload["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
+        self.assertIn("Use Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["chatbot_skills"]["price_objection"]["instruction"])
+        self.assertIn("Do not repeat prices", payload["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
+        self.assertIn("哈喽 [顾客名字]", payload["crm_follow_up_rules"]["comment_hook"]["public_reply"]["instruction"])
         self.assertIn("media_assets", payload)
         self.assertIn("brand_intro", payload["media_assets"])
         self.assertEqual(payload["media_assets"]["brand_intro_images"]["zh"], "/chatbot/aqina-brand-intro-zh.jpg")
@@ -200,7 +203,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 3,
+                "conversion_optimization_version": 4,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -280,7 +283,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 3)
+        self.assertEqual(payload["conversion_optimization_version"], 4)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -296,31 +299,31 @@ class MarketingApiTests(unittest.TestCase):
         skills = settings_doc["chatbot_skills"]
         serialized = json.dumps(settings_doc, ensure_ascii=False)
 
-        self.assertIn("用户英文进来就全程英文", prompt)
-        self.assertIn("NLP 咨询式销售节奏", prompt)
-        self.assertIn("若用户问“多少钱/price/how much/配套/优惠”，直接报价", prompt)
+        self.assertIn("Customer-facing replies must follow the customer's language", prompt)
+        self.assertIn("NLP consultative selling rhythm", prompt)
+        self.assertIn("If the customer asks about price/how much/packages/offers, answer directly", prompt)
         self.assertIn("1盒 SGD 39.90；2盒 SGD 75 免运；4盒 SGD 149", prompt)
         self.assertIn("+6591212369", prompt)
         self.assertIn("non_product_human_help", prompt)
         self.assertIn("unknown_requires_human", prompt)
-        self.assertIn("没有问价、没有问配套、没有问运费", prompt)
-        self.assertIn("不要再次报价", prompt)
-        self.assertIn("严禁推荐三包体验装", prompt)
+        self.assertIn("has not asked about price, package, shipping, or buying", prompt)
+        self.assertIn("do not quote SGD prices again", prompt)
+        self.assertIn("Never recommend a 3-sachet trial pack", prompt)
         self.assertNotIn(RETIRED_PACKAGE_CODE, serialized)
-        self.assertIn("给出地址、电话、付款截图", prompt)
-        self.assertIn("先 PayNow 付款", prompt)
-        self.assertIn("回传付款截图", prompt)
+        self.assertIn("address, phone number, payment screenshot", prompt)
+        self.assertIn("PayNow first", prompt)
+        self.assertIn("send back the payment screenshot", prompt)
         self.assertIn("usage_consultation", skills)
-        self.assertIn("不要把普通健康", skills["usage_consultation"]["listening_goal"])
-        self.assertIn("服用、适合性或身体状况", skills["usage_consultation"]["instruction"])
-        self.assertIn("只有顾客问价", skills["maternity_consultation"]["instruction"])
-        self.assertIn("不做医疗承诺", skills["maternity_consultation"]["instruction"])
-        self.assertIn("不要重复价格", settings_doc["crm_follow_up_rules"]["t15m"]["qualified_warm"]["instruction"])
-        self.assertIn("不要发送长篇感官描述", settings_doc["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
-        self.assertIn("回复 YES", settings_doc["crm_follow_up_rules"]["t23h"]["default"]["instruction"])
+        self.assertIn("Do not turn general health", skills["usage_consultation"]["listening_goal"])
+        self.assertIn("usage, suitability, or body-condition question", skills["usage_consultation"]["instruction"])
+        self.assertIn("Only mention SGD prices", skills["maternity_consultation"]["instruction"])
+        self.assertIn("do not make medical promises", skills["maternity_consultation"]["instruction"])
+        self.assertIn("Do not repeat prices", settings_doc["crm_follow_up_rules"]["t15m"]["qualified_warm"]["instruction"])
+        self.assertIn("Do not send long sensory copy", settings_doc["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
+        self.assertIn("reply YES", settings_doc["crm_follow_up_rules"]["t23h"]["default"]["instruction"])
         price_skill = skills["price_objection"]
         price_copy = json.dumps(price_skill, ensure_ascii=False)
-        self.assertIn("普通瓶装低价鸡精", price_copy)
+        self.assertIn("ordinary low-price bottled chicken essence", price_copy)
         self.assertIn("premium sachet", price_copy)
         self.assertIn("Hockhua", price_copy)
         self.assertIn("EYS Organic", price_copy)
@@ -328,7 +331,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("S$2-S$3+", price_copy)
         self.assertIn("why so expensive", price_copy)
         self.assertIn("Double Boiled", price_copy)
-        self.assertIn("不是最低价路线", price_copy)
+        self.assertIn("not the lowest-price route", price_copy)
         self.assertIn("price_positioning", settings_doc["knowledge_base"])
 
     def test_chatbot_settings_includes_cart_hot_checkout_skill(self) -> None:
@@ -338,12 +341,12 @@ class MarketingApiTests(unittest.TestCase):
         checkout_skill = settings_doc["chatbot_skills"]["cart_hot_checkout"]
         serialized = json.dumps(checkout_skill, ensure_ascii=False)
 
-        for expected in ["确认配套", "收件人姓名", "联系电话", "新加坡收货地址", "PayNow", "付款截图", "真人客服"]:
+        for expected in ["confirm package", "recipient name", "phone number", "full Singapore delivery address", "PayNow", "付款截图", "客服"]:
             self.assertIn(expected, serialized)
         self.assertIn("好的，我先帮您确认", serialized)
         self.assertIn("目前我们没有货到付款", serialized)
         self.assertIn("cart_hot", settings_doc["crm_follow_up_rules"]["t15m"])
-        self.assertIn("收件人姓名", settings_doc["crm_follow_up_rules"]["t15m"]["cart_hot"]["instruction"])
+        self.assertIn("recipient name", settings_doc["crm_follow_up_rules"]["t15m"]["cart_hot"]["instruction"])
 
     def test_facebook_comment_webhook_processes_keyword_comment_to_private_reply(self) -> None:
         self._seed_runtime_settings()
@@ -921,8 +924,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("Allowed package codes", prompt)
         self.assertIn("pack1", prompt)
         self.assertNotIn(RETIRED_PACKAGE_CODE, prompt)
-        self.assertIn("不要发明新的 package code", prompt)
-        self.assertIn("checkout_ready 才能为 true", prompt)
+        self.assertIn("Do not invent new package codes", prompt)
+        self.assertIn("checkout_ready may be true only", prompt)
 
     def test_gemini_chat_prompt_treats_whatsapp_channel_phone_as_collected(self) -> None:
         from app.services.gemini_service import GeminiConversationService
@@ -946,8 +949,8 @@ class MarketingApiTests(unittest.TestCase):
         )
 
         self.assertIn("Known channel phone: 6591119999", prompt)
-        self.assertIn("WhatsApp 来讯号码已经可以作为联系电话", prompt)
-        self.assertIn("不要再询问联系电话", prompt)
+        self.assertIn("the known WhatsApp sender number already counts as the phone field", prompt)
+        self.assertIn("do not ask for the phone number again", prompt)
 
     def test_chatbot_skill_router_selects_contextual_skills(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
@@ -1193,7 +1196,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertIn("Recent assistant price quote: yes", prompt)
         self.assertIn("Incoming asks price/order/shipping: no", prompt)
-        self.assertIn("不要重复任何 SGD 价格", prompt)
+        self.assertIn("do not repeat any SGD prices", prompt)
         self.assertIn("usage_consultation", prompt)
         self.assertNotIn("price_objection", prompt)
 
@@ -2573,6 +2576,22 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("SGD 75", result.reply_text)
         self.assertNotIn("不要发送长篇感官描述", result.reply_text)
         self.assertNotIn("询问顾客", result.reply_text)
+
+    def test_gemini_follow_up_prompt_uses_english_engine_instructions(self) -> None:
+        from app.services.gemini_service import GeminiConversationService
+
+        prompt = GeminiConversationService._build_follow_up_prompt(
+            contact={"current_tag": "qualified_warm", "selected_package_code": "pack2"},
+            messages=[{"role": "user", "text": "晚点再看"}],
+            stage="t3h",
+            instruction="Low-pressure reminder; do not repeat prices.",
+            checkout_url=None,
+        )
+
+        self.assertIn("Stage instruction is internal service strategy", prompt)
+        self.assertIn("Rewrite it into natural, short customer-facing reply_text", prompt)
+        self.assertIn("Do not copy Stage instruction verbatim", prompt)
+        self.assertIn("Output JSON with exactly these fields", prompt)
 
     def test_follow_up_result_model_normalizes_to_reply_text_only(self) -> None:
         from app.models.chatbot import FollowUpTurnResult
