@@ -35,6 +35,7 @@ export interface KnowledgeBase {
   logistics: string;
   consumption: string;
   comparisons: string;
+  price_positioning: string;
 }
 
 export interface FollowUpRuleCell {

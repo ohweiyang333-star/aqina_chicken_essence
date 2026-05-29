@@ -1,0 +1,17 @@
+{
+  "id": "aqina-sales-zh-40-heygen-hyperframes",
+  "name": "Aqina 纯鸡精 Sales UGC 40s",
+  "createdAt": "2026-05-15T00:00:00+08:00",
+  "product": "Aqina 纯鸡精",
+  "route": "HeyGen avatar A-roll + HyperFrames Level 2 packaging",
+  "language": "zh-Hans",
+  "targetDurationSeconds": [35, 40],
+  "heygenVideoId": "19d9c72857ea46db98a30b5d27d6b8ce",
+  "heygenStatus": "completed",
+  "heygenDurationSeconds": 29.649,
+  "heygenPageUrl": "https://app.heygen.com/videos/19d9c72857ea46db98a30b5d27d6b8ce",
+  "finalOutput": "renders/aqina-sales-zh-40-facebook.mp4",
+  "finalDurationSeconds": 36.021,
+  "finalResolution": "1080x1080",
+  "status": "completed"
+}

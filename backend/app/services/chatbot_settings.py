@@ -16,9 +16,10 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 2
+CONVERSION_OPTIMIZATION_VERSION = 3
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
+DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
 CHATBOT_PRODUCT_TERM_REPLACEMENTS = (
     ("滴" + "雞精", AQINA_NEW_PRODUCT_TERM),
     ("滴" + "鸡精", AQINA_NEW_PRODUCT_TERM),
@@ -209,12 +210,46 @@ DEFAULT_CHATBOT_SKILLS = {
     "price_objection": {
         "skill_id": "price_objection",
         "title": "价格异议",
-        "trigger_keywords": ["贵", "便宜", "多少钱", "价钱", "价格", "price", "how much", "discount", "优惠"],
-        "listening_goal": "顾客主动问价或表达价格犹豫时，清楚报价并帮助他按场景选择，不反复硬销。",
-        "instruction": "只有当顾客主动问价、问配套、问优惠、问运费或说贵时才报价：1盒 SGD39.90，2盒 SGD75 免运，4盒 SGD149 月度装。报价后用一句话重框架：如果只是确认口感可先 1盒；如果想更接近日常补养节奏，2盒起步更省运费。不要每轮重复价格。",
-        "required_questions": ["您是想先确认口感，还是想按日常补养节奏来选？"],
+        "trigger_keywords": [
+            "贵",
+            "太贵",
+            "便宜",
+            "多少钱",
+            "价钱",
+            "价格",
+            "price",
+            "pricey",
+            "expensive",
+            "why so expensive",
+            "how much",
+            "discount",
+            "优惠",
+            "brand's",
+            "brands",
+            "new moon",
+            "eys",
+            "eu yan sang",
+            "hockhua",
+            "qian jin",
+            "普通瓶装",
+            "traditional bottled",
+        ],
+        "listening_goal": "顾客主动问价、比价或表达价格犹豫时，先承认预算考虑，再用 premium sachet/drip 同级比较解释价值，最后给 1盒、2盒、4盒选择。",
+        "instruction": (
+            "必须使用 Pace -> Answer -> Diagnose -> Bridge -> Choice。"
+            "Pace：承认预算考虑正常。"
+            "Answer：直接说明 Aqina 不是普通瓶装低价鸡精路线，也不是最低价路线；它是 60g premium sachet、黄梨酵素鸡、单一来源、Halal、无添加、无焦糖色素的 premium 纯鸡精。"
+            "Diagnose：澄清顾客是在和普通瓶装、EYS traditional、premium drip/boiled chicken，还是自己的预算比价。"
+            "Bridge：若拿普通瓶装品牌如 BRAND'S、New Moon、EYS Traditional 或 Qian Jin 比，要说明它们是较低价的 bottle/traditional 价格锚点，常见约 S$2-S$3+/serving，但不是 premium drip/sachet 同级。"
+            "若拿同级 premium drip/sachet 比，Hockhua 7包约 SGD48-60，EYS Organic 6包约 SGD62.50-68.50；Aqina 7包 SGD39.90，约 SGD5.70/包，是比较亲民的 premium 选择。"
+            "若顾客点名 BRAND'S、New Moon、EYS Traditional 或 Qian Jin，要承认它们是普通瓶装/传统线价格锚点，不要贬低；说明材料、提炼方式和成分路线不同。"
+            "Aqina 是不加一滴水、用整只鲜鸡、黄梨酵素鸡，Double Boiled 制成。"
+            "Choice：给 1盒确认口感、2盒免运、4盒月度装三个低摩擦选择。不要空泛安抚，不要每轮重复完整价格表。"
+            "上线或正式投放前必须再核 live price。"
+        ),
+        "required_questions": ["您是先想确认口感，还是拿 Aqina 和普通瓶装 / premium drip sachet 鸡精比价呢？"],
         "recommended_package_code": "pack1",
-        "upgrade_package_code": "pack2",
+        "upgrade_package_code": "pack4",
         "media_keys": ["pack2_product"],
         "next_referrals": ["checkout_collect"],
     },
@@ -333,13 +368,17 @@ Conversation Rules (对话规则)
 - 系统会按顾客内容注入 Active chatbot skills。你必须优先遵守当前 active skills，而不是把全部场景规则一次性倒给顾客。
 - skill_id、内部 referral、lead tag、package code、checkout_ready、escalate 等内部字段绝不能写进 reply_text。
 - 系统会在合适时另外发送品牌图、套餐图和 PayNow QR；reply_text 不要贴图片 URL 或 checkout URL。
+- 任何 inquiry 只要用户明确或暗示需要 human/staff/agent/person in charge/call/WhatsApp contact/help/真人/人工/客服/负责人/电话/找人/有人帮忙，都必须先安抚并升级给负责人；负责人电话固定为 +6591212369。
+- 若用户的问题与鸡精无关，但他是在找 Aqina、负责人或真人协助，也必须升级，不要因为非产品问题而继续 bot 回复。
+- 投诉、退款、付款失败、订单异常、配送争议、批量采购、企业采购、医疗/法律/财务判断、或 bot 无法确认的价格/库存/配送/订单/付款状态/服务条件，都必须 escalate=true；next_tag 使用 handoff_pending；escalation_reason 必须可读，例如 manual_handoff_requested、non_product_human_help、complaint、payment_issue、order_issue、medical_safety、unknown_requires_human。
 - 若顾客是孕妇或产后妈妈，先安抚并问阶段；说明是食品补养，不做医疗承诺。阶段明确后可推荐 4盒月度装，预算犹豫则建议 2盒起步。
 - 若顾客是上班族、学生或自己喝，先问饮用频率或具体生活场景；需求明确后可推荐 2盒免运起步，犹豫则建议 1盒先确认口感。
 - 若顾客是长辈或送礼，先确认是试喝、恢复期日常食品补养，还是家庭长期常备；不要默认推最大配套。
 - 若顾客问运费/多久到，直接回答：2盒或以上免运；1盒加 SGD 8；新加坡现货通常 1-3 个工作日送达。然后问是否需要按他的情况选配套。
 - 若顾客给出地址、电话、付款截图、说“我要/下单/order/buy/拿一盒/拿两盒”，不要继续介绍产品，直接进入收单检查。
-- 顾客问“贵”时，不要辩解或施压；先承认预算考虑很正常，再说明 1盒适合确认口感、2盒适合日常补养且免运。
-- 顾客表达不满、退款、投诉、复杂医疗、批量采购或要求人工时，先安抚并 escalate=true，交给人工客服。
+- 顾客问“贵/太贵/expensive/pricey/why so expensive”或点名和 Brand's/New Moon/EYS Traditional/Qian Jin 比价时，不要辩解或贬低对方；先承认预算考虑正常，再说明普通瓶装/传统线是大众价格锚点，Aqina 是 premium 60g sachet/drip 路线。Aqina 不是最低价路线，但黄梨酵素鸡、单一来源、Halal、无添加/无焦糖色素、不加一滴水、整只鲜鸡 Double Boiled 的做法，和普通瓶装不同。
+- 价格异议必须用同级参考框架：Hockhua 7包约 SGD48-60，EYS Organic 6包约 SGD62.50-68.50；Aqina 7包 SGD39.90，约 SGD5.70/包。最后给 1盒试口感、2盒免运、4盒月度装选择。上线前必须重核 live price。
+- 顾客表达不满、退款、投诉、复杂医疗、批量采购或要求人工时，先安抚并 escalate=true，交给负责人。
 
 Knowledge Base (Aqina 纯鸡精事实约束)
 
@@ -462,6 +501,14 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             "logistics": "新加坡现货供应，通常 1-3 个工作日送达；满 SGD 70 免运费，低于 SGD 70 需加 SGD 8 配送费。",
             "consumption": "建议早晨空腹饮用，可隔水加热或热水浸泡后即饮。",
             "comparisons": "相较传统鸡精，Aqina 更像家里炖煮的鲜鸡汤，入口回甘、较少腥苦味。",
+            "price_positioning": (
+                "Aqina 1盒 SGD39.90 / 7 sachets，约 SGD5.70/包；2盒 SGD75 免运；4盒 SGD149 月度装。"
+                "Aqina 不是普通瓶装低价路线，而是 60g premium sachet/drip 风格。"
+                "普通瓶装品牌如 BRAND'S、New Moon、EYS Traditional、Qian Jin 常见约 S$2-S$3+/serving，是较低价 bottle/traditional 价格锚点，不是同级 drip/sachet 对标。"
+                "同级参考：Hockhua Traditional Drip Chicken Essence 7 x 60ml 约 SGD48 early bird / usual SGD60；"
+                "Eu Yan Sang Organic High Protein Drip Chicken 6 x 60g 约 RSP SGD68.50 / member SGD62.50。"
+                "正式上线或投放前必须重核 live price。"
+            ),
         },
         "crm_follow_up_rules": {
             "comment_hook": {
@@ -508,7 +555,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         },
         "escalation": {
             "enabled": True,
-            "private_whatsapp_number": "",
+            "private_whatsapp_number": DEFAULT_PRIVATE_WHATSAPP_NUMBER,
             "whatsapp_template_name": "",
             "pause_automation_on_handoff": True,
         },
@@ -568,6 +615,9 @@ class ChatbotSettingsService:
             normalized["payment"]["paynow"]["account_name"] = defaults["payment"]["paynow"]["account_name"]
         if not paynow.get("payment_qr_alt"):
             normalized["payment"]["paynow"]["payment_qr_alt"] = defaults["payment"]["paynow"]["payment_qr_alt"]
+        escalation = normalized.get("escalation", {})
+        if not escalation.get("private_whatsapp_number"):
+            normalized["escalation"]["private_whatsapp_number"] = defaults["escalation"]["private_whatsapp_number"]
         normalized["media_assets"] = _normalize_media_assets(normalized.get("media_assets", {}), defaults["media_assets"])
         normalized = _remove_retired_trial_package(normalized)
         normalized = _replace_chatbot_product_terms(normalized)

@@ -110,7 +110,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 2)
+        self.assertEqual(payload["conversion_optimization_version"], 3)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertIn("先 PayNow 付款", payload["system_prompt"])
         self.assertIn("主治医生", payload["system_prompt"])
@@ -120,6 +120,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["packages"]["pack1"]["name_zh"], "7天启动装")
         self.assertEqual(payload["faq"][0]["keywords"], ["delivery"])
         self.assertEqual(payload["payment"]["paynow"]["enabled"], True)
+        self.assertEqual(payload["escalation"]["private_whatsapp_number"], "+6591212369")
         self.assertEqual(payload["escalation"]["pause_automation_on_handoff"], True)
         self.assertTrue(payload["facebook_comment_automation"]["enabled"])
         self.assertIn("price", payload["facebook_comment_automation"]["keywords"])
@@ -199,7 +200,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 2,
+                "conversion_optimization_version": 3,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -279,7 +280,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 2)
+        self.assertEqual(payload["conversion_optimization_version"], 3)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -299,6 +300,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("NLP 咨询式销售节奏", prompt)
         self.assertIn("若用户问“多少钱/price/how much/配套/优惠”，直接报价", prompt)
         self.assertIn("1盒 SGD 39.90；2盒 SGD 75 免运；4盒 SGD 149", prompt)
+        self.assertIn("+6591212369", prompt)
+        self.assertIn("non_product_human_help", prompt)
+        self.assertIn("unknown_requires_human", prompt)
         self.assertIn("没有问价、没有问配套、没有问运费", prompt)
         self.assertIn("不要再次报价", prompt)
         self.assertIn("严禁推荐三包体验装", prompt)
@@ -314,6 +318,18 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("不要重复价格", settings_doc["crm_follow_up_rules"]["t15m"]["qualified_warm"]["instruction"])
         self.assertIn("不要发送长篇感官描述", settings_doc["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
         self.assertIn("回复 YES", settings_doc["crm_follow_up_rules"]["t23h"]["default"]["instruction"])
+        price_skill = skills["price_objection"]
+        price_copy = json.dumps(price_skill, ensure_ascii=False)
+        self.assertIn("普通瓶装低价鸡精", price_copy)
+        self.assertIn("premium sachet", price_copy)
+        self.assertIn("Hockhua", price_copy)
+        self.assertIn("EYS Organic", price_copy)
+        self.assertIn("BRAND'S", price_copy)
+        self.assertIn("S$2-S$3+", price_copy)
+        self.assertIn("why so expensive", price_copy)
+        self.assertIn("Double Boiled", price_copy)
+        self.assertIn("不是最低价路线", price_copy)
+        self.assertIn("price_positioning", settings_doc["knowledge_base"])
 
     def test_chatbot_settings_includes_cart_hot_checkout_skill(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
@@ -1017,6 +1033,106 @@ class MarketingApiTests(unittest.TestCase):
                 incoming_text="How much is it?",
             ),
         )
+        self.assertIn(
+            "price_objection",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+                incoming_text="为什么比 Brand's 贵？",
+            ),
+        )
+        self.assertIn(
+            "price_objection",
+            router.select_active_skill_ids(
+                contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+                incoming_text="Why so expensive? It feels pricey.",
+            ),
+        )
+
+    def test_gemini_service_escalates_manual_handoff_without_model_call(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import GeminiConversationService
+
+        turn = GeminiConversationService().generate_chat_reply(
+            contact={"current_tag": "lead_cold", "lead_goal": "unknown"},
+            messages=[],
+            incoming_text="我要找真人",
+            channel="messenger",
+            runtime_settings=get_default_chatbot_settings(),
+        )
+
+        self.assertTrue(turn.escalate)
+        self.assertEqual(turn.next_tag, "handoff_pending")
+        self.assertEqual(turn.escalation_reason, "manual_handoff_requested")
+        self.assertIn("+6591212369", turn.reply_text)
+
+    def test_gemini_service_escalates_non_product_human_help(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import GeminiConversationService
+
+        turn = GeminiConversationService().generate_chat_reply(
+            contact={"current_tag": "lead_cold", "lead_goal": "unknown"},
+            messages=[],
+            incoming_text="这不是鸡精的问题，我需要负责人帮忙",
+            channel="whatsapp",
+            runtime_settings=get_default_chatbot_settings(),
+        )
+
+        self.assertTrue(turn.escalate)
+        self.assertEqual(turn.next_tag, "handoff_pending")
+        self.assertEqual(turn.escalation_reason, "non_product_human_help")
+        self.assertIn("+6591212369", turn.reply_text)
+
+    def test_gemini_service_escalates_complex_medical_judgment(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import GeminiConversationService
+
+        turn = GeminiConversationService().generate_chat_reply(
+            contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+            messages=[],
+            incoming_text="我在化疗，可以停药改喝这个吗？",
+            channel="messenger",
+            runtime_settings=get_default_chatbot_settings(),
+        )
+
+        self.assertTrue(turn.escalate)
+        self.assertEqual(turn.next_tag, "handoff_pending")
+        self.assertEqual(turn.escalation_reason, "medical_safety")
+        self.assertIn("+6591212369", turn.reply_text)
+
+    def test_gemini_service_escalates_unknown_requires_human(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import GeminiConversationService
+
+        turn = GeminiConversationService().generate_chat_reply(
+            contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
+            messages=[],
+            incoming_text="你不能确认库存和付款状态的话，请负责人处理",
+            channel="messenger",
+            runtime_settings=get_default_chatbot_settings(),
+        )
+
+        self.assertTrue(turn.escalate)
+        self.assertEqual(turn.next_tag, "handoff_pending")
+        self.assertEqual(turn.escalation_reason, "unknown_requires_human")
+        self.assertIn("+6591212369", turn.reply_text)
+
+    def test_gemini_sales_turn_sanitizes_internal_reply_fields(self) -> None:
+        from app.services.gemini_service import GeminiConversationService
+
+        turn = GeminiConversationService._normalize_sales_turn_payload(
+            {
+                "reply_text": "skill_id=price_objection next_tag=cart_hot checkout_ready=false",
+                "next_tag": "qualified_warm",
+                "lead_goal": "unknown",
+                "checkout_ready": False,
+                "escalate": False,
+                "opt_in_granted": False,
+            }
+        )
+
+        self.assertNotIn("skill_id", turn.reply_text)
+        self.assertNotIn("checkout_ready", turn.reply_text)
+        self.assertFalse(turn.escalate)
 
     def test_chatbot_skill_router_selects_cart_hot_checkout_for_buying_intent(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings

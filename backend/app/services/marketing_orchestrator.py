@@ -1009,6 +1009,13 @@ class MarketingAutomationOrchestrator:
             reason,
             latest_customer_message[:120],
         ]
+        notification_status = "not_configured"
+        notification_error = None
+        if not escalation_settings.get("enabled"):
+            notification_status = "disabled"
+        elif escalation_settings.get("private_whatsapp_number") and escalation_settings.get("whatsapp_template_name"):
+            notification_status = "pending"
+
         payload = {
             "contact_id": contact_id,
             "conversation_id": conversation_id,
@@ -1018,7 +1025,9 @@ class MarketingAutomationOrchestrator:
             "private_whatsapp_number": escalation_settings.get("private_whatsapp_number", ""),
             "template_name": escalation_settings.get("whatsapp_template_name", ""),
             "template_variables": template_variables,
-            "notified_at": utcnow(),
+            "notification_status": notification_status,
+            "notification_error": notification_error,
+            "notified_at": None,
             "resolved_at": None,
             "created_at": utcnow(),
             "updated_at": utcnow(),
@@ -1026,11 +1035,26 @@ class MarketingAutomationOrchestrator:
         self.db.collection("marketing_escalations").document(escalation_id).set(payload)
 
         if escalation_settings.get("enabled") and escalation_settings.get("private_whatsapp_number") and escalation_settings.get("whatsapp_template_name"):
-            self.meta_client.send_whatsapp_template(
-                to=escalation_settings["private_whatsapp_number"],
-                template_name=escalation_settings["whatsapp_template_name"],
-                body_variables=template_variables,
-            )
+            try:
+                self.meta_client.send_whatsapp_template(
+                    to=escalation_settings["private_whatsapp_number"],
+                    template_name=escalation_settings["whatsapp_template_name"],
+                    body_variables=template_variables,
+                )
+                self.db.collection("marketing_escalations").document(escalation_id).set(
+                    {"notification_status": "sent", "notified_at": utcnow(), "updated_at": utcnow()},
+                    merge=True,
+                )
+            except Exception as exc:  # pragma: no cover - provider failures are integration-only
+                logger.warning("escalation_notification_failed escalation_id=%s error=%s", escalation_id, exc)
+                self.db.collection("marketing_escalations").document(escalation_id).set(
+                    {
+                        "notification_status": "failed",
+                        "notification_error": str(exc),
+                        "updated_at": utcnow(),
+                    },
+                    merge=True,
+                )
         return escalation_id
 
     def _send_channel_reply(self, *, channel: str, contact: dict[str, Any], text: str) -> dict[str, Any]:

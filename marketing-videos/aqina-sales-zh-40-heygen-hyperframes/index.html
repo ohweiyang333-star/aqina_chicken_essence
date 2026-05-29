@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="zh-Hans">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1080" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1080px;
+        margin: 0;
+        overflow: hidden;
+        background: #0b1512;
+        color: #fff8e7;
+        font-family: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+      }
+
+      #root {
+        position: relative;
+        width: 1080px;
+        height: 1080px;
+        overflow: hidden;
+        background: #0b1512;
+      }
+
+      .clip {
+        position: absolute;
+        overflow: hidden;
+      }
+
+      .base-video {
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        background: #111;
+      }
+
+      .base-bg {
+        inset: -44px;
+        width: calc(100% + 88px);
+        height: calc(100% + 88px);
+        object-fit: cover;
+        filter: blur(26px) saturate(0.96) brightness(0.72);
+        transform: scale(1.04);
+      }
+
+      .warm-grade {
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(8, 14, 12, 0.06) 0%, rgba(8, 14, 12, 0.18) 54%, rgba(8, 14, 12, 0.7) 100%),
+          radial-gradient(circle at 82% 16%, rgba(255, 189, 63, 0.2), transparent 32%);
+      }
+
+      .brand-tag {
+        top: 38px;
+        left: 42px;
+        z-index: 8;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid rgba(255, 210, 95, 0.46);
+        border-radius: 8px;
+        background: rgba(11, 21, 18, 0.74);
+        padding: 14px 18px;
+        font-size: 28px;
+        font-weight: 900;
+        letter-spacing: 0;
+        backdrop-filter: blur(12px);
+      }
+
+      .brand-dot {
+        width: 13px;
+        height: 13px;
+        border-radius: 999px;
+        background: #ffd35f;
+        box-shadow: 0 0 18px rgba(255, 211, 95, 0.72);
+      }
+
+      .caption {
+        left: 56px;
+        right: 56px;
+        bottom: 182px;
+        z-index: 9;
+        display: flex;
+        min-height: 112px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 211, 95, 0.42);
+        border-radius: 8px;
+        background: rgba(9, 18, 15, 0.84);
+        padding: 18px 32px;
+        color: #fff8e7;
+        font-size: 46px;
+        font-weight: 900;
+        line-height: 1.18;
+        text-align: center;
+        text-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        backdrop-filter: blur(14px);
+      }
+
+      .caption span {
+        display: block;
+      }
+
+      .product-card {
+        right: 38px;
+        bottom: 328px;
+        z-index: 7;
+        width: 290px;
+        min-height: 290px;
+        border: 1px solid rgba(255, 211, 95, 0.5);
+        border-radius: 8px;
+        background: rgba(255, 249, 235, 0.96);
+        padding: 18px;
+        opacity: 0;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+      }
+
+      .product-card img {
+        width: 100%;
+        height: 210px;
+        object-fit: contain;
+        display: block;
+      }
+
+      .product-card p {
+        margin: 8px 0 0;
+        color: #3f2b18;
+        font-size: 25px;
+        font-weight: 900;
+        line-height: 1.12;
+        text-align: center;
+      }
+
+      .cutaway {
+        inset: 0;
+        z-index: 6;
+        display: grid;
+        grid-template-columns: 0.96fr 1.04fr;
+        align-items: center;
+        gap: 28px;
+        background:
+          linear-gradient(135deg, rgba(11, 21, 18, 0.97), rgba(33, 58, 42, 0.94)),
+          radial-gradient(circle at 80% 20%, rgba(255, 211, 95, 0.24), transparent 32%);
+        padding: 86px 70px 230px;
+        opacity: 0;
+      }
+
+      .cutaway h2 {
+        margin: 0 0 22px;
+        color: #fff8e7;
+        font-size: 68px;
+        font-weight: 900;
+        line-height: 1.06;
+        letter-spacing: 0;
+      }
+
+      .cutaway p {
+        margin: 0;
+        color: rgba(255, 248, 231, 0.86);
+        font-size: 32px;
+        font-weight: 700;
+        line-height: 1.42;
+      }
+
+      .cutaway img {
+        width: 100%;
+        height: 650px;
+        border-radius: 8px;
+        object-fit: cover;
+        box-shadow: 0 30px 70px rgba(0, 0, 0, 0.34);
+      }
+
+      .cutaway .packshot {
+        object-fit: contain;
+        background: #fff5df;
+        padding: 26px;
+      }
+
+      .cta-panel {
+        left: 44px;
+        right: 44px;
+        bottom: 36px;
+        z-index: 14;
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 14px;
+        opacity: 0;
+      }
+
+      .cta-item {
+        min-height: 110px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        padding: 14px 16px;
+        background: #ffd35f;
+        color: #25180d;
+        font-size: 31px;
+        font-weight: 950;
+        line-height: 1.12;
+        text-align: center;
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.26);
+      }
+
+      .cta-item.green {
+        background: #1fac63;
+        color: #ffffff;
+      }
+
+      .cta-item.dark {
+        background: #111f1a;
+        color: #fff8e7;
+        border: 1px solid rgba(255, 211, 95, 0.44);
+      }
+
+      .final-card {
+        inset: 0;
+        z-index: 12;
+        display: grid;
+        grid-template-columns: 1fr 0.95fr;
+        align-items: center;
+        gap: 26px;
+        background: linear-gradient(135deg, #10231b 0%, #0b1512 100%);
+        padding: 78px 64px 176px;
+        opacity: 0;
+      }
+
+      .final-card h2 {
+        margin: 0 0 20px;
+        color: #fff8e7;
+        font-size: 72px;
+        font-weight: 950;
+        line-height: 1.04;
+        letter-spacing: 0;
+      }
+
+      .final-card p {
+        margin: 0;
+        color: rgba(255, 248, 231, 0.86);
+        font-size: 32px;
+        font-weight: 750;
+        line-height: 1.42;
+      }
+
+      .final-card img {
+        width: 100%;
+        height: 610px;
+        object-fit: contain;
+        filter: drop-shadow(0 28px 46px rgba(0, 0, 0, 0.36));
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-width="1080" data-height="1080" data-start="0" data-duration="36">
+      <video id="base-bg" class="clip base-bg" data-start="0" data-duration="36" data-track-index="0" src="assets/heygen-a-roll.mp4" muted></video>
+      <video id="base-video" class="clip base-video" data-start="0" data-duration="36" data-track-index="1" src="assets/heygen-a-roll.mp4" muted></video>
+      <audio id="base-audio" data-start="0" data-duration="29.655" data-track-index="2" src="assets/heygen-a-roll.mp4"></audio>
+      <div id="warm-grade" class="clip warm-grade" data-start="0" data-duration="36" data-track-index="3"></div>
+
+      <div id="brand-tag" class="clip brand-tag" data-start="0" data-duration="36" data-track-index="8">
+        <span class="brand-dot"></span>
+        <span>Aqina 纯鸡精</span>
+      </div>
+
+      <section id="product-cutaway" class="clip cutaway" data-start="4" data-duration="4" data-track-index="5">
+        <div>
+          <h2>每天一包，温热即饮</h2>
+          <p>不走夸张疗效，只把日常补养做得简单一点。</p>
+        </div>
+        <img src="assets/golden-essence.webp" alt="Aqina 纯鸡精金黄色原汤精华" />
+      </section>
+
+      <section id="proof-cutaway" class="clip cutaway" data-start="17" data-duration="5" data-track-index="5">
+        <div>
+          <h2>原汤精华，配方清楚</h2>
+          <p>不加一滴水、不加防腐剂、不加味精。</p>
+        </div>
+        <img src="assets/evidence-safety.webp" alt="Aqina 食品安全与质量证明" />
+      </section>
+
+      <div id="product-card" class="clip product-card" data-start="8" data-duration="23" data-track-index="7">
+        <img src="assets/pack-1.webp" alt="Aqina 纯鸡精 1 盒试喝" />
+        <p>1 盒试喝<br />先看口感合不合适</p>
+      </div>
+
+      <section id="final-card" class="clip final-card" data-start="29" data-duration="7" data-track-index="12">
+        <div>
+          <h2>先试 1 盒，再选适合配套</h2>
+          <p>点进页面，或用 WhatsApp / Facebook Messenger 问 Aqina 团队。</p>
+        </div>
+        <img src="assets/value-cta-product.webp" alt="Aqina 纯鸡精配套" />
+      </section>
+
+      <div id="caption-1" class="clip caption" data-start="0" data-duration="5" data-track-index="9"><span>最近常常觉得累？</span></div>
+      <div id="caption-2" class="clip caption" data-start="5" data-duration="7" data-track-index="9"><span>每天一包 Aqina 纯鸡精</span></div>
+      <div id="caption-3" class="clip caption" data-start="12" data-duration="8" data-track-index="9"><span>温一温就能喝，不腥苦</span></div>
+      <div id="caption-4" class="clip caption" data-start="20" data-duration="8" data-track-index="9"><span>不加一滴水 / 防腐剂 / 味精</span></div>
+      <div id="caption-5" class="clip caption" data-start="28" data-duration="4" data-track-index="9"><span>先试 1 盒，再选适合家里的配套</span></div>
+      <div id="caption-6" class="clip caption" data-start="32" data-duration="4" data-track-index="9"><span>点进页面，或 WhatsApp / Messenger 咨询</span></div>
+
+      <div id="cta-panel" class="clip cta-panel" data-start="29" data-duration="7" data-track-index="13">
+        <div class="cta-item dark">Landing Page</div>
+        <div class="cta-item green">WhatsApp</div>
+        <div class="cta-item">Messenger</div>
+      </div>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true });
+
+      function setVisible(selector, start, duration) {
+        tl.set(selector, { opacity: 1 }, start);
+        tl.set(selector, { opacity: 0 }, start + duration);
+      }
+
+      setVisible("#product-cutaway", 4, 4);
+      setVisible("#proof-cutaway", 17, 5);
+      setVisible("#final-card", 29, 7);
+      setVisible("#cta-panel", 29, 7);
+
+      tl.from("#product-cutaway h2, #proof-cutaway h2, #final-card h2", { y: 34, opacity: 0, duration: 0.5, ease: "power3.out", stagger: 0.06 }, 4.2);
+      tl.from("#product-cutaway img", { scale: 0.96, opacity: 0, duration: 0.56, ease: "power2.out" }, 4.22);
+      tl.from("#proof-cutaway img", { scale: 0.96, opacity: 0, duration: 0.56, ease: "power2.out" }, 17.22);
+      tl.from("#final-card img", { y: 24, scale: 0.94, opacity: 0, duration: 0.62, ease: "power3.out" }, 29.24);
+
+      tl.to("#product-card", { opacity: 1, y: 0, duration: 0.34, ease: "power2.out" }, 8);
+      tl.to("#product-card", { opacity: 0, y: 10, duration: 0.24, ease: "power2.in" }, 31);
+      tl.from("#product-card", { y: 28, scale: 0.95, duration: 0.5, ease: "back.out(1.4)" }, 8);
+
+      for (let i = 1; i <= 6; i += 1) {
+        const selector = "#caption-" + i;
+        const el = document.querySelector(selector);
+        const start = Number(el.dataset.start);
+        const duration = Number(el.dataset.duration);
+        tl.set(selector, { opacity: 1 }, start);
+        tl.from(selector + " span", { y: 16, opacity: 0, duration: 0.24, ease: "power3.out" }, start + 0.12);
+        tl.set(selector, { opacity: 0 }, start + duration);
+      }
+
+      tl.to("#cta-panel", { opacity: 1, y: 0, duration: 0.28, ease: "power3.out" }, 29.4);
+      tl.from("#cta-panel .cta-item", { y: 20, opacity: 0, scale: 0.97, duration: 0.38, stagger: 0.08, ease: "power3.out" }, 29.48);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

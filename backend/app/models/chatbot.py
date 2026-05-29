@@ -51,6 +51,7 @@ class KnowledgeBase(BaseModel):
     logistics: str = ""
     consumption: str = ""
     comparisons: str = ""
+    price_positioning: str = ""
 
 
 class PayNowSettings(BaseModel):

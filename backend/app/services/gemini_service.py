@@ -23,8 +23,12 @@ PRICE_OR_ORDER_INTENT_KEYWORDS = {
     "价钱",
     "价格",
     "贵",
+    "太贵",
     "便宜",
     "price",
+    "pricey",
+    "expensive",
+    "why so expensive",
     "how much",
     "discount",
     "优惠",
@@ -45,6 +49,19 @@ PRICE_OR_ORDER_INTENT_KEYWORDS = {
     "拿两盒",
 }
 
+ESCALATION_PHONE_NUMBER = "+6591212369"
+INTERNAL_REPLY_FIELD_TERMS = {
+    "skill_id",
+    "lead tag",
+    "package code",
+    "checkout_ready",
+    "escalate",
+    "next_tag",
+    "selected_package_code",
+    "recommended_package_code",
+    "upgrade_package_code",
+}
+
 
 class GeminiConversationService:
     """Generate structured chatbot output with Google Gemini."""
@@ -62,6 +79,18 @@ class GeminiConversationService:
         channel: str,
         runtime_settings: dict[str, Any] | None = None,
     ) -> SalesConversationTurn:
+        deterministic_escalation_reason = _detect_customer_escalation_reason(incoming_text)
+        if deterministic_escalation_reason:
+            return SalesConversationTurn(
+                reply_text=_handoff_reply_text(
+                    incoming_text,
+                    reason=deterministic_escalation_reason,
+                ),
+                next_tag="handoff_pending",
+                escalate=True,
+                escalation_reason=deterministic_escalation_reason,
+            )
+
         prompt = self._build_chat_prompt(
             contact=contact,
             messages=messages,
@@ -208,6 +237,12 @@ class GeminiConversationService:
         normalized["reply_text"] = str(normalized.get("reply_text") or "").strip()
         if not normalized["reply_text"]:
             normalized["reply_text"] = "明白，我先帮您了解一下需求。请问这次是自己日常保养、孕期调理，还是想送给长辈呢？"
+        if _contains_internal_reply_field(normalized["reply_text"]):
+            normalized["reply_text"] = (
+                _handoff_reply_text("", reason=str(normalized.get("escalation_reason") or "manual_handoff_requested"))
+                if bool(normalized.get("escalate"))
+                else "明白，我先按您的情况帮您判断。请问您是想了解喝法、适合性，还是配套选择呢？"
+            )
 
         normalized["next_tag"] = GeminiConversationService._normalize_marketing_tag(
             normalized.get("next_tag"),
@@ -310,6 +345,12 @@ class GeminiConversationService:
             "不要在 reply_text 里输出 skill_id、lead tag、package code、checkout_ready、escalate 或任何内部字段。\n"
             "图片会由系统作为媒体文件另发；不要把图片 URL 或 checkout URL 写进 reply_text。\n"
             "严禁夸大痛点、制造焦虑、暗示治疗效果、假装稀缺或用操控式话术逼单。\n"
+            f"如果顾客要求 human/staff/agent/person in charge/call/WhatsApp/help/真人/人工/客服/负责人/电话/找人，"
+            f"或问题和鸡精无关但在找 Aqina/负责人协助，reply_text 必须先安抚并提供 {ESCALATION_PHONE_NUMBER}，"
+            "next_tag=handoff_pending, escalate=true, escalation_reason 使用可读原因。\n"
+            "投诉、退款、付款失败、订单异常、配送争议、批量采购、企业采购、医疗/法律/财务判断必须升级给负责人；"
+            "如果 bot 无法确认价格、库存、配送、订单、付款状态或服务条件，也必须升级，escalation_reason=unknown_requires_human；"
+            "不要尝试用 bot 自己解决这些边界。\n"
             "如果 Recent assistant price quote 是 yes 且 Incoming asks price/order/shipping 是 no，"
             "不要重复任何 SGD 价格，只回答顾客当前咨询并问一个低压场景问题。\n"
             "如果 Channel 是 whatsapp 且 Known order fields.phone 或 Known channel phone 已有号码，"
@@ -382,3 +423,134 @@ def _safe_follow_up_fallback_text(*, checkout_url: str | None, cart_hot: bool = 
     if checkout_url or cart_hot:
         return SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT
     return SAFE_FOLLOW_UP_FALLBACK_TEXT
+
+
+def _detect_customer_escalation_reason(incoming_text: str) -> str | None:
+    text = str(incoming_text or "").casefold()
+    stripped = text.strip()
+    if not stripped:
+        return None
+
+    if _contains_any(stripped, COMPLAINT_TERMS):
+        return "complaint"
+    if _contains_any(stripped, REFUND_TERMS):
+        return "refund_request"
+    if _contains_any(stripped, PAYMENT_ISSUE_TERMS):
+        return "payment_issue"
+    if _contains_any(stripped, ORDER_ISSUE_TERMS):
+        return "order_issue"
+    if _contains_any(stripped, DELIVERY_DISPUTE_TERMS):
+        return "delivery_dispute"
+    if _contains_any(stripped, BULK_PURCHASE_TERMS):
+        return "bulk_purchase"
+    if _contains_any(stripped, LEGAL_FINANCIAL_TERMS):
+        return "legal_financial"
+    if _contains_any(stripped, COMPLEX_MEDICAL_TERMS):
+        return "medical_safety"
+    if _contains_any(stripped, BOT_CANNOT_CONFIRM_TERMS):
+        return "unknown_requires_human"
+    if _contains_any(stripped, HUMAN_HELP_TERMS):
+        if _contains_any(stripped, NON_PRODUCT_TERMS):
+            return "non_product_human_help"
+        return "manual_handoff_requested"
+    return None
+
+
+def _handoff_reply_text(incoming_text: str, *, reason: str) -> str:
+    text = str(incoming_text or "").casefold()
+    english = bool(re.search(r"\b(human|staff|agent|person in charge|call|whatsapp|help|refund|complaint)\b", text))
+    if english:
+        return (
+            "I’ll pass this to the person in charge to handle. You can also WhatsApp / call "
+            f"{ESCALATION_PHONE_NUMBER}, and the person in charge will take over."
+        )
+    if reason == "medical_safety":
+        return (
+            "这个情况我不建议由 bot 直接判断。我帮您转给负责人处理；"
+            f"您也可以直接 WhatsApp / call {ESCALATION_PHONE_NUMBER}，会由负责人接手。"
+        )
+    return (
+        "我帮您转给负责人处理。您也可以直接 WhatsApp / call "
+        f"{ESCALATION_PHONE_NUMBER}，会由负责人接手。"
+    )
+
+
+def _contains_internal_reply_field(reply_text: str) -> bool:
+    text = str(reply_text or "").casefold()
+    return any(term in text for term in INTERNAL_REPLY_FIELD_TERMS)
+
+
+def _contains_any(text: str, terms: set[str]) -> bool:
+    return any(term in text for term in terms)
+
+
+HUMAN_HELP_TERMS = {
+    "human",
+    "staff",
+    "agent",
+    "person in charge",
+    "talk to someone",
+    "call",
+    "call me",
+    "whatsapp",
+    "whatsapp contact",
+    "whatsapp me",
+    "need help",
+    "真人",
+    "人工",
+    "客服",
+    "负责人",
+    "找人",
+    "电话",
+    "whatsapp我",
+    "whatsapp 我",
+    "可以有人帮我吗",
+    "我要找人",
+    "需要负责人",
+    "找负责人",
+    "有人帮忙",
+    "人工帮忙",
+}
+NON_PRODUCT_TERMS = {"不是鸡精", "不是产品", "无关", "不เกี่ยว", "not chicken essence", "not product", "unrelated"}
+COMPLAINT_TERMS = {"投诉", "complaint", "complain", "不满", "差评"}
+REFUND_TERMS = {"退款", "退钱", "refund", "money back"}
+PAYMENT_ISSUE_TERMS = {"付款失败", "付不到", "无法付款", "不能付款", "paynow failed", "payment failed", "cannot pay", "can't pay"}
+ORDER_ISSUE_TERMS = {"订单异常", "订单问题", "order issue", "wrong order", "missing order", "没收到订单"}
+DELIVERY_DISPUTE_TERMS = {"配送争议", "送错", "没收到货", "没有收到货", "delivery dispute", "wrong delivery", "missing parcel"}
+BULK_PURCHASE_TERMS = {"批量采购", "企业采购", "bulk purchase", "corporate purchase", "wholesale", "b2b"}
+LEGAL_FINANCIAL_TERMS = {"法律", "律师", "legal", "财务判断", "投资", "贷款", "financial advice", "finance advice"}
+BOT_CANNOT_CONFIRM_TERMS = {
+    "不确定",
+    "不能确认",
+    "无法确认",
+    "你确认不到",
+    "bot cannot confirm",
+    "cannot confirm",
+    "can't confirm",
+    "not sure about stock",
+    "not sure about delivery",
+    "not sure about payment",
+    "not sure about order",
+    "库存不确定",
+    "价格不确定",
+    "配送不确定",
+    "订单状态不确定",
+    "付款状态不确定",
+    "服务条件不确定",
+}
+COMPLEX_MEDICAL_TERMS = {
+    "医生判断",
+    "医疗判断",
+    "能不能替代",
+    "可以停药",
+    "癌症",
+    "化疗",
+    "肾病",
+    "肝病",
+    "medical advice",
+    "replace medicine",
+    "stop medicine",
+    "chemotherapy",
+    "cancer",
+    "kidney disease",
+}

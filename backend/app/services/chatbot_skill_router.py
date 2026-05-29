@@ -214,7 +214,31 @@ USAGE_CONSULTATION_KEYWORDS = {
     "constipation",
 }
 TASTE_KEYWORDS = {"腥", "苦", "味道", "口感", "好喝", "难喝", "怕油"}
-PRICE_KEYWORDS = {"多少钱", "价钱", "价格", "贵", "便宜", "price", "how much", "discount", "优惠"}
+PRICE_KEYWORDS = {
+    "多少钱",
+    "价钱",
+    "价格",
+    "贵",
+    "太贵",
+    "便宜",
+    "price",
+    "pricey",
+    "expensive",
+    "why so expensive",
+    "how much",
+    "discount",
+    "优惠",
+    "brand's",
+    "brands",
+    "new moon",
+    "eys",
+    "eu yan sang",
+    "hockhua",
+    "qian jin",
+    "普通瓶装",
+    "bottled",
+    "traditional",
+}
 CHECKOUT_KEYWORDS = {
     "我要",
     "下单",
