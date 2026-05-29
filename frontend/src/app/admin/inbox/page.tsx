@@ -546,6 +546,19 @@ export default function AdminInboxPage() {
   );
 }
 
+function getDisplayCustomerName(item: { customer_name?: string; platform_id?: string; channel: string } | null | undefined) {
+  if (!item) return "选择一个对话";
+  const rawName = item.customer_name || item.platform_id || "Unknown contact";
+  if (item.channel === "messenger") {
+    const isPureDigits = /^\d+$/.test(rawName);
+    if (!rawName || isPureDigits || rawName === item.platform_id || rawName.toLowerCase().startsWith("psid_")) {
+      const suffix = item.platform_id ? ` (#${item.platform_id.slice(-4)})` : "";
+      return `Messenger 顾客${suffix}`;
+    }
+  }
+  return rawName;
+}
+
 function InboxPanel({
   conversations,
   conversationDetail,
@@ -593,6 +606,16 @@ function InboxPanel({
   const canReply = Boolean(conversationDetail && windowOpen);
   const canSendTemplate = Boolean(conversationDetail?.conversation.channel === "whatsapp" && templateName);
   const [activeInspector, setActiveInspector] = useState<"customer" | "source" | "orders">("customer");
+  const [showTemplate, setShowTemplate] = useState(false);
+
+  useEffect(() => {
+    if (conversationDetail?.conversation.channel === "whatsapp") {
+      setShowTemplate(!windowOpen);
+    } else {
+      setShowTemplate(false);
+    }
+  }, [conversationDetail?.conversation.conversation_id, windowOpen]);
+
   return (
     <section className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[330px_minmax(0,1fr)_340px]">
       <div className="min-h-0 overflow-hidden rounded-md border border-[#ddd5ca] bg-white">
@@ -618,7 +641,7 @@ function InboxPanel({
                     <div className="flex items-center gap-2">
                       <ChannelIcon channel={item.channel} />
                       <p className="truncate text-sm font-bold text-[#14231d]">
-                        {item.customer_name || item.platform_id || "Unknown contact"}
+                        {getDisplayCustomerName(item)}
                       </p>
                     </div>
                     <p className="mt-1 truncate text-xs text-[#69746e]">
@@ -644,7 +667,7 @@ function InboxPanel({
         <div className="flex items-start justify-between gap-4 border-b border-[#ebe5dc] p-4">
           <div>
             <h2 className="text-lg font-bold">
-              {conversationDetail?.conversation.customer_name || "选择一个对话"}
+              {getDisplayCustomerName(conversationDetail?.conversation)}
             </h2>
             {conversationDetail && (
               <p className="mt-1 text-xs text-[#6b746f]">
@@ -699,44 +722,52 @@ function InboxPanel({
           ))}
         </div>
 
-        <div className="border-t border-[#ebe5dc] p-4">
+        <div className="border-t border-[#ebe5dc] p-3">
           {selectedImagePreview && selectedImageFile && (
-            <div className="mb-3 flex items-center gap-3 rounded-md border border-[#d8d1c7] bg-[#fbfaf6] p-2">
+            <div className="mb-2 flex items-center gap-3 rounded-md border border-[#d8d1c7] bg-[#fbfaf6] p-2">
               <div
                 id="inbox-selected-image-preview"
                 role="img"
                 aria-label={selectedImageFile.name}
                 style={{ backgroundImage: `url(${selectedImagePreview})` }}
-                className="h-16 w-16 rounded-md bg-cover bg-center bg-no-repeat"
+                className="h-14 w-14 rounded-md bg-cover bg-center bg-no-repeat shrink-0"
               />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-[#14231d]">{selectedImageFile.name}</p>
-                <p className="text-xs text-[#6b746f]">{formatFileSize(selectedImageFile.size)}</p>
+                <p className="truncate text-xs font-semibold text-[#14231d]">{selectedImageFile.name}</p>
+                <p className="text-[10px] text-[#6b746f]">{formatFileSize(selectedImageFile.size)}</p>
               </div>
               <button
                 id="inbox-clear-image-button"
                 type="button"
                 onClick={onClearImage}
                 disabled={isSaving}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-[#d8d1c7] bg-white text-[#5d6a64] hover:text-[#10251d] disabled:opacity-50"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-[#d8d1c7] bg-white text-[#5d6a64] hover:text-[#10251d] disabled:opacity-50"
                 aria-label="清除已选图片"
               >
-                <X size={16} />
+                <X size={14} />
               </button>
             </div>
           )}
-          <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-            <div className="grid gap-2">
+          <div className="flex items-end gap-2">
+            <div className="flex-1 relative flex flex-col">
               <textarea
                 id="inbox-reply-textarea"
                 value={replyText}
                 onChange={(event) => onReplyTextChange(event.target.value)}
-                rows={3}
+                rows={1}
                 disabled={!canReply}
-                className="min-h-24 resize-none rounded-md border border-[#d8d1c7] bg-white p-3 text-sm text-[#14231d] outline-none focus:border-[#236b50] disabled:bg-[#f2eee7]"
-                placeholder={windowOpen ? "输入人工回复；选择图片后这里会作为图片说明..." : "窗口已关闭，无法自由回复"}
+                className="w-full min-h-[42px] max-h-28 resize-none rounded-md border border-[#d8d1c7] bg-white py-2.5 pl-3 pr-10 text-sm text-[#14231d] outline-none focus:border-[#236b50] disabled:bg-[#f2eee7] leading-relaxed"
+                placeholder={windowOpen ? "输入人工回复（Enter直接发送）..." : "窗口已关闭，无法自由回复"}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (!isSaving && canReply && (replyText.trim() || selectedImageFile)) {
+                      onSendReply();
+                    }
+                  }
+                }}
               />
-              <div>
+              <div className="absolute right-2 bottom-1.5 flex items-center">
                 <input
                   id="inbox-image-input"
                   type="file"
@@ -754,12 +785,12 @@ function InboxPanel({
                 <label
                   id="inbox-attach-image-button"
                   htmlFor="inbox-image-input"
-                  className={`inline-flex items-center gap-2 rounded-md border border-[#cfd8d2] bg-white px-3 py-2 text-sm font-semibold text-[#294239] ${
-                    canReply && !isSaving ? "cursor-pointer hover:border-[#236b50]" : "cursor-not-allowed opacity-50"
+                  className={`inline-flex h-7 w-7 items-center justify-center rounded-md border border-transparent bg-transparent text-[#294239] transition-colors ${
+                    canReply && !isSaving ? "cursor-pointer hover:bg-[#f2eee7] hover:text-[#10251d]" : "cursor-not-allowed opacity-50"
                   }`}
+                  title="上传图片"
                 >
                   <ImageIcon size={16} />
-                  图片
                 </label>
               </div>
             </div>
@@ -767,53 +798,64 @@ function InboxPanel({
               id="inbox-send-text-button"
               onClick={onSendReply}
               disabled={isSaving || !canReply || (!replyText.trim() && !selectedImageFile)}
-              className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-[#123d2f] px-5 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-[42px] items-center justify-center gap-1.5 rounded-md bg-[#123d2f] px-4 text-sm font-bold text-white transition-colors hover:bg-[#10251d] disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
             >
-              {isSaving ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />}
+              {isSaving ? <Loader2 className="animate-spin" size={14} /> : <Send size={14} />}
               发送
             </button>
           </div>
           {conversationDetail?.conversation.channel === "whatsapp" && (
-            <div className="mt-4 rounded-md border border-[#e5ddd1] bg-[#fbfaf6] p-3">
-              <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_auto]">
-                <label className="grid gap-1 text-xs font-semibold text-[#6b746f]">
-                  Template
-                  <select
-                    id="inbox-whatsapp-template-select"
-                    value={templateName}
-                    onChange={(event) => onTemplateNameChange(event.target.value)}
-                    disabled={isSaving || templates.length === 0}
-                    className="rounded-md border border-[#d8d1c7] bg-white px-3 py-2 text-sm font-bold text-[#14231d]"
-                  >
-                    <option value="">选择 template</option>
-                    {templates.map((template) => (
-                      <option key={`${template.name}-${template.language_code}`} value={template.name}>
-                        {template.name} · {template.language_code}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="grid gap-1 text-xs font-semibold text-[#6b746f]">
-                  Variables
-                  <textarea
-                    id="inbox-whatsapp-template-variables"
-                    value={templateVariables}
-                    onChange={(event) => onTemplateVariablesChange(event.target.value)}
-                    rows={2}
-                    disabled={isSaving}
-                    className="min-h-16 resize-none rounded-md border border-[#d8d1c7] bg-white p-2 text-sm text-[#14231d]"
-                  />
-                </label>
-                <button
-                  id="inbox-send-template-button"
-                  onClick={onSendTemplate}
-                  disabled={isSaving || !canSendTemplate}
-                  className="inline-flex h-10 self-end items-center justify-center gap-2 rounded-md border border-[#236b50] bg-white px-4 text-sm font-bold text-[#236b50] disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <ShieldCheck size={16} />
-                  Template
-                </button>
-              </div>
+            <div className="mt-2 border-t border-[#f0ebe4] pt-2">
+              <button
+                type="button"
+                onClick={() => setShowTemplate(!showTemplate)}
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#236b50] hover:text-[#10251d] transition-colors"
+              >
+                {showTemplate ? "收起 WhatsApp 模板回复" : "展开 WhatsApp 模板回复"}
+              </button>
+              {showTemplate && (
+                <div className="mt-2 rounded-md border border-[#e5ddd1] bg-[#fbfaf6] p-3 text-left">
+                  <div className="grid gap-3 lg:grid-cols-[220px_minmax(0,1fr)_auto]">
+                    <label className="grid gap-1 text-xs font-semibold text-[#6b746f]">
+                      Template
+                      <select
+                        id="inbox-whatsapp-template-select"
+                        value={templateName}
+                        onChange={(event) => onTemplateNameChange(event.target.value)}
+                        disabled={isSaving || templates.length === 0}
+                        className="rounded-md border border-[#d8d1c7] bg-white px-2 py-1.5 text-xs font-bold text-[#14231d]"
+                      >
+                        <option value="">选择 template</option>
+                        {templates.map((template) => (
+                          <option key={`${template.name}-${template.language_code}`} value={template.name}>
+                            {template.name} · {template.language_code}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-1 text-xs font-semibold text-[#6b746f]">
+                      Variables
+                      <textarea
+                        id="inbox-whatsapp-template-variables"
+                        value={templateVariables}
+                        onChange={(event) => onTemplateVariablesChange(event.target.value)}
+                        rows={2}
+                        disabled={isSaving}
+                        className="min-h-12 resize-none rounded-md border border-[#d8d1c7] bg-white p-2 text-xs text-[#14231d]"
+                      />
+                    </label>
+                    <button
+                      id="inbox-send-template-button"
+                      onClick={onSendTemplate}
+                      disabled={isSaving || !canSendTemplate}
+                      className="inline-flex h-9 self-end items-center justify-center gap-1.5 rounded-md border border-[#236b50] bg-white px-3 text-xs font-bold text-[#236b50] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <ShieldCheck size={14} />
+                      Template
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

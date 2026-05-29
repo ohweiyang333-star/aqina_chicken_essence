@@ -82,6 +82,7 @@ class MarketingAutomationOrchestrator:
                         interaction_time=occurred_at,
                         acquisition=referral_event["acquisition"],
                     )
+                    self._backfill_messenger_profile_for_webhook(contact_id, identifiers)
                     normalized = NormalizedMarketingEvent(
                         provider="meta",
                         channel="messenger",
@@ -120,6 +121,7 @@ class MarketingAutomationOrchestrator:
                     interaction_time=occurred_at,
                     acquisition=messenger_event["acquisition"],
                 )
+                self._backfill_messenger_profile_for_webhook(contact_id, identifiers)
                 self.contact_service.append_message(
                     contact_id=contact_id,
                     channel="messenger",
@@ -275,6 +277,36 @@ class MarketingAutomationOrchestrator:
                     )
 
         return accepted
+
+    def _backfill_messenger_profile_for_webhook(self, contact_id: str, identifiers: dict[str, str]) -> None:
+        psid = identifiers.get("psid")
+        if not psid:
+            return
+        try:
+            contact = self.contact_service.get_contact(contact_id)
+            order_fields = contact.get("order_fields") or {}
+            profile = contact.get("profile") or {}
+            existing_name = order_fields.get("name") or profile.get("name") or contact.get("name")
+            if existing_name:
+                return
+
+            profile_data = self.meta_client.get_messenger_profile(psid)
+            name = str(
+                profile_data.get("name")
+                or " ".join(
+                    part
+                    for part in [profile_data.get("first_name"), profile_data.get("last_name")]
+                    if part
+                )
+            ).strip()
+            if name:
+                self.contact_service.update_contact_profile(
+                    contact_id,
+                    {"profile": {"name": name}}
+                )
+                logger.info("messenger_profile_backfilled_in_webhook psid=%s name=%s", psid, name)
+        except Exception as exc:
+            logger.info("messenger_profile_backfill_failed_in_webhook psid=%s error=%s", psid, exc)
 
     def _normalize_messenger_event(self, message_event: dict[str, Any]) -> dict[str, Any] | None:
         sender_psid = str(message_event.get("sender", {}).get("id") or "")
