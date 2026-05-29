@@ -1,6 +1,7 @@
 """Admin inbox operations for Messenger and WhatsApp conversations."""
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from app.services.marketing_contacts import MarketingContactService
@@ -16,6 +17,7 @@ BLOCKER_KEYWORDS: dict[str, tuple[str, ...]] = {
     "delivery": ("delivery", "deliver", "shipping", "运费", "配送", "送货", "多久收到", "几天到", "免运"),
     "payment": ("paynow", "payment", "付款", "货到付款", "cod", "cash on delivery", "截图"),
 }
+logger = logging.getLogger(__name__)
 
 
 class MarketingConversationConsoleService:
@@ -32,7 +34,7 @@ class MarketingConversationConsoleService:
         self.meta_client = meta_client or get_meta_client()
         self.contact_service = contact_service or MarketingContactService(db)
 
-    def list_conversations(self, *, channel: str = "all", limit: int = 50) -> dict[str, Any]:
+    def list_conversations(self, *, channel: str = "all", limit: int = 200) -> dict[str, Any]:
         self._validate_channel_filter(channel)
         query = self.db.collection("marketing_conversations")
         if channel != "all":
@@ -55,6 +57,7 @@ class MarketingConversationConsoleService:
         conversation = self._get_conversation(conversation_id)
         contact = self.contact_service.get_contact(conversation["contact_id"])
         contact["contact_id"] = conversation["contact_id"]
+        contact = self._backfill_messenger_profile(conversation, contact)
         return {
             "conversation": self._conversation_summary(conversation_id, conversation, contact=contact),
             "contact": contact,
@@ -208,7 +211,7 @@ class MarketingConversationConsoleService:
             "conversation_id": conversation_id,
             "contact_id": conversation["contact_id"],
             "channel": conversation.get("channel", ""),
-            "customer_name": self._contact_name(contact_payload) or self._masked_platform_id(platform_id),
+            "customer_name": self._contact_name(contact_payload) or platform_id or "Unknown contact",
             "platform_id": platform_id,
             "current_tag": contact_payload.get("current_tag", ""),
             "marketing_status": contact_payload.get("marketing_status", "unknown"),
@@ -327,13 +330,50 @@ class MarketingConversationConsoleService:
             raise ValueError(f"Unsupported inbox channel: {channel}")
         return {**contact, "identifiers": identifiers}
 
-    @staticmethod
-    def _masked_platform_id(platform_id: str) -> str:
+    def _backfill_messenger_profile(
+        self,
+        conversation: dict[str, Any],
+        contact: dict[str, Any],
+    ) -> dict[str, Any]:
+        if conversation.get("channel") != "messenger" or self._contact_name(contact):
+            return contact
+        platform_id = self._platform_id(contact, "messenger")
         if not platform_id:
-            return "Unknown contact"
-        if len(platform_id) <= 8:
-            return platform_id
-        return f"{platform_id[:4]}...{platform_id[-4:]}"
+            return contact
+
+        try:
+            profile = self.meta_client.get_messenger_profile(platform_id)
+        except Exception as exc:  # pragma: no cover - best-effort production backfill.
+            logger.info("messenger_profile_backfill_failed psid=%s error=%s", platform_id, exc)
+            self.contact_service.update_contact_profile(
+                contact["contact_id"],
+                {"profile_lookup_failed_at": utcnow()},
+            )
+            return contact
+
+        name = str(
+            profile.get("name")
+            or " ".join(
+                part
+                for part in [profile.get("first_name"), profile.get("last_name")]
+                if part
+            )
+        ).strip()
+        if not name:
+            return contact
+
+        next_contact = {
+            **contact,
+            "profile": {
+                **(contact.get("profile") or {}),
+                "name": name,
+            },
+        }
+        self.contact_service.update_contact_profile(
+            contact["contact_id"],
+            {"profile": next_contact["profile"]},
+        )
+        return next_contact
 
     @staticmethod
     def _acquisition_payload(contact: dict[str, Any]) -> dict[str, Any]:

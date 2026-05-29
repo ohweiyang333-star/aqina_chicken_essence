@@ -12,11 +12,13 @@ from app.api.deps import Admin, DB
 from app.core.config import settings
 from app.models.chatbot import CheckoutSessionResponse
 from app.models.marketing import (
+    ArchiveEscalationRequest,
     LaunchWhatsAppCampaignRequest,
     ProcessWhatsAppCampaignRecipientRequest,
     ProcessFollowUpJobRequest,
     ProcessMarketingEventRequest,
     ReconcileDueJobsRequest,
+    RemarkEscalationRequest,
     SendMarketingTextRequest,
     SendWhatsAppTemplateRequest,
     SendWhatsAppTextRequest,
@@ -210,7 +212,7 @@ async def list_marketing_conversations(
     db: DB,
     admin: Admin,
     channel: str = Query(default="all"),
-    limit: int = Query(default=50, ge=1, le=100),
+    limit: int = Query(default=200, ge=1, le=500),
 ):
     """List Messenger and WhatsApp conversations for the unified admin inbox."""
     del admin
@@ -349,7 +351,7 @@ async def whatsapp_health(db: DB, admin: Admin):
 
 
 @router.get("/whatsapp/conversations")
-async def list_whatsapp_conversations(db: DB, admin: Admin, limit: int = Query(default=50, ge=1, le=100)):
+async def list_whatsapp_conversations(db: DB, admin: Admin, limit: int = Query(default=200, ge=1, le=500)):
     """List WhatsApp conversations for the admin inbox."""
     del admin
     return _build_whatsapp_console(db).list_conversations(limit=limit)
@@ -567,7 +569,11 @@ async def get_marketing_checkout(token: str, db: DB):
 
 
 @router.get("/escalations")
-async def list_escalations(db: DB, admin: Admin):
+async def list_escalations(
+    db: DB,
+    admin: Admin,
+    include_archived: bool = Query(default=False),
+):
     """List escalation queue for the admin UI."""
     del admin
     docs = (
@@ -578,6 +584,8 @@ async def list_escalations(db: DB, admin: Admin):
     results = []
     for doc in docs:
         row = doc.to_dict()
+        if not include_archived and row.get("status") == "archived":
+            continue
         row["escalation_id"] = doc.id
         results.append(row)
     return {"items": results}
@@ -586,19 +594,75 @@ async def list_escalations(db: DB, admin: Admin):
 @router.post("/escalations/{escalation_id}/acknowledge")
 async def acknowledge_escalation(escalation_id: str, db: DB, admin: Admin):
     """Mark an escalation as acknowledged by staff."""
-    del admin
     ref = db.collection("marketing_escalations").document(escalation_id)
     snapshot = ref.get()
     if not snapshot.exists:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation not found")
-    ref.set({"status": "acknowledged", "updated_at": _now()}, merge=True)
+    ref.set(
+        {
+            "status": "acknowledged",
+            "updated_at": _now(),
+            "updated_by": _admin_identifier(admin),
+        },
+        merge=True,
+    )
     return {"status": "acknowledged"}
+
+
+@router.post("/escalations/{escalation_id}/remark")
+async def remark_escalation(
+    escalation_id: str,
+    body: RemarkEscalationRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Add an internal staff remark to an escalation."""
+    ref = db.collection("marketing_escalations").document(escalation_id)
+    snapshot = ref.get()
+    if not snapshot.exists:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation not found")
+    ref.set(
+        {
+            "remark": body.remark.strip(),
+            "remark_updated_at": _now(),
+            "updated_at": _now(),
+            "updated_by": _admin_identifier(admin),
+        },
+        merge=True,
+    )
+    return {"status": "remarked"}
+
+
+@router.post("/escalations/{escalation_id}/archive")
+async def archive_escalation(
+    escalation_id: str,
+    body: ArchiveEscalationRequest,
+    db: DB,
+    admin: Admin,
+):
+    """Archive an escalation without hard deleting the audit record."""
+    ref = db.collection("marketing_escalations").document(escalation_id)
+    snapshot = ref.get()
+    if not snapshot.exists:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Escalation not found")
+    update = {
+        "status": "archived",
+        "archived_at": _now(),
+        "archived_by": _admin_identifier(admin),
+        "updated_at": _now(),
+        "updated_by": _admin_identifier(admin),
+    }
+    remark = (body.remark or "").strip()
+    if remark:
+        update["remark"] = remark
+        update["remark_updated_at"] = _now()
+    ref.set(update, merge=True)
+    return {"status": "archived"}
 
 
 @router.post("/escalations/{escalation_id}/resolve")
 async def resolve_escalation(escalation_id: str, db: DB, admin: Admin):
     """Resolve an escalation and optionally resume automation."""
-    del admin
     ref = db.collection("marketing_escalations").document(escalation_id)
     snapshot = ref.get()
     if not snapshot.exists:
@@ -606,8 +670,20 @@ async def resolve_escalation(escalation_id: str, db: DB, admin: Admin):
     row = snapshot.to_dict()
     contact_service = MarketingContactService(db)
     contact_service.resume_automation(row["contact_id"])
-    ref.set({"status": "resolved", "resolved_at": _now(), "updated_at": _now()}, merge=True)
+    ref.set(
+        {
+            "status": "resolved",
+            "resolved_at": _now(),
+            "updated_at": _now(),
+            "updated_by": _admin_identifier(admin),
+        },
+        merge=True,
+    )
     return {"status": "resolved"}
+
+
+def _admin_identifier(admin: dict) -> str:
+    return str(admin.get("email") or admin.get("uid") or "admin")
 
 
 def _build_orchestrator(db):

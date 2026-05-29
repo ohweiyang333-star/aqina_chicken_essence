@@ -50,6 +50,18 @@ class UpdateMarketingContactTagRequest(BaseModel):
     current_tag: Literal["lead_cold", "qualified_warm", "cart_hot", "handoff_pending"]
 
 
+class RemarkEscalationRequest(BaseModel):
+    """Admin payload for adding an internal remark to an escalation."""
+
+    remark: str = Field(..., min_length=1, max_length=1000)
+
+
+class ArchiveEscalationRequest(BaseModel):
+    """Admin payload for archiving an escalation without hard deletion."""
+
+    remark: str | None = Field(default=None, max_length=1000)
+
+
 class SendWhatsAppTemplateRequest(BaseModel):
     """Admin payload for sending an approved WhatsApp template."""
 

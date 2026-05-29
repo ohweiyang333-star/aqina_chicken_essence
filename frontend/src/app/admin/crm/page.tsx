@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Bot,
@@ -24,12 +24,8 @@ import {
   updateChatbotSettings,
 } from "@/lib/backend-chatbot-service";
 import {
-  EscalationRecord,
   FacebookCommentEvent,
-  acknowledgeEscalation,
   listFacebookCommentEvents,
-  listEscalations,
-  resolveEscalation,
 } from "@/lib/backend-marketing-service";
 
 const RULE_FIELDS = [
@@ -48,7 +44,6 @@ export default function AdminCRMPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [settings, setSettings] = useState<ChatbotSettings | null>(null);
-  const [escalations, setEscalations] = useState<EscalationRecord[]>([]);
   const [commentEvents, setCommentEvents] = useState<FacebookCommentEvent[]>([]);
 
   useEffect(() => {
@@ -73,25 +68,14 @@ export default function AdminCRMPage() {
     return () => unsubscribe();
   }, [router]);
 
-  const escalationStats = useMemo(
-    () => ({
-      open: escalations.filter((item) => item.status === "open").length,
-      acknowledged: escalations.filter((item) => item.status === "acknowledged").length,
-      resolved: escalations.filter((item) => item.status === "resolved").length,
-    }),
-    [escalations],
-  );
-
   async function loadData() {
     setIsLoading(true);
     try {
-      const [fetchedSettings, escalationRows] = await Promise.all([
+      const [fetchedSettings, facebookRows] = await Promise.all([
         getChatbotSettings(),
-        listEscalations(),
+        listFacebookCommentEvents(),
       ]);
-      const facebookRows = await listFacebookCommentEvents();
       setSettings(fetchedSettings);
-      setEscalations(escalationRows);
       setCommentEvents(facebookRows);
     } catch (error) {
       console.error("Failed to load CRM settings", error);
@@ -113,16 +97,6 @@ export default function AdminCRMPage() {
     } finally {
       setIsSaving(false);
     }
-  }
-
-  async function handleAcknowledge(escalationId: string) {
-    await acknowledgeEscalation(escalationId);
-    await loadData();
-  }
-
-  async function handleResolve(escalationId: string) {
-    await resolveEscalation(escalationId);
-    await loadData();
   }
 
   function updateRule(stage: string, key: string, instruction: string) {
@@ -242,9 +216,9 @@ export default function AdminCRMPage() {
               <section className="grid gap-4 md:grid-cols-4">
                 <StatCard
                   icon={<ShieldAlert size={18} />}
-                  title="待人工处理"
-                  value={String(escalationStats.open)}
-                  caption="Open escalations"
+                  title="人工升级"
+                  value={settings.escalation.enabled ? "ON" : "OFF"}
+                  caption="Queue moved to Handoff"
                   accent="from-[#402415] to-[#8f4f2b]"
                 />
                 <StatCard
@@ -807,8 +781,8 @@ export default function AdminCRMPage() {
 
                 <SectionShell
                   icon={<ShieldAlert size={18} />}
-                  title="Escalation 与人工接管队列"
-                  subtitle="当顾客投诉、退款或要求人工时，系统会暂停自动化并发 WhatsApp 模板给你的私人号码。"
+                  title="Escalation 设置"
+                  subtitle="人工接管队列已经移到左侧 Handoff；这里只保留升级规则、私人号码和模板设置。"
                 >
                   <div className="grid gap-4">
                     <ToggleRow
@@ -882,49 +856,6 @@ export default function AdminCRMPage() {
                     />
                   </div>
 
-                  <div className="mt-6 space-y-3">
-                    {escalations.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-[#d9c5ad] bg-[#fffaf4] p-6 text-sm text-[#6c5849]">
-                        目前没有待处理的 escalation。
-                      </div>
-                    ) : (
-                      escalations.map((item) => (
-                        <div key={item.escalation_id} className="rounded-[24px] border border-[#e6d7c7] bg-[#fffaf4] p-5">
-                          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                            <div className="space-y-2">
-                              <div className="inline-flex rounded-full bg-[#2b2018] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f7f2ea]">
-                                {item.status}
-                              </div>
-                              <h3 className="text-base font-bold text-[#2b2018]">{item.reason}</h3>
-                              <p className="text-sm leading-6 text-[#6c5849]">{item.latest_customer_message || "无附加留言"}</p>
-                              <p className="text-xs uppercase tracking-[0.2em] text-[#9a7a57]">
-                                {item.private_whatsapp_number || "未配置私人号码"}
-                              </p>
-                            </div>
-
-                            <div className="flex flex-wrap gap-3">
-                              {item.status !== "acknowledged" && item.status !== "resolved" && (
-                                <button
-                                  onClick={() => void handleAcknowledge(item.escalation_id)}
-                                  className="rounded-full border border-[#d7c3ab] bg-white px-4 py-2 text-sm font-semibold text-[#6c5849] transition hover:border-[#8e5d34] hover:text-[#8e5d34]"
-                                >
-                                  Acknowledge
-                                </button>
-                              )}
-                              {item.status !== "resolved" && (
-                                <button
-                                  onClick={() => void handleResolve(item.escalation_id)}
-                                  className="rounded-full bg-[#2b2018] px-4 py-2 text-sm font-semibold text-[#f7f2ea] transition hover:bg-[#8e5d34]"
-                                >
-                                  Resolve & Resume
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
                 </SectionShell>
               </div>
             </div>

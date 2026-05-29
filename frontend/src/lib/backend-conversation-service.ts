@@ -66,10 +66,13 @@ export interface MarketingConversationDetail {
   window: MarketingConversationSummary["window"];
 }
 
-export async function listMarketingConversations(channel: MarketingInboxFilter = "all") {
+export async function listMarketingConversations(
+  channel: MarketingInboxFilter = "all",
+  limit = 300,
+) {
   const response = await apiClient.get<{ items: MarketingConversationSummary[] }>(
     "/api/v1/marketing/conversations",
-    { channel },
+    { channel, limit },
   );
   return response.items;
 }

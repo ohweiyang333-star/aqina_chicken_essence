@@ -267,6 +267,10 @@ class FakeMetaClient:
         self.calls.append(("send_messenger_text", kwargs))
         return {"message_id": "messenger-id"}
 
+    def get_messenger_profile(self, recipient_psid: str) -> dict[str, Any]:
+        self.calls.append(("get_messenger_profile", {"recipient_psid": recipient_psid}))
+        return {"name": "Messenger User"}
+
     def send_whatsapp_text(self, **kwargs: Any) -> dict[str, Any]:
         self.calls.append(("send_whatsapp_text", kwargs))
         return {"messages": [{"id": "whatsapp-id"}]}

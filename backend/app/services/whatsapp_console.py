@@ -102,7 +102,7 @@ class WhatsAppConsoleService:
             "contact_id": contact_id,
             "conversation_id": conversation_id,
             "conversation_url": (
-                f"/admin/whatsapp?conversation={conversation_id}" if conversation_id else None
+                f"/admin/inbox?conversation={conversation_id}" if conversation_id else None
             ),
             "window_is_open": bool(window["is_open"]),
             "window_expires_at": window["expires_at"],

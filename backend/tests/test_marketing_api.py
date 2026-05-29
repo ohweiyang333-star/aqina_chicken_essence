@@ -3084,6 +3084,38 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(items[0]["acquisition"]["ad_id"], "ad-123")
         self.assertEqual(items[0]["latest_message"]["text"], "请问多少钱？")
 
+    def test_unified_conversations_api_supports_more_than_50_and_full_ids(self) -> None:
+        for index in range(55):
+            channel = "whatsapp" if index % 2 else "messenger"
+            identifier_key = "wa_id" if channel == "whatsapp" else "psid"
+            identifier_value = f"65910000{index:02d}" if channel == "whatsapp" else f"psid-full-visible-{index:02d}"
+            self._seed_contact_and_event(
+                contact_id=f"contact-limit-{index:02d}",
+                conversation_id=f"conv-limit-{index:02d}",
+                event_id=f"event-limit-{index:02d}",
+                channel=channel,
+                incoming_text=f"message {index}",
+                identifier_key=identifier_key,
+                identifier_value=identifier_value,
+            )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/marketing/conversations",
+            params={"limit": 55},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        items = response.json()["items"]
+        self.assertEqual(len(items), 55)
+        platform_ids = {item["platform_id"] for item in items}
+        customer_names = {item["customer_name"] for item in items}
+        self.assertIn("psid-full-visible-00", platform_ids)
+        self.assertIn("6591000001", platform_ids)
+        self.assertIn("psid-full-visible-00", customer_names)
+        self.assertNotIn("psid...e-00", customer_names)
+
     def test_unified_conversation_detail_returns_messages_contact_and_window(self) -> None:
         self._seed_contact_and_event(
             contact_id="contact-detail-msgr",
@@ -3108,6 +3140,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertTrue(payload["window"]["is_open"])
         self.assertEqual(payload["messages"][0]["text"], "我要买给妈妈")
         self.assertEqual(payload["contact"]["contact_id"], "contact-detail-msgr")
+        self.assertEqual(payload["conversation"]["customer_name"], "Messenger User")
 
     def test_unified_conversation_detail_flags_cart_hot_handoff_without_order(self) -> None:
         self._seed_contact_and_event(
@@ -3380,6 +3413,69 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(tag_events[0].to_dict()["source"], "admin_unified_inbox")
         self.assertEqual(invalid_response.status_code, 422)
 
+    def test_escalation_queue_supports_remark_and_archive_without_hard_delete(self) -> None:
+        self.db.seed(
+            "marketing_escalations/escalation-open",
+            {
+                "contact_id": "contact-escalation-open",
+                "conversation_id": "conv-escalation-open",
+                "reason": "refund_request",
+                "latest_customer_message": "I need help",
+                "status": "open",
+                "private_whatsapp_number": "+6591212369",
+                "template_name": "aqina_escalation_alert",
+                "template_variables": ["refund_request"],
+                "created_at": "2026-04-10T00:00:00Z",
+            },
+        )
+        self.db.seed(
+            "marketing_escalations/escalation-archived",
+            {
+                "contact_id": "contact-escalation-archived",
+                "reason": "old_case",
+                "status": "archived",
+                "created_at": "2026-04-09T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        list_response = client.get(
+            "/api/v1/marketing/escalations",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        remark_response = client.post(
+            "/api/v1/marketing/escalations/escalation-open/remark",
+            json={"remark": "Customer asked for refund evidence."},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        archive_response = client.post(
+            "/api/v1/marketing/escalations/escalation-open/archive",
+            json={"remark": "Handled by staff, remove from active queue."},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        after_archive_response = client.get(
+            "/api/v1/marketing/escalations",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+        include_archived_response = client.get(
+            "/api/v1/marketing/escalations",
+            params={"include_archived": True},
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(list_response.status_code, 200)
+        self.assertEqual([item["escalation_id"] for item in list_response.json()["items"]], ["escalation-open"])
+        self.assertEqual(remark_response.status_code, 200)
+        self.assertEqual(archive_response.status_code, 200)
+        archived_doc = self.db.collection("marketing_escalations").document("escalation-open").get()
+        self.assertTrue(archived_doc.exists)
+        archived = archived_doc.to_dict()
+        self.assertEqual(archived["status"], "archived")
+        self.assertEqual(archived["remark"], "Handled by staff, remove from active queue.")
+        self.assertEqual(archived["archived_by"], "admin@aqina.com")
+        self.assertEqual(after_archive_response.json()["items"], [])
+        self.assertEqual(len(include_archived_response.json()["items"]), 2)
+
     def test_whatsapp_console_allows_template_after_customer_window(self) -> None:
         self._seed_contact_and_event(
             contact_id="contact-template",
@@ -3556,6 +3652,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(context_payload["source_label"], "WhatsApp Chatbot")
         self.assertEqual(context_payload["source_channel"], "whatsapp")
         self.assertEqual(context_payload["conversation_id"], "conv-order-send")
+        self.assertEqual(context_payload["conversation_url"], "/admin/inbox?conversation=conv-order-send")
         self.assertEqual(context_payload["backend_send_method"], "free_text")
 
         response = client.post(

@@ -77,6 +77,16 @@ class MetaMessagingClient:
             params={"access_token": settings.meta_page_access_token},
         )
 
+    def get_messenger_profile(self, recipient_psid: str) -> dict[str, Any]:
+        """Fetch a Messenger user's public profile fields available to the Page."""
+        return self._get(
+            f"/{recipient_psid}",
+            params={
+                "access_token": settings.meta_page_access_token,
+                "fields": "first_name,last_name,name",
+            },
+        )
+
     def send_whatsapp_text(self, to: str, text: str) -> dict[str, Any]:
         """Send a WhatsApp text message."""
         payload = {

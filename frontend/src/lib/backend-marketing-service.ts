@@ -6,12 +6,17 @@ export interface EscalationRecord {
   conversation_id?: string | null;
   reason: string;
   latest_customer_message: string;
-  status: "open" | "acknowledged" | "resolved";
+  status: "open" | "acknowledged" | "resolved" | "archived";
   private_whatsapp_number: string;
   template_name: string;
   template_variables: string[];
   notified_at?: string;
   resolved_at?: string | null;
+  remark?: string;
+  remark_updated_at?: string | null;
+  archived_at?: string | null;
+  archived_by?: string | null;
+  updated_by?: string | null;
 }
 
 export interface MarketingCheckoutPayload {
@@ -58,9 +63,10 @@ export interface FacebookCommentEvent {
   processed_at?: string | null;
 }
 
-export async function listEscalations(): Promise<EscalationRecord[]> {
+export async function listEscalations(includeArchived = false): Promise<EscalationRecord[]> {
   const response = await apiClient.get<{ items: EscalationRecord[] }>(
     "/api/v1/marketing/escalations",
+    { include_archived: includeArchived },
   );
   return response.items;
 }
@@ -76,6 +82,20 @@ export async function resolveEscalation(escalationId: string) {
   return apiClient.post<{ status: string }>(
     `/api/v1/marketing/escalations/${escalationId}/resolve`,
     {},
+  );
+}
+
+export async function remarkEscalation(escalationId: string, remark: string) {
+  return apiClient.post<{ status: string }>(
+    `/api/v1/marketing/escalations/${escalationId}/remark`,
+    { remark },
+  );
+}
+
+export async function archiveEscalation(escalationId: string, remark?: string) {
+  return apiClient.post<{ status: string }>(
+    `/api/v1/marketing/escalations/${escalationId}/archive`,
+    { remark },
   );
 }
 

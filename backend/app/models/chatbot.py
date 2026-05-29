@@ -196,10 +196,15 @@ class EscalationRecord(BaseModel):
     conversation_id: str | None = None
     reason: str
     latest_customer_message: str = ""
-    status: Literal["open", "acknowledged", "resolved"] = "open"
+    status: Literal["open", "acknowledged", "resolved", "archived"] = "open"
     private_whatsapp_number: str = ""
     template_name: str = ""
     template_variables: list[str] = Field(default_factory=list)
+    remark: str = ""
+    remark_updated_at: Any | None = None
+    archived_at: Any | None = None
+    archived_by: str | None = None
+    updated_by: str | None = None
 
 
 class CheckoutSessionResponse(BaseModel):
