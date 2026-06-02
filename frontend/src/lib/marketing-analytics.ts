@@ -4,7 +4,7 @@ export const MARKETING_CONSENT_STORAGE_KEY = 'aqina_marketing_consent_v1';
 export const MARKETING_CONSENT_CHANGE_EVENT = 'aqina-marketing-consent-change';
 
 export type MarketingConsent = 'accepted' | 'declined';
-export type MarketingLandingVersion = 'home' | 'v2' | 'v3' | 'v4';
+export type MarketingLandingVersion = 'offer_reset' | 'v2' | 'v3' | 'v4';
 export type MarketingLanguage = 'en' | 'zh';
 
 type GtagValue = string | Date | Record<string, unknown> | boolean | number | undefined;
@@ -322,7 +322,7 @@ export function getMarketingPageContext(pathname?: string): MarketingPageContext
   if (isMarketingLanguage(firstSegment) && segments.length === 1) {
     return {
       page_path: pagePath,
-      landing_version: 'home',
+      landing_version: 'offer_reset',
       language: firstSegment,
     };
   }

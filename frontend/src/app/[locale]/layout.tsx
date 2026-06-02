@@ -16,12 +16,13 @@ export async function generateMetadata({
 
   return {
     title: isZh
-      ? "Aqina 阿其纳纯鸡精｜好吸收、轻负担的每日补养"
-      : "Aqina Premium Chicken Essence Singapore | Clean Daily Recovery",
+      ? "Aqina 纯鸡精｜1盒 SGD47.90 / 2盒 SGD79.80｜French Poulet 赠品"
+      : "Aqina Pure Chicken Essence | 1 Box SGD47.90 / 2 Boxes SGD79.80",
     description: isZh
-      ? "Aqina 黄梨酵素纯鸡精，聚焦好吸收、轻负担与每日可持续的温热补养，支持新加坡家庭、恢复期与日常元气管理。"
-      : "Aqina pineapple enzyme chicken essence is made for clean absorption, gentle daily recovery, and easy warm nourishment for Singapore families.",
+      ? "Aqina 纯鸡精新版配套：1盒 SGD47.90，2盒 SGD79.80，等于每盒 SGD39.90，并送 French Poulet Cut Part 五选一。WhatsApp 确认配套与赠品，或直接 PayNow 上传收据下单。"
+      : "Aqina Pure Chicken Essence offer reset: 1 box at SGD47.90, 2 boxes at SGD79.80, equal to SGD39.90 per box with one French Poulet Cut Part gift choice. Confirm on WhatsApp or PayNow and upload your receipt directly.",
     alternates: {
+      canonical: isZh ? "/zh" : "/en",
       languages: {
         en: "/en",
         zh: "/zh",

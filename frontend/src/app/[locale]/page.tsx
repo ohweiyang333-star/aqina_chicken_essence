@@ -1,5 +1,5 @@
-import GreenLandingPage from '@/components/pages/GreenLandingPage';
+import OfferResetLandingPage from '@/components/pages/OfferResetLandingPage';
 
 export default function HomePage() {
-  return <GreenLandingPage />;
+  return <OfferResetLandingPage />;
 }
