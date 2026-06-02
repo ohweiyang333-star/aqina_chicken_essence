@@ -29,15 +29,11 @@ interface CheckoutModalProps {
 
 function resolvePackage(product: NonNullable<CheckoutModalProps['product']>) {
   const text = `${product.id} ${product.name} ${product.label}`.toLowerCase();
-  if (text.includes('pack6') || text.includes('42') || text.includes('6盒') || text.includes('6 box')) {
-    return { productId: 'pack6', boxCount: 6 };
-  }
-  if (text.includes('pack4') || text.includes('28') || text.includes('4盒') || text.includes('4 box')) {
-    return { productId: 'pack4', boxCount: 4 };
-  }
+
   if (text.includes('pack2') || text.includes('14') || text.includes('2盒') || text.includes('2 box')) {
     return { productId: 'pack2', boxCount: 2 };
   }
+
   return { productId: 'pack1', boxCount: 1 };
 }
 
@@ -67,7 +63,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
   if (!isOpen || !product) return null;
 
   const selectedPackage = resolvePackage(product);
-  const shippingFee = selectedPackage.boxCount >= 2 ? 0 : 8;
+  const shippingFee = 0;
   const subtotal = Number(product.price);
   const total = subtotal + shippingFee;
   const checkoutWhatsAppHref = getWhatsAppHref(
@@ -321,10 +317,8 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
                   {ct('form.total') || 'Total'}
                 </p>
                 <p className="mt-1 text-xl font-black text-charcoal">SGD {total.toFixed(2)}</p>
-                <p className={shippingFee === 0 ? 'text-xs font-bold text-green-600' : 'text-xs text-charcoal/50'}>
-                  {shippingFee === 0
-                    ? (ct('form.free') || 'FREE')
-                    : `${ct('form.delivery') || 'Delivery Fee'} SGD ${shippingFee.toFixed(2)}`}
+                <p className="text-xs font-bold text-green-700">
+                  {ct('form.offerResetTotal') || 'Offer reset total shown. Gift and delivery details can be confirmed on WhatsApp.'}
                 </p>
               </div>
             </div>
