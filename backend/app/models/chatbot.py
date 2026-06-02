@@ -112,6 +112,7 @@ class ChatbotMediaAssets(BaseModel):
     brand_intro: str = ""
     brand_intro_images: dict[str, str] = Field(default_factory=dict)
     package_images: dict[str, Any] = Field(default_factory=dict)
+    ugc_social_proof_images: dict[str, list[str]] = Field(default_factory=dict)
     captions: dict[str, Any] = Field(default_factory=dict)
 
 

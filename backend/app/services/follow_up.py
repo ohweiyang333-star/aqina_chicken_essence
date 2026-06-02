@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import ast
+from copy import deepcopy
+import logging
 import re
 from datetime import timedelta
 from typing import Any
@@ -14,8 +16,14 @@ from app.services.gemini_service import (
 )
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, stable_id, utcnow
+from app.services.meta_media_assets import MetaMediaAssetService
 from app.services.meta_client import get_meta_client
 from app.services.task_queue import get_task_queue_service
+
+
+logger = logging.getLogger(__name__)
+SOCIAL_PROOF_FOLLOW_UP_STAGES = {"t3h"}
+SOCIAL_PROOF_FOLLOW_UP_TAGS = {"lead_cold", "qualified_warm"}
 
 
 class FollowUpEngine:
@@ -114,13 +122,28 @@ class FollowUpEngine:
             if not checkout_url:
                 return self._mark_job(ref, status="skipped_missing_checkout", skip_reason="no_checkout_session")
 
+        social_proof_media = self._select_social_proof_media(
+            contact_id=job["contact_id"],
+            contact=contact,
+            stage=job["stage"],
+            current_tag=current_tag,
+            runtime_settings=runtime_settings,
+        )
+
+        instruction = str(stage_rule.get("instruction", ""))
+        if social_proof_media:
+            instruction = (
+                f"{instruction} If natural, tell the customer you are also sharing one real customer usage photo "
+                "for reference. Do not invent review quotes, medical outcomes, safety guarantees, or exact usage results."
+            )
+
         conversation_id = job["conversation_id"]
         messages = self.contact_service.get_recent_messages(conversation_id)
         result = self.gemini_service.generate_follow_up_reply(
             contact=contact,
             messages=messages,
             stage=job["stage"],
-            instruction=str(stage_rule.get("instruction", "")),
+            instruction=instruction,
             runtime_settings=runtime_settings,
             checkout_url=checkout_url,
         )
@@ -140,6 +163,13 @@ class FollowUpEngine:
             follow_up_stage=job["stage"],
             delivery_status="sent",
         )
+        if social_proof_media:
+            self._send_social_proof_media(
+                contact_id=job["contact_id"],
+                contact=contact,
+                stage=job["stage"],
+                media=social_proof_media,
+            )
         if next_tag and next_tag != current_tag:
             self.contact_service.update_contact_tag(
                 job["contact_id"],
@@ -186,6 +216,86 @@ class FollowUpEngine:
         if channel == "whatsapp":
             return self.meta_client.send_whatsapp_text(to=identifiers["wa_id"], text=text)
         raise ValueError(f"Unsupported follow-up channel: {channel}")
+
+    def _select_social_proof_media(
+        self,
+        *,
+        contact_id: str,
+        contact: dict[str, Any],
+        stage: str,
+        current_tag: str,
+        runtime_settings: dict[str, Any],
+    ) -> dict[str, Any] | None:
+        if stage not in SOCIAL_PROOF_FOLLOW_UP_STAGES:
+            return None
+        if current_tag not in SOCIAL_PROOF_FOLLOW_UP_TAGS:
+            return None
+        if contact.get("channel") not in {"messenger", "whatsapp"}:
+            return None
+
+        sent_media = contact.get("sent_media") if isinstance(contact.get("sent_media"), dict) else {}
+        social_proof_state = sent_media.get("follow_up_social_proof")
+        if isinstance(social_proof_state, dict) and social_proof_state.get("sent"):
+            return None
+
+        locale = _follow_up_locale(contact)
+        media_assets = runtime_settings.get("media_assets", {}) or {}
+        images = _localized_media_list(media_assets.get("ugc_social_proof_images"), locale)
+        if not images:
+            return None
+
+        index = _stable_media_index(contact_id, stage, len(images))
+        captions = media_assets.get("captions", {}) if isinstance(media_assets.get("captions"), dict) else {}
+        return {
+            "source_url": images[index],
+            "cache_key": f"ugc_social_proof_{locale}_{index}",
+            "caption": _localized_media_value(captions.get("ugc_social_proof"), locale),
+            "locale": locale,
+            "index": index,
+        }
+
+    def _send_social_proof_media(
+        self,
+        *,
+        contact_id: str,
+        contact: dict[str, Any],
+        stage: str,
+        media: dict[str, Any],
+    ) -> None:
+        try:
+            channel = contact["channel"]
+            media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
+            result = media_service.send_chatbot_image(
+                channel=channel,
+                contact=contact,
+                source_url=media["source_url"],
+                cache_key=media["cache_key"],
+                caption=media.get("caption"),
+            )
+            self.contact_service.append_message(
+                contact_id=contact_id,
+                channel=channel,
+                direction="outbound",
+                role="assistant",
+                text=f"Customer social proof image sent: {media['locale']}:{media['index']}",
+                source="follow_up_social_proof_media",
+                provider_message_id=_extract_provider_message_id(channel, result),
+                message_type="image",
+                follow_up_stage=stage,
+                delivery_status="sent",
+                media_url=media["source_url"],
+            )
+            refreshed = self.contact_service.get_contact(contact_id)
+            sent_media = deepcopy(refreshed.get("sent_media") or {})
+            sent_media["follow_up_social_proof"] = {
+                "sent": True,
+                "locale": media["locale"],
+                "image_url": media["source_url"],
+                "image_index": media["index"],
+            }
+            self.contact_service.update_contact_profile(contact_id, {"sent_media": sent_media})
+        except Exception as exc:  # noqa: BLE001 - follow-up text should still be delivered.
+            logger.warning("follow_up_social_proof_media_failed contact_id=%s stage=%s error=%s", contact_id, stage, exc)
 
     @staticmethod
     def _normalize_follow_up_result(
@@ -248,6 +358,58 @@ class FollowUpEngine:
         }
         ref.set(payload, merge=True)
         return {"status": status}
+
+
+def _follow_up_locale(contact: dict[str, Any]) -> str:
+    locale = str(contact.get("chatbot_locale") or "").strip().lower()
+    return locale if locale in {"zh", "en"} else "zh"
+
+
+def _localized_media_list(value: Any, locale: str) -> list[str]:
+    if isinstance(value, dict):
+        localized = value.get(locale) or value.get("zh") or value.get("en")
+        return _coerce_media_list(localized)
+    return _coerce_media_list(value)
+
+
+def _localized_media_value(value: Any, locale: str) -> str:
+    normalized_locale = locale if locale in {"zh", "en"} else "zh"
+    if isinstance(value, str):
+        return value.strip()
+    if isinstance(value, dict):
+        localized = value.get(normalized_locale) or value.get("zh") or value.get("en")
+        if localized:
+            return str(localized).strip()
+        for candidate in value.values():
+            if candidate:
+                return str(candidate).strip()
+    return ""
+
+
+def _coerce_media_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        candidates = [value]
+    elif isinstance(value, list):
+        candidates = value
+    elif isinstance(value, tuple):
+        candidates = list(value)
+    else:
+        candidates = []
+    return [str(item).strip() for item in candidates if str(item).strip()]
+
+
+def _stable_media_index(contact_id: str, stage: str, image_count: int) -> int:
+    if image_count <= 0:
+        return 0
+    seed = f"{contact_id}:{stage}"
+    return sum(ord(char) for char in seed) % image_count
+
+
+def _extract_provider_message_id(channel: str, payload: dict[str, Any]) -> str | None:
+    if channel == "messenger":
+        return payload.get("message_id")
+    messages = payload.get("messages") or []
+    return messages[0].get("id") if messages else None
 
 
 def _extract_python_literal_field(text: str, field_name: str) -> Any:

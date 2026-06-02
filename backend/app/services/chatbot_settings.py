@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 6
+CONVERSION_OPTIMIZATION_VERSION = 7
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -46,6 +46,24 @@ DEFAULT_PACK1_IMAGE_ZH = "/chatbot/aqina-offer-gift-guide-zh.jpg"
 DEFAULT_PACK1_IMAGE_EN = "/chatbot/aqina-offer-gift-guide-en.jpg"
 DEFAULT_PACK2_IMAGE_ZH = "/chatbot/aqina-offer-gift-guide-zh.jpg"
 DEFAULT_PACK2_IMAGE_EN = "/chatbot/aqina-offer-gift-guide-en.jpg"
+DEFAULT_UGC_SOCIAL_PROOF_IMAGES = (
+    "/chatbot/ugc/customer-middle-aged-chinese-man-product.jpg",
+    "/chatbot/ugc/customer-middle-aged-malay-woman-product.jpg",
+    "/chatbot/ugc/customer-family-care-serving-essence.jpg",
+    "/chatbot/ugc/customer-young-indian-woman-kitchen.jpg",
+    "/chatbot/ugc/customer-office-woman-sachet.jpg",
+    "/chatbot/ugc/customer-bright-kitchen-woman-product.jpg",
+    "/chatbot/ugc/customer-chinese-student-product.jpg",
+    "/chatbot/ugc/customer-home-woman-product.jpg",
+    "/chatbot/ugc/customer-young-chinese-woman-product.jpg",
+    "/chatbot/ugc/customer-young-indian-man-product.jpg",
+    "/chatbot/ugc/customer-young-malay-man-outdoor.jpg",
+    "/chatbot/ugc/customer-yoga-woman-product.jpg",
+    "/chatbot/ugc/customer-senior-chinese-woman-product.jpg",
+    "/chatbot/ugc/customer-senior-malay-man-product.jpg",
+    "/chatbot/ugc/customer-young-woman-outdoor-product.jpg",
+    "/chatbot/ugc/customer-office-woman-product.jpg",
+)
 
 DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
     "pm",
@@ -84,6 +102,10 @@ DEFAULT_MEDIA_ASSETS = {
         "pack1": {"zh": DEFAULT_PACK1_IMAGE_ZH, "en": DEFAULT_PACK1_IMAGE_EN},
         "pack2": {"zh": DEFAULT_PACK2_IMAGE_ZH, "en": DEFAULT_PACK2_IMAGE_EN},
     },
+    "ugc_social_proof_images": {
+        "zh": list(DEFAULT_UGC_SOCIAL_PROOF_IMAGES),
+        "en": list(DEFAULT_UGC_SOCIAL_PROOF_IMAGES),
+    },
     "captions": {
         "brand_intro": {
             "zh": "一图看懂 Aqina 纯鸡精：来源、成分、工艺。",
@@ -96,6 +118,10 @@ DEFAULT_MEDIA_ASSETS = {
         "pack2": {
             "zh": "1盒/2盒选择指南：1盒 SGD47.90；2盒 SGD79.80，并可选 1包 French Poulet Cut Part 赠品。",
             "en": "1-box / 2-box guide: 1 box SGD47.90; 2 boxes SGD79.80 with one French Poulet Cut Part gift choice.",
+        },
+        "ugc_social_proof": {
+            "zh": "真实顾客使用照给您参考：很多顾客会把 Aqina 纯鸡精当作日常补养或送家人的选择。Aqina 是食品补养，不是药；特殊健康状况建议先咨询医生。",
+            "en": "Real customer usage photo for reference: many customers use AQINA Pure Chicken Essence for daily nourishment or family gifting. AQINA is food nourishment, not medicine; please check with a doctor for special health conditions.",
         },
     },
 }
@@ -364,6 +390,7 @@ Tone & Style
 - Do not invent facts, stock, delivery time, payment status, order status, limited-time deadlines, reviews, or live policy.
 - Never expose skill_id, internal referral, lead tag, package code, checkout_ready, escalate, intent tags, or other internal fields in reply_text.
 - Brand images, package images, and the PayNow QR may be sent separately by the system. Do not paste image URLs or checkout URLs in reply_text.
+- During follow-up, the system may send authorized real customer usage photos as social proof. Do not invent customer names, review quotes, medical outcomes, safety guarantees, or exact usage results. Explain them only as real customer usage references.
 
 New Promotion Source Of Truth
 
@@ -505,7 +532,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
             },
             "t3h": {
                 "cart_hot": {"instruction": "The customer asked about package, delivery, or payment but has not completed the order. Briefly remind them to continue with delivery details or the PayNow payment screenshot; if needed, mention that customer service will verify."},
-                "default": {"instruction": "Low-pressure reminder: if usage, suitability, or package choice is still unclear, the customer can continue asking and you will judge by their situation. Do not repeat prices. Do not send long sensory copy."}
+                "default": {"instruction": "Low-pressure reminder: if usage, suitability, or package choice is still unclear, the customer can continue asking and you will judge by their situation. You may mention that a real customer usage photo is being shared for reference. Do not invent review quotes, medical outcomes, safety guarantees, or exact usage results. Do not repeat prices. Do not send long sensory copy."}
             },
             "t12h": {
                 "cart_hot": {"instruction": "If the customer has selected a package or provided details, remind them to use the PayNow QR and send back the payment screenshot. Keep it short and say the team will verify delivery after receiving the screenshot."}
@@ -680,6 +707,11 @@ def _normalize_media_assets(media_assets: dict[str, Any], defaults: dict[str, An
             package_images[code] = {"zh": default_value, "en": default_value}
     normalized["package_images"] = package_images
 
+    normalized["ugc_social_proof_images"] = _normalize_localized_media_list(
+        normalized.get("ugc_social_proof_images"),
+        defaults.get("ugc_social_proof_images", {}),
+    )
+
     captions = normalized.get("captions") if isinstance(normalized.get("captions"), dict) else {}
     default_captions = defaults.get("captions", {})
     for key, default_value in default_captions.items():
@@ -698,6 +730,37 @@ def _normalize_media_assets(media_assets: dict[str, Any], defaults: dict[str, An
             captions[key] = {"zh": default_value, "en": default_value}
     normalized["captions"] = captions
     return normalized
+
+
+def _normalize_localized_media_list(value: Any, defaults: dict[str, Any]) -> dict[str, list[str]]:
+    if isinstance(value, dict):
+        normalized = {
+            "zh": _coerce_media_list(value.get("zh")),
+            "en": _coerce_media_list(value.get("en")),
+        }
+    else:
+        shared = _coerce_media_list(value)
+        normalized = {"zh": shared, "en": list(shared)}
+
+    default_zh = _coerce_media_list(defaults.get("zh"))
+    default_en = _coerce_media_list(defaults.get("en")) or list(default_zh)
+    if not normalized["zh"]:
+        normalized["zh"] = default_zh
+    if not normalized["en"]:
+        normalized["en"] = default_en or list(normalized["zh"])
+    return normalized
+
+
+def _coerce_media_list(value: Any) -> list[str]:
+    if isinstance(value, str):
+        candidates = [value]
+    elif isinstance(value, list):
+        candidates = value
+    elif isinstance(value, tuple):
+        candidates = list(value)
+    else:
+        candidates = []
+    return [str(item).strip() for item in candidates if str(item).strip()]
 
 
 def _replace_chatbot_product_terms(value: Any) -> Any:

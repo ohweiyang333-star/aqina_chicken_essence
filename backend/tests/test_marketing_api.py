@@ -110,7 +110,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 6)
+        self.assertEqual(payload["conversion_optimization_version"], 7)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertIn("You are Aqina WhatsApp / Messenger private sales support", payload["system_prompt"])
         self.assertIn("1盒 = SGD47.90", payload["system_prompt"])
@@ -148,6 +148,13 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["media_assets"]["package_images"]["pack1"]["en"], "/chatbot/aqina-offer-gift-guide-en.jpg")
         self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["zh"], "/chatbot/aqina-offer-gift-guide-zh.jpg")
         self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["en"], "/chatbot/aqina-offer-gift-guide-en.jpg")
+        self.assertEqual(len(payload["media_assets"]["ugc_social_proof_images"]["zh"]), 16)
+        self.assertEqual(len(payload["media_assets"]["ugc_social_proof_images"]["en"]), 16)
+        self.assertEqual(
+            payload["media_assets"]["ugc_social_proof_images"]["zh"][0],
+            "/chatbot/ugc/customer-middle-aged-chinese-man-product.jpg",
+        )
+        self.assertIn("真实顾客使用照", payload["media_assets"]["captions"]["ugc_social_proof"]["zh"])
         self.assertNotIn("pack4", payload["media_assets"]["package_images"])
         self.assertNotIn("pack6", payload["media_assets"]["package_images"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["package_images"])
@@ -230,7 +237,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 6,
+                "conversion_optimization_version": 7,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -310,7 +317,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 6)
+        self.assertEqual(payload["conversion_optimization_version"], 7)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -2975,6 +2982,144 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("不要发送长篇感官描述", message_calls[0][1]["text"])
         self.assertNotIn("询问顾客", message_calls[0][1]["text"])
 
+    def test_t3h_follow_up_sends_customer_social_proof_image_for_warm_lead(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+
+        self.gemini_service = FakeGeminiService(
+            follow_up_result={
+                "reply_text": "我也发一张真实顾客使用照给您参考，您可以慢慢看。",
+                "next_tag": "qualified_warm",
+                "checkout_link_required": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "opt_in_request": False,
+            }
+        )
+        self.db.seed("chatbotSettings/default", get_default_chatbot_settings())
+        self._seed_contact_and_event(
+            contact_id="contact-followup-ugc",
+            conversation_id="conv-followup-ugc",
+            event_id="event-followup-ugc",
+            channel="whatsapp",
+            incoming_text="我想买给妈妈，但是还在考虑",
+            identifier_key="wa_id",
+            identifier_value="6595553333",
+        )
+        self.db.collection("marketing_contacts").document("contact-followup-ugc").set(
+            {"current_tag": "qualified_warm", "chatbot_locale": "zh"},
+            merge=True,
+        )
+        self.db.seed(
+            "marketing_follow_up_jobs/job-followup-ugc",
+            {
+                "contact_id": "contact-followup-ugc",
+                "conversation_id": "conv-followup-ugc",
+                "stage": "t3h",
+                "anchor_interaction_time": "2026-04-10T00:00:00Z",
+                "due_at": "2026-04-10T03:00:00Z",
+                "eligible_tags": ["lead_cold", "qualified_warm", "cart_hot"],
+                "status": "scheduled",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-follow-up-job",
+            json={"job_id": "job-followup-ugc"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "completed")
+        text_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(text_calls), 1)
+        self.assertEqual(len(image_calls), 1)
+        self.assertIn("真实顾客使用照", image_calls[0][1]["caption"])
+        self.assertIn("real customer usage photo", self.gemini_service.calls[0][1]["instruction"])
+
+        media_docs = [snapshot.to_dict() for snapshot in self.db.collection("meta_media_assets").stream()]
+        self.assertEqual(len(media_docs), 1)
+        self.assertTrue(media_docs[0]["source_url"].startswith("https://aqina.example.com/chatbot/ugc/customer-"))
+
+        outbound_messages = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-followup-ugc")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("direction") == "outbound"
+        ]
+        self.assertEqual(
+            [item["source"] for item in outbound_messages],
+            ["follow_up_engine", "follow_up_social_proof_media"],
+        )
+        contact = self.db.collection("marketing_contacts").document("contact-followup-ugc").get().to_dict()
+        self.assertTrue(contact["sent_media"]["follow_up_social_proof"]["sent"])
+        self.assertTrue(contact["sent_media"]["follow_up_social_proof"]["image_url"].startswith("/chatbot/ugc/customer-"))
+
+    def test_t3h_follow_up_does_not_resend_customer_social_proof_image(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+
+        self.gemini_service = FakeGeminiService(
+            follow_up_result={
+                "reply_text": "如果还不确定，我可以按妈妈的情况帮您判断。",
+                "next_tag": "lead_cold",
+                "checkout_link_required": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "opt_in_request": False,
+            }
+        )
+        self.db.seed("chatbotSettings/default", get_default_chatbot_settings())
+        self._seed_contact_and_event(
+            contact_id="contact-followup-ugc-seen",
+            conversation_id="conv-followup-ugc-seen",
+            event_id="event-followup-ugc-seen",
+            channel="whatsapp",
+            incoming_text="我晚点再看",
+            identifier_key="wa_id",
+            identifier_value="6595554444",
+        )
+        self.db.collection("marketing_contacts").document("contact-followup-ugc-seen").set(
+            {
+                "current_tag": "lead_cold",
+                "chatbot_locale": "zh",
+                "sent_media": {"follow_up_social_proof": {"sent": True}},
+            },
+            merge=True,
+        )
+        self.db.seed(
+            "marketing_follow_up_jobs/job-followup-ugc-seen",
+            {
+                "contact_id": "contact-followup-ugc-seen",
+                "conversation_id": "conv-followup-ugc-seen",
+                "stage": "t3h",
+                "anchor_interaction_time": "2026-04-10T00:00:00Z",
+                "due_at": "2026-04-10T03:00:00Z",
+                "eligible_tags": ["lead_cold", "qualified_warm", "cart_hot"],
+                "status": "scheduled",
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-follow-up-job",
+            json={"job_id": "job-followup-ugc-seen"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "completed")
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        upload_calls = [call for call in self.meta_client.calls if call[0] == "upload_whatsapp_media"]
+        self.assertEqual(len(image_calls), 0)
+        self.assertEqual(len(upload_calls), 0)
+
     def test_follow_up_job_sends_only_reply_text_from_string_repr(self) -> None:
         self.gemini_service = FakeGeminiService(
             follow_up_result="reply_text='想象一下，早晨起来撕开一包 Aqina 纯鸡精，喝起来像一碗精华鸡汤。' next_tag='lead_cold' checkout_link_required=False escalate=False escalation_reason=None opt_in_request=False"
@@ -4078,7 +4223,7 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
-                "conversion_optimization_version": 6,
+                "conversion_optimization_version": 7,
                 "handoff_message": "",
                 "packages": {
                     "pack1": {
