@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 5
+CONVERSION_OPTIMIZATION_VERSION = 6
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -40,12 +40,12 @@ LEGACY_ENERGY_PACK_NAME_ZH = "活力" + "升级装"
 
 DEFAULT_PAYNOW_QR_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa"
 LEGACY_PAYNOW_QR_IMAGE = "/paynow/bp-paynow-qr.png"
-DEFAULT_BRAND_INTRO_IMAGE_ZH = "/chatbot/aqina-brand-intro-zh.jpg"
-DEFAULT_BRAND_INTRO_IMAGE_EN = "/chatbot/aqina-brand-intro-en.jpg"
-DEFAULT_PACK1_IMAGE_ZH = "/chatbot/aqina-pack1-chatbot-zh.jpg"
-DEFAULT_PACK1_IMAGE_EN = "/chatbot/aqina-pack1-chatbot-en.jpg"
-DEFAULT_PACK2_IMAGE_ZH = "/chatbot/aqina-pack2-chatbot-zh.jpg"
-DEFAULT_PACK2_IMAGE_EN = "/chatbot/aqina-pack2-chatbot-en.jpg"
+DEFAULT_BRAND_INTRO_IMAGE_ZH = "/chatbot/aqina-purity-cycle-zh.jpg"
+DEFAULT_BRAND_INTRO_IMAGE_EN = "/chatbot/aqina-purity-cycle-en.jpg"
+DEFAULT_PACK1_IMAGE_ZH = "/chatbot/aqina-offer-gift-guide-zh.jpg"
+DEFAULT_PACK1_IMAGE_EN = "/chatbot/aqina-offer-gift-guide-en.jpg"
+DEFAULT_PACK2_IMAGE_ZH = "/chatbot/aqina-offer-gift-guide-zh.jpg"
+DEFAULT_PACK2_IMAGE_EN = "/chatbot/aqina-offer-gift-guide-en.jpg"
 
 DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
     "pm",
@@ -86,16 +86,16 @@ DEFAULT_MEDIA_ASSETS = {
     },
     "captions": {
         "brand_intro": {
-            "zh": "Aqina 农场到上架，全程可追溯。",
-            "en": "Aqina: raised on MD2 golden pineapples, traceable from farm to shelf.",
+            "zh": "一图看懂 Aqina 纯鸡精：来源、成分、工艺。",
+            "en": "Why AQINA Pure Chicken Essence: source, ingredients, and process.",
         },
         "pack1": {
-            "zh": "1盒 Aqina 纯鸡精：SGD47.90，适合第一次先试口感。",
-            "en": "1 box Aqina Pure Chicken Essence: SGD47.90, suitable for a first taste trial.",
+            "zh": "1盒/2盒选择指南：1盒 SGD47.90；2盒 SGD79.80，并可选 1包 French Poulet Cut Part 赠品。",
+            "en": "1-box / 2-box guide: 1 box SGD47.90; 2 boxes SGD79.80 with one French Poulet Cut Part gift choice.",
         },
         "pack2": {
-            "zh": "2盒 Aqina 纯鸡精：SGD79.80，等于 SGD39.90/盒，并送 French Poulet Cut Part 五选一。",
-            "en": "2 boxes Aqina Pure Chicken Essence: SGD79.80, SGD39.90 per box, with one French Poulet Cut Part gift choice.",
+            "zh": "1盒/2盒选择指南：1盒 SGD47.90；2盒 SGD79.80，并可选 1包 French Poulet Cut Part 赠品。",
+            "en": "1-box / 2-box guide: 1 box SGD47.90; 2 boxes SGD79.80 with one French Poulet Cut Part gift choice.",
         },
     },
 }

@@ -110,7 +110,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 5)
+        self.assertEqual(payload["conversion_optimization_version"], 6)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertIn("You are Aqina WhatsApp / Messenger private sales support", payload["system_prompt"])
         self.assertIn("1盒 = SGD47.90", payload["system_prompt"])
@@ -142,10 +142,12 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("哈喽 [顾客名字]", payload["crm_follow_up_rules"]["comment_hook"]["public_reply"]["instruction"])
         self.assertIn("media_assets", payload)
         self.assertIn("brand_intro", payload["media_assets"])
-        self.assertEqual(payload["media_assets"]["brand_intro_images"]["zh"], "/chatbot/aqina-brand-intro-zh.jpg")
-        self.assertEqual(payload["media_assets"]["brand_intro_images"]["en"], "/chatbot/aqina-brand-intro-en.jpg")
-        self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["zh"], "/chatbot/aqina-pack2-chatbot-zh.jpg")
-        self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["en"], "/chatbot/aqina-pack2-chatbot-en.jpg")
+        self.assertEqual(payload["media_assets"]["brand_intro_images"]["zh"], "/chatbot/aqina-purity-cycle-zh.jpg")
+        self.assertEqual(payload["media_assets"]["brand_intro_images"]["en"], "/chatbot/aqina-purity-cycle-en.jpg")
+        self.assertEqual(payload["media_assets"]["package_images"]["pack1"]["zh"], "/chatbot/aqina-offer-gift-guide-zh.jpg")
+        self.assertEqual(payload["media_assets"]["package_images"]["pack1"]["en"], "/chatbot/aqina-offer-gift-guide-en.jpg")
+        self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["zh"], "/chatbot/aqina-offer-gift-guide-zh.jpg")
+        self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["en"], "/chatbot/aqina-offer-gift-guide-en.jpg")
         self.assertNotIn("pack4", payload["media_assets"]["package_images"])
         self.assertNotIn("pack6", payload["media_assets"]["package_images"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["package_images"])
@@ -228,7 +230,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 5,
+                "conversion_optimization_version": 6,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -308,7 +310,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 5)
+        self.assertEqual(payload["conversion_optimization_version"], 6)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -1692,8 +1694,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertTrue(contact["sent_media"]["package_images"]["pack2"])
         brand_media = self.db.collection("meta_media_assets").document("brand_intro_zh_whatsapp").get().to_dict()
         pack_media = self.db.collection("meta_media_assets").document("package_pack2_zh_whatsapp").get().to_dict()
-        self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-brand-intro-zh.jpg")
-        self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-pack2-chatbot-zh.jpg")
+        self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-purity-cycle-zh.jpg")
+        self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-offer-gift-guide-zh.jpg")
 
     def test_process_inbound_message_sends_english_chatbot_images_for_english_customer(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -1745,8 +1747,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertTrue(contact["sent_media"]["package_images"]["pack2"])
         brand_media = self.db.collection("meta_media_assets").document("brand_intro_en_whatsapp").get().to_dict()
         pack_media = self.db.collection("meta_media_assets").document("package_pack2_en_whatsapp").get().to_dict()
-        self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-brand-intro-en.jpg")
-        self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-pack2-chatbot-en.jpg")
+        self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-purity-cycle-en.jpg")
+        self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-offer-gift-guide-en.jpg")
 
     def test_process_inbound_message_does_not_resend_seen_chatbot_images(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -4076,7 +4078,7 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
-                "conversion_optimization_version": 5,
+                "conversion_optimization_version": 6,
                 "handoff_message": "",
                 "packages": {
                     "pack1": {
