@@ -229,15 +229,12 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
     const marketing = getMarketingServerEventContext(marketingEventId);
 
     try {
-      const customerNameWithGift = selectedPackage.productId === 'pack2'
-        ? `${normalizedName} (赠: ${selectedGift})`
-        : normalizedName;
-
       const result = await createOrder({
-        customerName: customerNameWithGift,
+        customerName: normalizedName,
         customerPhone: normalizedPhone,
         address: normalizedAddress,
         productId: selectedPackage.productId,
+        giftChoice: selectedPackage.productId === 'pack2' ? selectedGift : undefined,
         receiptFile,
         marketing,
       });

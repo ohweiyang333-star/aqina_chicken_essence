@@ -27,6 +27,13 @@ export interface OrderLineItem {
   price: number;
 }
 
+export interface GiftChoice {
+  code?: string;
+  name?: string;
+  weight?: string;
+  displayName: string;
+}
+
 export interface PaymentVerification {
   status: 'ok' | 'warning' | 'unavailable';
   expectedAmount?: number;
@@ -53,6 +60,7 @@ export interface Order {
   subtotalAmount: number;
   shippingFee: number;
   boxCount: number;
+  giftChoice?: GiftChoice;
   total: number;
   status: OrderStatus;
   paymentStatus: OrderPaymentStatus;
@@ -124,6 +132,7 @@ export interface CreateCheckoutOrderInput {
   address: string;
   productId: string;
   receiptFile: File;
+  giftChoice?: string;
   marketing?: MarketingServerEventContext | null;
 }
 
@@ -165,6 +174,9 @@ export const createOrder = async (order: CreateCheckoutOrderInput) => {
   formData.append('customer_phone', order.customerPhone);
   formData.append('customer_address', order.address);
   formData.append('product_id', order.productId);
+  if (order.giftChoice) {
+    formData.append('gift_choice', order.giftChoice);
+  }
   formData.append('payment_receipt', order.receiptFile);
   appendMarketingEventContext(formData, order.marketing);
 
@@ -361,6 +373,12 @@ type RawRecord = Record<string, unknown>;
 function normalizeOrder(id: string, data: RawRecord): Order {
   const customer = isRecord(data.customer) ? data.customer : {};
   const items = Array.isArray(data.items) ? data.items : [];
+  const rawCustomerName = String(data.customerName || customer.name || '');
+  const legacyGift = parseLegacyGiftFromCustomerName(rawCustomerName);
+  const giftChoice =
+    normalizeGiftChoice(data.gift_choice) ??
+    normalizeGiftChoice(data.giftChoice) ??
+    legacyGift.giftChoice;
   const normalizedItems = items.map((rawItem) => {
     const item = isRecord(rawItem) ? rawItem : {};
     return {
@@ -376,13 +394,14 @@ function normalizeOrder(id: string, data: RawRecord): Order {
 
   return {
     id,
-    customerName: String(data.customerName || customer.name || ''),
+    customerName: legacyGift.customerName,
     customerPhone: String(data.customerPhone || customer.whatsapp || ''),
     address: String(data.address || customer.address || ''),
     items: normalizedItems,
     subtotalAmount,
     shippingFee,
     boxCount: Number(data.box_count ?? inferBoxCount(normalizedItems)),
+    giftChoice,
     total,
     status: normalizeStatus(data.status || data.order_status),
     paymentStatus: normalizePaymentStatus(data.payment_status),
@@ -407,6 +426,40 @@ function normalizeOrder(id: string, data: RawRecord): Order {
     lastCustomerContactMethod: stringOrUndefined(data.last_customer_contact_method),
     createdAt: data.createdAt || data.created_at,
   };
+}
+
+function parseLegacyGiftFromCustomerName(customerName: string) {
+  const trimmedName = customerName.trim();
+  const match = trimmedName.match(/^(.*?)\s*[\(（]\s*(?:赠|贈|gift)\s*[:：]\s*([^)）]+)\s*[\)）]\s*$/i);
+  if (!match) {
+    return { customerName: trimmedName, giftChoice: undefined as GiftChoice | undefined };
+  }
+
+  const cleanName = match[1]?.trim() || trimmedName;
+  const giftText = match[2]?.trim() || '';
+  return {
+    customerName: cleanName,
+    giftChoice: giftText ? { displayName: giftText } : undefined,
+  };
+}
+
+function normalizeGiftChoice(value: unknown): GiftChoice | undefined {
+  if (typeof value === 'string') {
+    const displayName = value.trim();
+    return displayName ? { displayName } : undefined;
+  }
+  if (!isRecord(value)) return undefined;
+
+  const code = stringOrUndefined(value.code);
+  const name = stringOrUndefined(value.name);
+  const weight = stringOrUndefined(value.weight);
+  const displayName =
+    stringOrUndefined(value.display_name) ??
+    stringOrUndefined(value.displayName) ??
+    [name, weight].filter(Boolean).join(' ');
+
+  if (!displayName) return undefined;
+  return { code, name, weight, displayName };
 }
 
 function normalizeOrderContactContext(data: RawRecord): OrderContactContext {

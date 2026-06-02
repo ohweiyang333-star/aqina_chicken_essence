@@ -8,6 +8,7 @@ from typing import Any
 from app.core.config import settings
 from app.models.chatbot import FollowUpTurnResult, SalesConversationTurn
 from app.services.chatbot_skill_router import ChatbotSkillRouter
+from app.services.gift_choices import allowed_gift_choice_prompt_payload
 
 
 VALID_LEAD_GOALS = {"self_care", "pregnancy", "postpartum", "gift_elder", "unknown"}
@@ -314,6 +315,7 @@ class GeminiConversationService:
         available_packages = runtime_settings.get("packages", {})
         package_codes = sorted(str(code) for code in available_packages.keys())
         packages = json.dumps(available_packages, ensure_ascii=False)
+        gift_choices = json.dumps(allowed_gift_choice_prompt_payload(), ensure_ascii=False)
         knowledge_base = json.dumps(runtime_settings.get("knowledge_base", {}), ensure_ascii=False)
         order_fields = contact.get("order_fields", {}) if isinstance(contact.get("order_fields"), dict) else {}
         identifiers = contact.get("identifiers", {}) if isinstance(contact.get("identifiers"), dict) else {}
@@ -334,6 +336,7 @@ class GeminiConversationService:
             f"Known channel phone: {known_channel_phone}\n"
             f"Allowed package codes: {json.dumps(package_codes, ensure_ascii=False)}\n"
             f"Available packages: {packages}\n"
+            f"Allowed gift choices for pack2: {gift_choices}\n"
             f"Active chatbot skills: {active_skills_json}\n"
             f"Knowledge base: {knowledge_base}\n"
             f"Recent assistant price quote: {'yes' if recently_quoted_price else 'no'}\n"
@@ -356,8 +359,10 @@ class GeminiConversationService:
             "If Channel is whatsapp and Known order fields.phone or Known channel phone is present, "
             "the known WhatsApp sender number already counts as the phone field; do not ask for the phone number again, and do not include phone in missing_order_fields.\n"
             "If Channel is not whatsapp, still collect the customer's contact phone number.\n"
+            "If selected_package_code is pack2 and the customer chooses one French Poulet gift, set gift_choice to the matching allowed gift code or object, "
+            "and also put the same value in order_fields.gift_choice. If no gift is selected, use null. Do not invent gift choices.\n"
             "Output JSON with exactly these fields: reply_text, next_tag, lead_goal, recommended_package_code, "
-            "upgrade_package_code, selected_package_code, order_fields, missing_order_fields, "
+            "upgrade_package_code, selected_package_code, gift_choice, order_fields, missing_order_fields, "
             "checkout_ready, escalate, escalation_reason, faq_topic, opt_in_granted.\n"
             "next_tag must be one of: lead_cold, qualified_warm, cart_hot, handoff_pending.\n"
             "lead_goal must be one of: self_care, pregnancy, postpartum, gift_elder, unknown.\n"

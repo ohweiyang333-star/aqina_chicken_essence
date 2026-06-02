@@ -32,6 +32,7 @@ import {
   MessageCircle,
   User as UserIcon,
   ShoppingBag,
+  Gift,
 } from "lucide-react";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 
@@ -433,6 +434,22 @@ export default function AdminOrdersPage() {
                         </p>
                       </div>
                     </div>
+
+                    {order.giftChoice && (
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-700">
+                          <Gift size={16} />
+                        </div>
+                        <div>
+                          <p className="text-[10px] uppercase tracking-widest text-charcoal/40 font-bold mb-1">
+                            Gift Choice
+                          </p>
+                          <p className="text-sm font-bold text-charcoal">
+                            {order.giftChoice.displayName}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-wrap gap-2">
@@ -494,6 +511,11 @@ export default function AdminOrdersPage() {
                       Shipping: SGD {order.shippingFee.toFixed(2)} · {order.boxCount} box
                       {order.boxCount === 1 ? "" : "es"}
                     </p>
+                    {order.giftChoice && (
+                      <p className="mt-1 text-[10px] font-semibold text-amber-700">
+                        Gift: {order.giftChoice.displayName}
+                      </p>
+                    )}
                     {order.lastCustomerContactMethod && (
                       <p className="mt-1 text-[10px] font-semibold text-green-700">
                         Contacted via {formatContactMethod(order.lastCustomerContactMethod)}
@@ -688,6 +710,9 @@ function OrderContactDrawer({
               <section className="rounded-xl border border-charcoal/10 bg-white p-4">
                 <div className="grid gap-3 sm:grid-cols-2">
                   <InfoTile label="WhatsApp" value={context?.normalizedWhatsApp || order.customerPhone || "-"} />
+                  {order.giftChoice && (
+                    <InfoTile label="Gift choice" value={order.giftChoice.displayName} tone="amber" />
+                  )}
                   <InfoTile
                     label="Backend send"
                     value={backendSendLabel(context)}
@@ -979,34 +1004,41 @@ function buildManualWhatsAppDraftHref(order: Order) {
 function buildManualOrderMessage(order: Order) {
   const customerName = order.customerName || "there";
   const orderRef = order.id ? `#${order.id.slice(-8)}` : "your order";
+  const giftLine = order.giftChoice
+    ? `Gift choice: ${order.giftChoice.displayName}.`
+    : "";
 
   if (order.expectedShipDate) {
     return [
       `Hi ${customerName}, Aqina SG here.`,
       `Your order ${orderRef} is arranged for shipment on ${formatShipDate(order.expectedShipDate)}.`,
+      giftLine,
       "We will update you again if there are any delivery changes. Thank you.",
-    ].join("\n");
+    ].filter(Boolean).join("\n");
   }
 
   if (order.status === "SHIPPED") {
     return [
       `Hi ${customerName}, Aqina SG here.`,
       `Your order ${orderRef} has been arranged for shipment.`,
+      giftLine,
       "Thank you for your patience.",
-    ].join("\n");
+    ].filter(Boolean).join("\n");
   }
 
   if (order.paymentStatus === "paid") {
     return [
       `Hi ${customerName}, Aqina SG has verified your PayNow payment for order ${orderRef}.`,
+      giftLine,
       "We are arranging your shipment and will update you once delivery is ready. Thank you.",
-    ].join("\n");
+    ].filter(Boolean).join("\n");
   }
 
   return [
     `Hi ${customerName}, Aqina SG has received your order ${orderRef} and PayNow receipt.`,
+    giftLine,
     "We are checking the payment and will update you about delivery soon. Thank you.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function buildTemplateVariables(

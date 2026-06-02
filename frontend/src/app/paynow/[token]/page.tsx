@@ -27,6 +27,7 @@ type PayNowCopy = {
   customerName: string;
   paymentMethod: string;
   orderStatus: string;
+  giftChoice: string;
   deliveryAddress: string;
   total: string;
   scanTitle: string;
@@ -53,6 +54,7 @@ const payNowCopy: Record<PayNowLocale, PayNowCopy> = {
     customerName: "Recipient",
     paymentMethod: "Payment Method",
     orderStatus: "Order Status",
+    giftChoice: "Gift Choice",
     deliveryAddress: "Delivery Address",
     total: "Total",
     scanTitle: "Scan PayNow",
@@ -78,6 +80,7 @@ const payNowCopy: Record<PayNowLocale, PayNowCopy> = {
     customerName: "收件人",
     paymentMethod: "付款方式",
     orderStatus: "订单状态",
+    giftChoice: "赠品选择",
     deliveryAddress: "收货地址",
     total: "总计",
     scanTitle: "扫描 PayNow",
@@ -159,6 +162,9 @@ export default async function PayNowCheckoutPage({ params, searchParams }: PageP
               <InfoPair label="WhatsApp" value={checkout.customer_whatsapp} />
               <InfoPair label={copy.paymentMethod} value="PayNow" />
               <InfoPair label={copy.orderStatus} value={checkout.order_status} />
+              {checkout.gift_choice && (
+                <InfoPair label={copy.giftChoice} value={displayGiftChoice(checkout.gift_choice)} />
+              )}
             </div>
 
             <div className="mt-5 rounded-2xl bg-white p-4">
@@ -262,6 +268,10 @@ function InfoPair({ label, value }: { label: string; value: string }) {
       <p className="mt-2 text-sm font-semibold leading-6 text-[#3b2c21]">{value}</p>
     </div>
   );
+}
+
+function displayGiftChoice(giftChoice: { display_name?: string; name?: string; weight?: string }) {
+  return giftChoice.display_name || [giftChoice.name, giftChoice.weight].filter(Boolean).join(" ");
 }
 
 function InfoPairDark({ label, value }: { label: string; value: string }) {

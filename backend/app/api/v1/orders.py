@@ -23,6 +23,7 @@ from app.models.order import (
 from app.services.marketing_contacts import MarketingContactService
 from app.services.meta_conversions import MetaAddToCartEventInput, MetaConversionsService
 from app.services.meta_client import get_meta_client
+from app.services.gift_choices import normalize_gift_choice
 from app.services.storage_uploads import upload_public_file_to_firebase
 from app.services.task_queue import get_task_queue_service
 from app.services.whatsapp_console import WhatsAppConsoleService
@@ -51,6 +52,12 @@ def _landing_receipt_shipping_fee_for(box_count: int) -> float:
 
 def _money(value: float) -> float:
     return round(value + 1e-8, 2)
+
+
+def _gift_choice_for_package(product_id: str, value) -> dict[str, str] | None:
+    if product_id != "pack2":
+        return None
+    return normalize_gift_choice(value)
 
 
 def _normalize_customer_phone(customer_phone: str) -> str:
@@ -228,6 +235,7 @@ async def create_landing_order_with_receipt(
     customer_address: str = Form(...),
     product_id: str = Form(..., min_length=1, max_length=100),
     payment_receipt: UploadFile = File(...),
+    gift_choice: Optional[str] = Form(default=None, max_length=250),
     marketing_consent: Optional[str] = Form(default=None, max_length=20),
     marketing_event_id: Optional[str] = Form(default=None, max_length=160),
     event_source_url: Optional[str] = Form(default=None, max_length=1000),
@@ -279,6 +287,7 @@ async def create_landing_order_with_receipt(
     box_count = int(package["box_count"])
     shipping_fee = _landing_receipt_shipping_fee_for(box_count)
     total_amount = _money(subtotal_amount + shipping_fee)
+    normalized_gift_choice = _gift_choice_for_package(product_id, gift_choice)
     now = datetime.now()
     customer = {
         "name": normalized_name,
@@ -300,6 +309,7 @@ async def create_landing_order_with_receipt(
         "subtotal_amount": subtotal_amount,
         "shipping_fee": shipping_fee,
         "box_count": box_count,
+        "gift_choice": normalized_gift_choice,
         "total_amount": total_amount,
         "payment_method": "paynow",
         "payment_status": "payment_submitted",
@@ -387,6 +397,7 @@ async def create_landing_order_with_receipt(
         subtotal_amount=subtotal_amount,
         shipping_fee=shipping_fee,
         box_count=box_count,
+        gift_choice=normalized_gift_choice,
         total_amount=total_amount,
         payment_method="paynow",
         payment_status="payment_submitted",
@@ -415,6 +426,11 @@ async def create_order(order_data: CreateOrderRequest, db: DB):
         for item in order_data.items
     )
     shipping_fee = _shipping_fee_for(box_count)
+    normalized_gift_choice = None
+    for item in order_data.items:
+        normalized_gift_choice = _gift_choice_for_package(item.product_id, order_data.gift_choice)
+        if normalized_gift_choice:
+            break
     has_marketing_attribution = bool(
         order_data.marketing_contact_id or order_data.conversation_id or order_data.channel
     )
@@ -431,6 +447,7 @@ async def create_order(order_data: CreateOrderRequest, db: DB):
         "subtotal_amount": subtotal_amount,
         "shipping_fee": shipping_fee,
         "box_count": box_count,
+        "gift_choice": normalized_gift_choice,
         "total_amount": _money(subtotal_amount + shipping_fee),
         "payment_method": order_data.payment_method,
         "payment_status": "pending",

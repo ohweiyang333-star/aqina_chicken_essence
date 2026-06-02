@@ -565,6 +565,7 @@ async def get_marketing_checkout(token: str, db: DB):
         "paynow": runtime_settings.get("payment", {}).get("paynow", {}),
         "checkout_url": session.get("checkout_url", ""),
         "package_code": session.get("package_code"),
+        "gift_choice": order.get("gift_choice") or session.get("gift_choice"),
     }
 
 

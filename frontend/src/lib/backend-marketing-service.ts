@@ -46,6 +46,12 @@ export interface MarketingCheckoutPayload {
   };
   checkout_url: string;
   package_code?: string | null;
+  gift_choice?: {
+    code?: string;
+    name?: string;
+    weight?: string;
+    display_name?: string;
+  } | null;
 }
 
 export interface FacebookCommentEvent {

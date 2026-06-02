@@ -158,6 +158,7 @@ class OrderFields(BaseModel):
     name: str | None = None
     phone: str | None = None
     address: str | None = None
+    gift_choice: Any | None = None
 
 
 class SalesConversationTurn(BaseModel):
@@ -169,6 +170,7 @@ class SalesConversationTurn(BaseModel):
     recommended_package_code: str | None = None
     upgrade_package_code: str | None = None
     selected_package_code: str | None = None
+    gift_choice: Any | None = None
     order_fields: OrderFields = Field(default_factory=OrderFields)
     missing_order_fields: list[str] = Field(default_factory=list)
     checkout_ready: bool = False
@@ -223,3 +225,4 @@ class CheckoutSessionResponse(BaseModel):
     paynow: PayNowSettings
     checkout_url: str
     package_code: str | None = None
+    gift_choice: dict[str, Any] | None = None

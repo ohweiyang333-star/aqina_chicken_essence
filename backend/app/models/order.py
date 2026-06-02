@@ -24,6 +24,15 @@ class CustomerInfo(BaseModel):
     address: str = Field(..., min_length=10, max_length=500)
 
 
+class GiftChoice(BaseModel):
+    """Free French Poulet gift selected for the 2-box offer."""
+
+    code: str = Field(..., min_length=1, max_length=100)
+    name: str = Field(..., min_length=1, max_length=200)
+    weight: str = Field(..., min_length=1, max_length=50)
+    display_name: str = Field(..., min_length=1, max_length=250)
+
+
 class CreateOrderRequest(BaseModel):
     """Request model for creating a new order."""
 
@@ -31,6 +40,7 @@ class CreateOrderRequest(BaseModel):
     items: list[OrderItem] = Field(..., min_length=1, max_length=20)
     total_amount: float = Field(..., ge=0, description="Total order amount in SGD")
     payment_method: Literal["paynow"] = "paynow"
+    gift_choice: Optional[Any] = None
     notes: Optional[str] = Field(None, max_length=1000)
     source: Optional[str] = Field(default="web_checkout", max_length=100)
     marketing_contact_id: Optional[str] = Field(default=None, max_length=200)
@@ -53,6 +63,7 @@ class OrderResponse(BaseModel):
     subtotal_amount: Optional[float] = None
     shipping_fee: float = 0
     box_count: int = 0
+    gift_choice: Optional[GiftChoice] = None
     total_amount: float
     payment_method: str
     payment_status: Literal["pending", "payment_submitted", "paid", "failed", "refunded"]

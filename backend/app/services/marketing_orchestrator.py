@@ -14,6 +14,7 @@ from app.services.meta_media_assets import MetaMediaAssetService
 from app.services.chatbot_settings import ChatbotSettingsService, DEFAULT_FACEBOOK_COMMENT_KEYWORDS
 from app.services.chatbot_skill_router import is_cart_hot_checkout_intent, should_send_paynow_qr_for_checkout_intent
 from app.services.follow_up import FollowUpEngine
+from app.services.gift_choices import normalize_gift_choice
 from app.services.marketing_contacts import MarketingContactService
 from app.services.marketing_utils import ensure_datetime, excerpt, payload_hash, stable_id, utcnow
 from app.services.storage_uploads import upload_public_file_to_firebase
@@ -734,6 +735,16 @@ class MarketingAutomationOrchestrator:
             contact=contact,
             order_fields=merged_order_fields,
         )
+        selected_package_code = turn.selected_package_code or contact.get("selected_package_code")
+        detected_gift_choice = self._resolve_gift_choice(
+            selected_package_code=selected_package_code,
+            incoming_text=incoming_text,
+            turn=turn,
+            contact=contact,
+            order_fields=merged_order_fields,
+        )
+        if detected_gift_choice:
+            merged_order_fields["gift_choice"] = detected_gift_choice
         missing_order_fields = self._effective_missing_order_fields(
             turn.missing_order_fields,
             order_fields=merged_order_fields,
@@ -757,6 +768,8 @@ class MarketingAutomationOrchestrator:
             "future_contact_opt_in": bool(turn.opt_in_granted),
             "chatbot_locale": customer_locale,
         }
+        if detected_gift_choice:
+            update_fields["gift_choice"] = detected_gift_choice
         if hot_checkout_intent or checkout_ready:
             update_fields["handoff_recommended"] = True
             update_fields["handoff_reason"] = "high_intent_checkout"
@@ -932,6 +945,8 @@ class MarketingAutomationOrchestrator:
         if not package:
             raise KeyError(f"Unknown package code: {selected_package_code}")
 
+        now = utcnow()
+        gift_choice = normalize_gift_choice(order_fields.get("gift_choice")) if selected_package_code == "pack2" else None
         contact = self.contact_service.get_contact(contact_id)
         existing_id = contact.get("checkout_session_id")
         if existing_id:
@@ -939,9 +954,14 @@ class MarketingAutomationOrchestrator:
             if existing.exists:
                 session = existing.to_dict()
                 session["session_id"] = existing.id
+                if gift_choice:
+                    gift_update = {"gift_choice": gift_choice, "updated_at": now}
+                    self.db.collection("marketing_checkout_sessions").document(existing_id).set(gift_update, merge=True)
+                    if session.get("order_id"):
+                        self.db.collection("orders").document(session["order_id"]).set(gift_update, merge=True)
+                    session["gift_choice"] = gift_choice
                 return session
 
-        now = utcnow()
         order_id = stable_id("order", contact_id, selected_package_code, now.isoformat())
         subtotal_amount = self._money(float(package["price_sgd"]))
         box_count = self._package_box_count(package)
@@ -967,6 +987,7 @@ class MarketingAutomationOrchestrator:
             "subtotal_amount": subtotal_amount,
             "shipping_fee": shipping_fee,
             "box_count": box_count,
+            "gift_choice": gift_choice,
             "total_amount": total_amount,
             "payment_method": "paynow",
             "payment_status": "pending",
@@ -1000,6 +1021,7 @@ class MarketingAutomationOrchestrator:
             "subtotal_amount": subtotal_amount,
             "shipping_fee": shipping_fee,
             "box_count": box_count,
+            "gift_choice": gift_choice,
             "total_amount": total_amount,
             "created_at": now,
             "updated_at": now,
@@ -1811,6 +1833,32 @@ class MarketingAutomationOrchestrator:
             if value:
                 merged[key] = value
         return merged
+
+    @staticmethod
+    def _resolve_gift_choice(
+        *,
+        selected_package_code: str | None,
+        incoming_text: str,
+        turn: SalesConversationTurn,
+        contact: dict[str, Any],
+        order_fields: dict[str, Any],
+    ) -> dict[str, str] | None:
+        if selected_package_code != "pack2":
+            return None
+
+        contact_order_fields = contact.get("order_fields") if isinstance(contact.get("order_fields"), dict) else {}
+        candidates = [
+            getattr(turn, "gift_choice", None),
+            order_fields.get("gift_choice"),
+            contact.get("gift_choice"),
+            contact_order_fields.get("gift_choice"),
+            incoming_text,
+        ]
+        for candidate in candidates:
+            gift_choice = normalize_gift_choice(candidate)
+            if gift_choice:
+                return gift_choice
+        return None
 
     @classmethod
     def _contact_with_channel_order_defaults(

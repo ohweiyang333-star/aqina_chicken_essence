@@ -1265,10 +1265,12 @@ class MarketingApiTests(unittest.TestCase):
                 "recommended_package_code": "pack2",
                 "upgrade_package_code": None,
                 "selected_package_code": "pack2",
+                "gift_choice": "whole-leg",
                 "order_fields": {
                     "name": "Alice Tan",
                     "phone": "6591112222",
                     "address": "1 Orchard Road, Singapore 238823",
+                    "gift_choice": "French Poulet Whole Leg 400g",
                 },
                 "missing_order_fields": [],
                 "checkout_ready": True,
@@ -1310,17 +1312,21 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["shipping_fee"], 0.0)
         self.assertEqual(order["total_amount"], 79.8)
         self.assertEqual(order["box_count"], 2)
+        self.assertEqual(order["gift_choice"]["code"], "whole-leg")
+        self.assertEqual(order["gift_choice"]["display_name"], "French Poulet Whole Leg 400g")
 
         sessions = self.db.collection("marketing_checkout_sessions").stream()
         self.assertEqual(len(sessions), 1)
         session = sessions[0].to_dict()
         self.assertEqual(session["order_id"], orders[0].id)
         self.assertIn("https://aqina.example.com/paynow/", session["checkout_url"])
+        self.assertEqual(session["gift_choice"]["code"], "whole-leg")
 
         contact = self.db.collection("marketing_contacts").document("contact-1").get().to_dict()
         self.assertEqual(contact["current_tag"], "cart_hot")
         self.assertEqual(contact["selected_package_code"], "pack2")
         self.assertEqual(contact["order_fields"]["name"], "Alice Tan")
+        self.assertEqual(contact["order_fields"]["gift_choice"]["display_name"], "French Poulet Whole Leg 400g")
 
         message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
         self.assertEqual(len(message_calls), 1)
@@ -2028,6 +2034,34 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["shipping_fee"], 0.0)
         self.assertEqual(payload["total_amount"], 79.8)
         self.assertEqual(payload["box_count"], 2)
+
+    def test_landing_order_with_receipt_stores_two_box_gift_choice(self) -> None:
+        client = self._build_client()
+
+        with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
+            response = client.post(
+                "/api/v1/orders/with-receipt",
+                data={
+                    "customer_name": "Kelvin Tan",
+                    "customer_phone": "6591234567",
+                    "customer_address": "1 Orchard Road, Singapore 238823",
+                    "product_id": "pack2",
+                    "gift_choice": "French Poulet 3 Joint Wing 500g",
+                },
+                files={"payment_receipt": ("receipt.webp", b"fake-image", "image/webp")},
+            )
+
+        self.assertEqual(response.status_code, 201)
+        payload = response.json()
+        self.assertEqual(payload["customer"]["name"], "Kelvin Tan")
+        self.assertNotIn("赠", payload["customer"]["name"])
+        self.assertEqual(payload["gift_choice"]["code"], "joint-wing")
+        self.assertEqual(payload["gift_choice"]["display_name"], "French Poulet 3 Joint Wing 500g")
+
+        order = self.db.collection("orders").stream()[0].to_dict()
+        self.assertEqual(order["customer"]["name"], "Kelvin Tan")
+        self.assertEqual(order["gift_choice"]["code"], "joint-wing")
+        self.assertEqual(order["gift_choice"]["display_name"], "French Poulet 3 Joint Wing 500g")
 
     def test_landing_order_with_receipt_rejects_retired_offer_packages(self) -> None:
         client = self._build_client()
