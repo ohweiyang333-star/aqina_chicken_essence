@@ -189,7 +189,7 @@
       "tagline": "为现代家庭与日常补养节奏而打造的高级纯鸡精。",
       "nav": {
         "story": "吸收故事",
-        "reviews": "场景参考",
+        "reviews": "信任证明",
         "products": "套餐选择"
       },
       "copyright": "© 2026 Aqina Singapore. 版权所有。",
@@ -881,54 +881,112 @@
         "retailNote": "渠道标识作为信任线索；实际售卖与库存请以门店、平台或官方客服回复为准。"
       },
       "ugc": {
-        "eyebrow": "生活场景参考",
-        "title": "先看自己像哪一种使用情境。",
-        "body": "以下内容用于展示常见购买与饮用场景，不作为真实顾客见证；真实反馈需由客服后续收集与授权。",
+        "eyebrow": "Product proof + real-ready reviews",
+        "title": "先看真实产品证明，再看评价。",
+        "body": "这一段先用真实产品图、赠品选择、PayNow / WhatsApp 成交流程、来源、工艺与认证建立信任；真实顾客评价会在收集并授权后导入。",
         "items": [
           {
-            "name": "Alicia",
-            "context": "早晨厨房",
-            "quote": "我会在准备早餐时顺便热一袋，味道像清汤，比较容易放进每天的节奏。",
-            "image": "/ugc/morning-kitchen.jpg",
-            "alt": "早晨厨房里的 Aqina 饮用场景"
+            "name": "真实产品图",
+            "context": "Product proof",
+            "quote": "以真实 Aqina 纯鸡精包装、独立 sachet 和金色汤感作为主要 proof，让顾客先看清楚自己买到的产品。",
+            "image": "/v2/aqina-v2-hero-product-real.webp",
+            "alt": "Aqina 纯鸡精真实包装与产品图"
           },
           {
-            "name": "Jia En",
-            "context": "复习桌边",
-            "quote": "复习期最重要是简单，不用准备很多东西，热一下就能喝。",
-            "image": "/ugc/home-study.jpg",
-            "alt": "学生复习时的日常饮用场景"
+            "name": "French Poulet 赠品选择",
+            "context": "Gift proof",
+            "quote": "两盒配套可由客服确认 French Poulet Cut Part 赠品选择，包括 Wing、Minced、Boneless Breast、Whole Leg 或 Half Chicken Cut 4 Pieces。",
+            "images": [
+              {
+                "src": "/french-poulet-gift/minced.png",
+                "alt": "French Poulet Minced 赠品实图"
+              },
+              {
+                "src": "/french-poulet-gift/boneless-breast.png",
+                "alt": "French Poulet Boneless Breast 赠品实图"
+              },
+              {
+                "src": "/french-poulet-gift/chicken-wing.jpg",
+                "alt": "French Poulet Chicken Wing 赠品实图"
+              },
+              {
+                "src": "/french-poulet-gift/whole-leg.jpg",
+                "alt": "French Poulet Whole Leg 赠品实图"
+              },
+              {
+                "src": "/french-poulet-gift/half-chicken-4-cut.jpg",
+                "alt": "French Poulet Half Chicken 4 Cut 赠品实图"
+              }
+            ]
           },
           {
-            "name": "Emma",
-            "context": "运动后",
-            "quote": "课间时间很短，独立小袋对我来说方便，口感也不会太厚重。",
-            "image": "/ugc/yoga-studio.jpg",
-            "alt": "运动后温热补给场景"
+            "name": "PayNow / WhatsApp 成交流程",
+            "context": "Order path",
+            "quote": "页面选择配套后完成 PayNow，上传付款截图；不确定配套、赠品或配送时，先用 WhatsApp / Messenger 让客服确认。",
+            "image": "/paynow/aqina-paynow-qr-designed.png",
+            "alt": "Aqina PayNow 与 WhatsApp 下单流程"
           },
           {
-            "name": "陈先生",
-            "context": "客厅日常",
-            "quote": "家里常备几盒，想喝时加热一包，不需要重新熬汤。",
-            "image": "/ugc/sg-middle-aged-chinese-man.webp",
-            "alt": "家庭客厅中的日常纯鸡精场景"
+            "name": "Aqina farm / MD2 黄梨酵素鸡",
+            "context": "Source proof",
+            "quote": "用 Aqina farm、MD2 黄梨酵素鸡 / French Poulet 和来源可追溯来解释价值，不把 Aqina 纯鸡精讲成普通瓶装鸡精。",
+            "image": "/v2/aqina-v2-pineapple-farm 2.webp",
+            "alt": "Aqina farm 与 MD2 黄梨酵素鸡来源"
           },
           {
-            "name": "Riya",
-            "context": "在家办公",
-            "quote": "会议之间热一袋就好，对忙碌日程来说比较好安排。",
-            "image": "/ugc/sg-young-indian-home-woman.webp",
-            "alt": "在家办公期间饮用 Aqina"
+            "name": "7天慢炼 / 无添加",
+            "context": "Craft proof",
+            "quote": "强调 7天慢炼、双重蒸煮、pure chicken essence 与无添加，呈现清透金汤，不走厚重、油腻或低价补品路线。",
+            "image": "/v2/aqina-v2-golden-essence.webp",
+            "alt": "Aqina 纯鸡精清透金汤与工艺"
           },
           {
-            "name": "Aishah",
-            "context": "家庭餐桌",
-            "quote": "口味温和，早上准备给家人时不会太麻烦。",
-            "image": "/ugc/sg-middle-aged-malay-woman.webp",
-            "alt": "家庭餐桌上的温热饮用场景"
+            "name": "Halal / HACCP / GMP",
+            "context": "Trust proof",
+            "quote": "把 Halal、HACCP、GMP、JPH 等信任标识作为购买前可检查的依据，帮助新加坡家庭更安心地下单。",
+            "image": "/v2/aqina-v2-family-care.webp",
+            "alt": "Aqina 家庭照护与 Halal 信任证明"
           }
         ],
-        "disclaimer": "场景内容不代表医疗建议、效果承诺或已验证顾客见证；如有特殊健康状况，请先咨询专业人士。"
+        "reviewTitle": "真实评价待导入",
+        "reviewBody": "现在先预留真实评价槽位。等客服从 WhatsApp / Messenger / 订单售后里收集到授权反馈后，再导入真实文字、截图或买家秀。",
+        "reviewSlots": [
+          {
+            "label": "Review slot 01",
+            "title": "口感反馈",
+            "body": "适合放第一次试喝后的真实口感评价，例如清爽度、是否腥、是否容易入口。"
+          },
+          {
+            "label": "Review slot 02",
+            "title": "下单与配送反馈",
+            "body": "适合放 PayNow、WhatsApp 确认、配送速度、客服跟进等真实购买体验。"
+          },
+          {
+            "label": "Review slot 03",
+            "title": "买家秀 / 家庭场景",
+            "body": "适合放授权后的产品开箱、温热饮用、送礼或家庭日常照片。"
+          }
+        ],
+        "qaTitle": "购买前 Q&A",
+        "questions": [
+          {
+            "question": "French Poulet 赠品现在可以看实图吗？",
+            "answer": "可以，页面已经放入 5 款 French Poulet Cut Part 赠品实图。下单前仍建议 WhatsApp 让客服确认当期库存与可选部位。"
+          },
+          {
+            "question": "为什么先展示 product proof，不直接放评价？",
+            "answer": "新店上线初期，真实评价还需要收集与授权。先展示真实产品、来源、工艺、认证和付款路径，比放未授权评价更稳。"
+          },
+          {
+            "question": "PayNow 付款后会自动确认吗？",
+            "answer": "不会自动确认。顾客完成 PayNow 后上传付款截图，由团队人工核对后再安排订单。"
+          },
+          {
+            "question": "Aqina 纯鸡精和普通瓶装鸡精怎么比？",
+            "answer": "Aqina 走的是 pure chicken essence / premium sachet route，重点是 MD2 黄梨酵素鸡、7天慢炼、无添加和清透汤感，不是普通瓶装鸡精的低价比较。"
+          }
+        ],
+        "disclaimer": "真实评价待导入：当前区块展示可验证产品证明与购买 Q&A，不代表医疗建议、效果承诺或已验证顾客见证。"
       },
       "pricingBand": {
         "ariaLabel": "Aqina 产品配套选择"

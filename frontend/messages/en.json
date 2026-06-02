@@ -189,7 +189,7 @@
       "tagline": "Premium chicken essence designed for modern families and daily nourishment routines.",
       "nav": {
         "story": "Absorption Story",
-        "reviews": "Real Reviews",
+        "reviews": "Product Proof",
         "products": "Plans"
       },
       "copyright": "© 2026 Aqina Singapore. All rights reserved.",
@@ -881,54 +881,112 @@
         "retailNote": "Existing retail logos are retained as trust cues. Actual selling points and stock should follow stores, platforms, or official support replies."
       },
       "ugc": {
-        "eyebrow": "Usage Scene References",
-        "title": "See which buying situation feels closest to yours.",
-        "body": "These examples show common purchase and drinking scenarios. They are not verified customer testimonials; real feedback should be collected and approved after purchase.",
+        "eyebrow": "Product proof + real-ready reviews",
+        "title": "Check the product proof before the reviews.",
+        "body": "This section builds trust with real product visuals, gift selection, the PayNow / WhatsApp order path, source, craft, and certification signals. Customer reviews can be imported after collection and approval.",
         "items": [
           {
-            "name": "Alicia",
-            "context": "Morning kitchen",
-            "quote": "I warm one pouch while preparing breakfast. It tastes like light soup, so it is easy to fit into my day.",
-            "image": "/ugc/morning-kitchen.jpg",
-            "alt": "Aqina morning kitchen drinking scene"
+            "name": "Real product visual",
+            "context": "Product proof",
+            "quote": "Use the real Aqina chicken essence box, individual sachets, and golden broth as the main proof so buyers can see what they are ordering.",
+            "image": "/v2/aqina-v2-hero-product-real.webp",
+            "alt": "Real Aqina chicken essence product pack"
           },
           {
-            "name": "Jia En",
-            "context": "Study desk",
-            "quote": "During revision weeks, simple matters. I just warm it and drink without preparing much.",
-            "image": "/ugc/home-study.jpg",
-            "alt": "Student study desk drinking scene"
+            "name": "French Poulet gift selection",
+            "context": "Gift proof",
+            "quote": "Support can confirm the French Poulet Cut Part gift for the two-box pack, including Wing, Minced, Boneless Breast, Whole Leg, or Half Chicken Cut 4 Pieces.",
+            "images": [
+              {
+                "src": "/french-poulet-gift/minced.png",
+                "alt": "Real French Poulet Minced gift photo"
+              },
+              {
+                "src": "/french-poulet-gift/boneless-breast.png",
+                "alt": "Real French Poulet Boneless Breast gift photo"
+              },
+              {
+                "src": "/french-poulet-gift/chicken-wing.jpg",
+                "alt": "Real French Poulet Chicken Wing gift photo"
+              },
+              {
+                "src": "/french-poulet-gift/whole-leg.jpg",
+                "alt": "Real French Poulet Whole Leg gift photo"
+              },
+              {
+                "src": "/french-poulet-gift/half-chicken-4-cut.jpg",
+                "alt": "Real French Poulet Half Chicken 4 Cut gift photo"
+              }
+            ]
           },
           {
-            "name": "Emma",
-            "context": "After class",
-            "quote": "Breaks are short, so the single pouch is convenient. The taste is not too heavy for me.",
-            "image": "/ugc/yoga-studio.jpg",
-            "alt": "Warm nourishment after movement"
+            "name": "PayNow / WhatsApp order path",
+            "context": "Order path",
+            "quote": "Choose a pack, complete PayNow, and upload the payment screenshot. If unsure about pack, gift, or delivery, confirm first through WhatsApp or Messenger.",
+            "image": "/paynow/aqina-paynow-qr-designed.png",
+            "alt": "Aqina PayNow and WhatsApp ordering path"
           },
           {
-            "name": "Mr. Tan",
-            "context": "Living room routine",
-            "quote": "We keep a few boxes at home. When someone wants a warm drink, there is no need to boil soup again.",
-            "image": "/ugc/sg-middle-aged-chinese-man.webp",
-            "alt": "Living room daily chicken essence scene"
+            "name": "Aqina farm / MD2 pineapple-fed chicken",
+            "context": "Source proof",
+            "quote": "Use Aqina farm, MD2 pineapple-fed chicken / French Poulet, and traceable sourcing to explain the value instead of comparing it to ordinary bottled chicken essence.",
+            "image": "/v2/aqina-v2-pineapple-farm 2.webp",
+            "alt": "Aqina farm and MD2 pineapple-fed chicken source"
           },
           {
-            "name": "Riya",
-            "context": "Work from home",
-            "quote": "I can warm one between calls. It fits better into a busy schedule.",
-            "image": "/ugc/sg-young-indian-home-woman.webp",
-            "alt": "Work from home Aqina drinking scene"
+            "name": "7-day slow extraction / no additives",
+            "context": "Craft proof",
+            "quote": "Highlight 7-day slow extraction, double boiling, pure chicken essence, and no additives with a clear golden broth rather than a heavy or low-price supplement cue.",
+            "image": "/v2/aqina-v2-golden-essence.webp",
+            "alt": "Aqina clear golden chicken essence craft"
           },
           {
-            "name": "Aishah",
-            "context": "Family table",
-            "quote": "The taste is gentle, and preparing it for the family in the morning does not take much time.",
-            "image": "/ugc/sg-middle-aged-malay-woman.webp",
-            "alt": "Family table warm drink scene"
+            "name": "Halal / HACCP / GMP",
+            "context": "Trust proof",
+            "quote": "Present Halal, HACCP, GMP, and JPH signals as checkable buying confidence for Singapore households before they order.",
+            "image": "/v2/aqina-v2-family-care.webp",
+            "alt": "Aqina family care and Halal trust proof"
           }
         ],
-        "disclaimer": "Scene content is not medical advice, a promise of results, or verified customer testimony. Please consult a qualified professional for specific health concerns."
+        "reviewTitle": "Real reviews pending import",
+        "reviewBody": "The page now keeps real-ready review slots. After support collects approved feedback from WhatsApp, Messenger, or post-purchase follow-up, real text, screenshots, or customer photos can be imported here.",
+        "reviewSlots": [
+          {
+            "label": "Review slot 01",
+            "title": "Taste feedback",
+            "body": "For verified first-drink feedback such as lightness, aroma, and whether the taste is easy to accept."
+          },
+          {
+            "label": "Review slot 02",
+            "title": "Order and delivery feedback",
+            "body": "For real buying experience around PayNow, WhatsApp confirmation, delivery speed, and support follow-up."
+          },
+          {
+            "label": "Review slot 03",
+            "title": "Customer photo / family use",
+            "body": "For approved unboxing, warm drinking, gifting, or family-use photos."
+          }
+        ],
+        "qaTitle": "Buying Q&A",
+        "questions": [
+          {
+            "question": "Can I see the real French Poulet gift photo now?",
+            "answer": "Yes. The page now includes real photos for the five French Poulet Cut Part gift options. Before ordering, WhatsApp support should still confirm current stock and available options."
+          },
+          {
+            "question": "Why show product proof before reviews?",
+            "answer": "For an early Singapore launch, real reviews still need collection and approval. Showing product, source, craft, certification, and payment path is more reliable than unapproved testimonials."
+          },
+          {
+            "question": "Is PayNow confirmed automatically after payment?",
+            "answer": "No. Customers complete PayNow, upload the payment screenshot, and the team verifies manually before arranging the order."
+          },
+          {
+            "question": "How is Aqina different from ordinary bottled chicken essence?",
+            "answer": "Aqina follows a pure chicken essence / premium sachet route, with MD2 pineapple-fed chicken, 7-day slow extraction, no additives, and a clean golden broth profile."
+          }
+        ],
+        "disclaimer": "Real reviews pending import: this block currently shows checkable product proof and buying Q&A, not medical advice, result promises, or verified customer testimony."
       },
       "pricingBand": {
         "ariaLabel": "Aqina product plan selection"

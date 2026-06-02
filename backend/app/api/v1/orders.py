@@ -36,7 +36,7 @@ LANDING_PACKAGES = {
 }
 ALLOWED_RECEIPT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_RECEIPT_BYTES = 8 * 1024 * 1024
-SINGLE_BOX_SHIPPING_FEE = 8.0
+SINGLE_BOX_SHIPPING_FEE = 0.0
 
 
 def _shipping_fee_for(box_count: int) -> float:

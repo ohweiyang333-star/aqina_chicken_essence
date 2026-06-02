@@ -1,0 +1,42 @@
+<h2>Aqina full offer reset: architecture and data flow</h2>
+<p class="subtitle">Selected direction: new MarketplaceOfferPage replaces /en and /zh. WhatsApp-first is primary; page PayNow receipt checkout remains as a verified secondary path.</p>
+
+<div class="mockup">
+  <div class="mockup-header">Active customer path after reset</div>
+  <div class="mockup-body">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch;">
+      <div class="placeholder"><strong>1. Ads / direct traffic</strong><br>/en, /zh, default landing</div>
+      <div class="placeholder"><strong>2. MarketplaceOfferPage</strong><br>gallery, 1-box / 2-box, gift selector, FAQ</div>
+      <div class="placeholder"><strong>3A. Primary CTA</strong><br>WhatsApp prefill with selected box + gift intent</div>
+      <div class="placeholder"><strong>4A. Chat/admin flow</strong><br>chatbot rules + inbox + PayNow QR/session</div>
+      <div class="placeholder"><strong>5A. Admin outcome</strong><br>cart_hot / order / payment review</div>
+    </div>
+    <div style="height:24px;"></div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:stretch;">
+      <div class="placeholder"><strong>Fallback</strong><br>User wants direct order</div>
+      <div class="placeholder"><strong>PayNow modal</strong><br>pack1 SGD47.90 / pack2 SGD79.80</div>
+      <div class="placeholder"><strong>/orders/with-receipt</strong><br>creates order + payment + customer</div>
+      <div class="placeholder"><strong>Meta CAPI</strong><br>AddToCart after receipt submit</div>
+      <div class="placeholder"><strong>Admin orders</strong><br>manual receipt verification</div>
+    </div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Single source of truth</div>
+    <div class="mockup-body">
+      <div class="placeholder">Offer constants: pack1 / pack2 only</div>
+      <div class="placeholder">Gift options: five French Poulet choices</div>
+      <div class="placeholder">No pack4 / pack6 / SGD75 / free-delivery selling point</div>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">Local verification boundary</div>
+    <div class="mockup-body">
+      <div class="placeholder">Unit/integration tests for frontend copy + backend packages</div>
+      <div class="placeholder">Local API smoke with fake receipt and fake DB where available</div>
+      <div class="placeholder">No live WhatsApp/Messenger, no production customer writes, no deploy</div>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,5 @@
-import OfferResetLandingPage from '@/components/pages/OfferResetLandingPage';
+import MarketplaceOfferPage from '@/components/pages/MarketplaceOfferPage';
 
 export default function HomePage() {
-  return <OfferResetLandingPage />;
+  return <MarketplaceOfferPage />;
 }

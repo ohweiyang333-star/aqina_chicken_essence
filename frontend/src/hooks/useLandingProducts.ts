@@ -23,7 +23,7 @@ export default function useLandingProducts({
       {
         id: 'pack1',
         name: t('products.items.pack1'),
-        price: 39.9,
+        price: 47.9,
         image: IMAGES.products.box1,
         label: t('products.packSizes.pack1'),
         badge: t('products.badges.pack1'),
@@ -31,27 +31,11 @@ export default function useLandingProducts({
       {
         id: 'pack2',
         name: t('products.items.pack2'),
-        price: 75.0,
+        price: 79.8,
         image: IMAGES.products.box2,
         label: t('products.packSizes.pack2'),
         badge: t('products.badges.pack2'),
         popular: true,
-      },
-      {
-        id: 'pack4',
-        name: t('products.items.pack4'),
-        price: 149.0,
-        image: IMAGES.products.box4,
-        label: t('products.packSizes.pack4'),
-        badge: t('products.badges.pack4'),
-      },
-      {
-        id: 'pack6',
-        name: t('products.items.pack6'),
-        price: 219.0,
-        image: IMAGES.products.box6,
-        label: t('products.packSizes.pack6'),
-        badge: t('products.badges.pack6'),
       },
     ],
     [t],
@@ -120,7 +104,7 @@ export default function useLandingProducts({
           });
 
           setProducts(
-            ['pack1', 'pack2', 'pack4', 'pack6']
+            ['pack1', 'pack2']
               .map((packKey) => productsByPack.get(packKey))
               .filter((product): product is DisplayProduct => Boolean(product)),
           );

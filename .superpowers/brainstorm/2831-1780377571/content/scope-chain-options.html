@@ -1,0 +1,71 @@
+<h2>Aqina Offer Reset: choose the build scope</h2>
+<p class="subtitle">The core decision is which sales/API chain should be true after this project. Pick the option that matches the business goal.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a-whatsapp-first" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">A. WhatsApp-first marketplace page</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Ad traffic -> Product page</div>
+          <div class="placeholder">Marketplace-style product block: gallery, 1 box, 2 boxes, gift selector</div>
+          <div style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+            <button class="mock-button">Ask about 1 box</button>
+            <button class="mock-button">Ask about 2 boxes + gift</button>
+          </div>
+          <div class="placeholder">WhatsApp prefill -> human/chatbot confirms order -> PayNow link/session</div>
+          <div class="placeholder">Admin inbox + chatbot runtime already aligned to new offer</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. WhatsApp-first</h3>
+      <p>Fastest and commercially safest. Page explains the offer, every CTA opens WhatsApp/Messenger, and payment/order stays inside the existing chat/admin flow. Less risk of hardcoding checkout mistakes.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b-page-checkout" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">B. Page checkout + receipt upload</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Ad traffic -> Product page</div>
+          <div class="placeholder">Variant selector: pack1 SGD47.90, pack2 SGD79.80, gift only on pack2</div>
+          <div style="display:flex;gap:10px;align-items:center;margin:12px 0;">
+            <button class="mock-button">Open PayNow checkout</button>
+          </div>
+          <div class="placeholder">/api/v1/orders/with-receipt creates order + payment + customer + CAPI event</div>
+          <div class="placeholder">Admin orders verifies receipt manually</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Page checkout</h3>
+      <p>More complete ecommerce path, but it requires updating frontend products, checkout modal, order API package source, shipping math, tests, and browser QA. Stronger API verification needed.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c-full-reset" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">C. Full offer reset chain</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Ad -> Page -> WhatsApp/Messenger -> Chatbot -> Checkout -> PayNow -> Admin</div>
+          <div class="placeholder">New marketplace page replaces live default entry</div>
+          <div class="placeholder">Frontend products, static copy, chatbot media, backend order packages all share 1-box / 2-box truth</div>
+          <div class="placeholder">All old 4/6-box and free-delivery language removed from active customer path</div>
+          <div class="placeholder">Local tests + desktop/mobile browser + selected API smoke checks</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Full reset</h3>
+      <p>Best long-term consistency. Highest scope: landing page, checkout/order API, WhatsApp links, chatbot settings/media references, active routes, tests, and release verification.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Known current mismatch</h3>
+  <p>The chatbot runtime has moved to the new offer, but active landing/order code still contains old pack4/pack6, SGD75/149/219, and free-delivery logic. If the project goal is a real offer reset, the API chain needs to include order/checkout, not just page copy.</p>
+</div>

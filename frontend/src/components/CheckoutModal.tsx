@@ -93,6 +93,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
     customerPhone: '',
     address: '',
   });
+  const [selectedGift, setSelectedGift] = useState('French Poulet Minced 400g');
 
   if (!isOpen || !product) return null;
 
@@ -228,8 +229,12 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
     const marketing = getMarketingServerEventContext(marketingEventId);
 
     try {
+      const customerNameWithGift = selectedPackage.productId === 'pack2'
+        ? `${normalizedName} (赠: ${selectedGift})`
+        : normalizedName;
+
       const result = await createOrder({
-        customerName: normalizedName,
+        customerName: customerNameWithGift,
         customerPhone: normalizedPhone,
         address: normalizedAddress,
         productId: selectedPackage.productId,
@@ -416,6 +421,26 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               }}
             />
           </div>
+
+          {selectedPackage.productId === 'pack2' && (
+            <div className="space-y-2">
+              <label htmlFor="checkout-gift-select" className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
+                选择您的 French Poulet 赠品 (2盒专享)
+              </label>
+              <select
+                id="checkout-gift-select"
+                className="w-full rounded-xl border border-charcoal/10 bg-white px-5 py-4 text-charcoal outline-none transition-all focus:border-primary focus:ring-4 focus:ring-primary/10"
+                value={selectedGift}
+                onChange={(e) => setSelectedGift(e.target.value)}
+              >
+                <option value="French Poulet Minced 400g">法式鸡肉碎 400g (市场价值 $8)</option>
+                <option value="French Poulet 3 Joint Wing 500g">法式三节翅 500g (市场价值 $8)</option>
+                <option value="French Poulet Boneless Breast 350g">法式去骨鸡胸肉 350g (市场价值 $8)</option>
+                <option value="French Poulet Whole Leg 400g">法式整只鸡腿 400g (市场价值 $8)</option>
+                <option value="French Poulet Half Chicken Cut 4 Pieces 500g">法式半只切块鸡 500g (市场价值 $8)</option>
+              </select>
+            </div>
+          )}
 
           <div className="space-y-2">
             <label htmlFor="checkout-customer-phone" className="text-xs font-bold text-charcoal/40 uppercase tracking-widest pl-1">
