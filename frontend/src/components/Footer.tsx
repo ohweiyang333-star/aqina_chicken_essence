@@ -1,6 +1,7 @@
 'use client';
 
 import { useTranslations, useLocale } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { aqinaSiteConfig } from '@/lib/site-config';
@@ -9,7 +10,38 @@ import { IMAGES } from '@/lib/image-utils';
 export default function Footer() {
   const t = useTranslations('Index');
   const locale = useLocale();
+  const pathname = usePathname();
   const homeHref = `/${locale}`;
+  const isOfferResetEntry = pathname === '/en' || pathname === '/zh';
+  const footerLinks = isOfferResetEntry
+    ? [
+        {
+          href: '#offer-reset-proof',
+          label: locale === 'zh' ? '产品证明' : 'Product Proof',
+        },
+        {
+          href: '#offer-reset-qa',
+          label: locale === 'zh' ? '购买 Q&A' : 'Buying Q&A',
+        },
+        {
+          href: '#offer-reset-products',
+          label: locale === 'zh' ? '配套选择' : 'Choose Pack',
+        },
+      ]
+    : [
+        {
+          href: '#story-experience',
+          label: t('footer.nav.story'),
+        },
+        {
+          href: '#ugc-reviews',
+          label: t('footer.nav.reviews'),
+        },
+        {
+          href: '#products',
+          label: t('footer.nav.products'),
+        },
+      ];
 
   return (
     <footer className="border-t border-primary/14 bg-background-dark py-12">
@@ -25,15 +57,11 @@ export default function Footer() {
           </div>
 
           <nav className="flex flex-wrap gap-4 text-xs font-bold uppercase tracking-[0.22em] text-text-light/72">
-            <Link href="#story-experience" className="hover:text-primary">
-              {t('footer.nav.story')}
-            </Link>
-            <Link href="#ugc-reviews" className="hover:text-primary">
-              {t('footer.nav.reviews')}
-            </Link>
-            <Link href="#products" className="hover:text-primary">
-              {t('footer.nav.products')}
-            </Link>
+            {footerLinks.map((link) => (
+              <Link key={link.href} href={link.href} className="hover:text-primary">
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
 

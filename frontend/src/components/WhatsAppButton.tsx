@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { MessageCircle } from 'lucide-react';
 import { getV2WhatsAppHref, getWhatsAppHref } from '@/lib/site-config';
+import { getOfferResetWhatsAppMessage } from '@/lib/offer-reset-content';
 import { trackLandingFunnelEvent } from '@/lib/marketing-analytics';
 
 export default function WhatsAppButton() {
@@ -11,20 +12,31 @@ export default function WhatsAppButton() {
   const locale = useLocale();
   const pathname = usePathname();
   const isV2Landing = pathname?.startsWith('/v2/');
-  const href = isV2Landing ? getV2WhatsAppHref(locale) : getWhatsAppHref();
+  const isOfferResetEntry = pathname === '/en' || pathname === '/zh';
+  const href = isV2Landing
+    ? getV2WhatsAppHref(locale)
+    : isOfferResetEntry
+      ? getWhatsAppHref(getOfferResetWhatsAppMessage(locale))
+      : getWhatsAppHref();
+  const label = isOfferResetEntry
+    ? locale === 'zh'
+      ? 'WhatsApp 确认配套'
+      : 'Confirm on WhatsApp'
+    : t('mobileCta.whatsappLabel');
 
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      aria-label={t('mobileCta.whatsappLabel')}
+      aria-label={label}
       onClick={() => {
-        if (!isV2Landing) return;
+        if (!isOfferResetEntry && !isV2Landing) return;
 
         trackLandingFunnelEvent('whatsapp_cta_click', {
-          source: 'v2_floating_whatsapp',
+          source: isOfferResetEntry ? 'offer_reset_floating_whatsapp' : 'v2_floating_whatsapp',
           destination: 'whatsapp',
+          landing_version: isOfferResetEntry ? 'offer_reset' : undefined,
         });
       }}
       className={[
@@ -34,7 +46,7 @@ export default function WhatsAppButton() {
     >
       <MessageCircle size={26} />
       <span className="hidden text-sm font-bold tracking-tight md:inline">
-        {t('mobileCta.whatsappLabel')}
+        {label}
       </span>
     </a>
   );

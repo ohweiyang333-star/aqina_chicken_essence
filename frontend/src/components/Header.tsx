@@ -38,6 +38,8 @@ export default function Header() {
   const homeHref = `/${locale}`;
   const nextLocale = locale === 'en' ? 'zh' : 'en';
   const languageHref = getLanguageHref(pathname, nextLocale);
+  const isOfferResetEntry = pathname === '/en' || pathname === '/zh';
+  const plansHref = isOfferResetEntry ? '#offer-reset-products' : '#products';
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
@@ -64,7 +66,7 @@ export default function Header() {
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <a
-            href="#products"
+            href={plansHref}
             className="inline-flex min-h-10 items-center justify-center rounded-md border border-primary/28 bg-surface px-3 text-xs font-bold uppercase tracking-[0.08em] text-text-light shadow-[0_12px_28px_rgba(0,0,0,0.28)] transition hover:border-primary/48 hover:text-primary sm:px-4 sm:tracking-[0.16em]"
           >
             {locale === 'zh' ? '选配套' : 'Plans'}

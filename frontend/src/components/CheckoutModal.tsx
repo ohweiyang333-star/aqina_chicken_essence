@@ -30,6 +30,14 @@ interface CheckoutModalProps {
 function resolvePackage(product: NonNullable<CheckoutModalProps['product']>) {
   const text = `${product.id} ${product.name} ${product.label}`.toLowerCase();
 
+  if (text.includes('pack6') || text.includes('42') || text.includes('6盒') || text.includes('6 box')) {
+    return { productId: 'pack6', boxCount: 6 };
+  }
+
+  if (text.includes('pack4') || text.includes('28') || text.includes('4盒') || text.includes('4 box')) {
+    return { productId: 'pack4', boxCount: 4 };
+  }
+
   if (text.includes('pack2') || text.includes('14') || text.includes('2盒') || text.includes('2 box')) {
     return { productId: 'pack2', boxCount: 2 };
   }
@@ -44,6 +52,32 @@ const MAX_RECEIPT_BYTES = 8 * 1024 * 1024;
 
 function normalizePhone(value: string) {
   return value.replace(/\D/g, '');
+}
+
+function isSupportedOfferResetPackage(productId: string) {
+  return productId === 'pack1' || productId === 'pack2';
+}
+
+function isZhLocale(locale: string) {
+  return locale === 'zh';
+}
+
+function getOfferResetTotalNote(locale: string) {
+  return isZhLocale(locale)
+    ? '新版价格已同步；赠品与配送细节可在 WhatsApp 确认。'
+    : 'Offer reset total shown. Gift and delivery details can be confirmed on WhatsApp.';
+}
+
+function getCheckoutSupportBody(locale: string) {
+  return isZhLocale(locale)
+    ? '付款前想先确认 1盒 / 2盒、French Poulet 赠品或配送细节，可以先发给 WhatsApp 客服。'
+    : 'Before PayNow, send this pack to WhatsApp support to confirm 1 box / 2 boxes, gift availability, and delivery details.';
+}
+
+function getCheckoutSupportMessage(locale: string, productName: string) {
+  return isZhLocale(locale)
+    ? `Hi Aqina SG，我正在看 ${productName}。请帮我确认 1盒 / 2盒配套、French Poulet Cut Part 赠品选择和配送安排。`
+    : `Hi Aqina SG, I am looking at ${productName}. Please help me confirm the 1-box / 2-box offer, French Poulet Cut Part gift choice, and delivery arrangement.`;
 }
 
 export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModalProps) {
@@ -66,9 +100,9 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
   const shippingFee = 0;
   const subtotal = Number(product.price);
   const total = subtotal + shippingFee;
-  const checkoutWhatsAppHref = getWhatsAppHref(
-    ct('support.message', { product: product.name }),
-  );
+  const isSupportedPackage = isSupportedOfferResetPackage(selectedPackage.productId);
+  const unsupportedPackageError = isSupportedPackage ? '' : errorMessageForCode('unknownPackage');
+  const checkoutWhatsAppHref = getWhatsAppHref(getCheckoutSupportMessage(locale, product.name));
   const rawPaymentSteps = ct.raw('payment.steps');
   const paymentSteps = Array.isArray(rawPaymentSteps)
     ? rawPaymentSteps.filter((step): step is string => typeof step === 'string')
@@ -83,7 +117,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
     onClose();
   };
 
-  const errorMessageForCode = (code: CheckoutOrderErrorCode) => {
+  function errorMessageForCode(code: CheckoutOrderErrorCode) {
     const messages: Record<CheckoutOrderErrorCode, string> = {
       nameRequired: ct('form.nameRequired') || 'Please enter your full name.',
       phoneInvalid:
@@ -103,7 +137,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
     };
 
     return messages[code];
-  };
+  }
 
   const validateReceiptFile = (file: File | null) => {
     if (!file) return errorMessageForCode('receiptRequired');
@@ -158,6 +192,11 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
+
+    if (!isSupportedPackage) {
+      setFormError(errorMessageForCode('unknownPackage'));
+      return;
+    }
 
     const normalizedName = formData.customerName.trim();
     const normalizedPhone = normalizePhone(formData.customerPhone);
@@ -292,14 +331,14 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6 overflow-y-auto">
-          {formError && (
+          {(formError || unsupportedPackageError) && (
             <div
               id="checkout-form-error"
               role="alert"
               className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-800"
             >
               <p className="font-bold">{ct('form.errorTitle') || 'Please check your order details'}</p>
-              <p>{formError}</p>
+              <p>{formError || unsupportedPackageError}</p>
             </div>
           )}
 
@@ -318,7 +357,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
                 </p>
                 <p className="mt-1 text-xl font-black text-charcoal">SGD {total.toFixed(2)}</p>
                 <p className="text-xs font-bold text-green-700">
-                  {ct('form.offerResetTotal') || 'Offer reset total shown. Gift and delivery details can be confirmed on WhatsApp.'}
+                  {getOfferResetTotalNote(locale)}
                 </p>
               </div>
             </div>
@@ -342,7 +381,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
                   {ct('support.title') || 'Need help before paying?'}
                 </p>
                 <p className="mt-1 text-sm leading-6 text-green-800/80">
-                  {ct('support.body') || 'Ask us on WhatsApp if you are unsure about this plan.'}
+                  {getCheckoutSupportBody(locale)}
                 </p>
               </div>
               <a
@@ -370,7 +409,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               placeholder={ct('form.namePlaceholder') || 'Your full name'}
               className={checkoutTextInputClassName}
               value={formData.customerName}
-              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              aria-describedby={formError || unsupportedPackageError ? 'checkout-form-error' : undefined}
               onChange={(e) => {
                 setFormError('');
                 setFormData({ ...formData, customerName: e.target.value });
@@ -390,7 +429,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               placeholder="+65 ..."
               className={checkoutTextInputClassName}
               value={formData.customerPhone}
-              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              aria-describedby={formError || unsupportedPackageError ? 'checkout-form-error' : undefined}
               onChange={(e) => {
                 setFormError('');
                 setFormData({ ...formData, customerPhone: e.target.value });
@@ -409,7 +448,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               placeholder={ct('form.addressPlaceholder') || 'Singapore delivery address'}
               className={`${checkoutTextInputClassName} resize-none`}
               value={formData.address}
-              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              aria-describedby={formError || unsupportedPackageError ? 'checkout-form-error' : undefined}
               onChange={(e) => {
                 setFormError('');
                 setFormData({ ...formData, address: e.target.value });
@@ -465,7 +504,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
               type="file"
               accept="image/png,image/jpeg,image/webp"
               className="block w-full text-sm text-charcoal/70 file:mr-4 file:rounded-lg file:border-0 file:bg-charcoal file:px-4 file:py-2 file:text-sm file:font-bold file:text-ivory"
-              aria-describedby={formError ? 'checkout-form-error' : undefined}
+              aria-describedby={formError || unsupportedPackageError ? 'checkout-form-error' : undefined}
               onChange={handleReceiptChange}
             />
             <span className="mt-3 block text-xs leading-5 text-charcoal/45">
@@ -478,7 +517,7 @@ export default function CheckoutModal({ isOpen, onClose, product }: CheckoutModa
           <button
             id="checkout-submit-order"
             type="submit"
-            disabled={isSubmitting || !paymentReceipt}
+            disabled={isSubmitting || !paymentReceipt || !isSupportedPackage}
             className="w-full py-5 rounded-xl bg-charcoal text-ivory font-bold hover:bg-primary disabled:opacity-50 disabled:cursor-wait transition-all flex items-center justify-center space-x-3 shadow-xl shadow-charcoal/20"
           >
             {isSubmitting ? (
