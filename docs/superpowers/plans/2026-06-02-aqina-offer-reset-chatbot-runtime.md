@@ -14,6 +14,8 @@
 
 - Modify: `backend/app/services/chatbot_settings.py`
   - Version bump, prompt copy, default packages, skills, knowledge, media defaults, migration behavior.
+- Modify: `backend/app/services/marketing_orchestrator.py`
+  - Marketing-chat checkout shipping calculation so PayNow totals match the new 1-box / 2-box source of truth.
 - Modify: `backend/tests/test_marketing_api.py`
   - Update chatbot settings migration expectations and add retired-copy regression assertions.
 - Create: `docs/superpowers/specs/2026-06-02-aqina-offer-reset-chatbot-runtime-design.md`
@@ -61,6 +63,10 @@ Change price positioning, logistics wording, and follow-up copy so free shipping
 
 ### Task 3: Verify
 
+- [ ] **Step 0: Align chatbot checkout totals**
+
+In `backend/app/services/marketing_orchestrator.py`, keep chatbot checkout totals aligned to the new promotion source of truth by returning `0.0` from `_shipping_fee_for()` for marketing-chat checkout sessions. This prevents `1盒 SGD47.90` from becoming `SGD55.90` during PayNow generation.
+
 - [ ] **Step 1: Run focused tests**
 
 Run:
@@ -88,7 +94,7 @@ Expected: pass, or only unrelated pre-existing failures clearly documented.
 Run:
 
 ```bash
-git diff -- backend/app/services/chatbot_settings.py backend/tests/test_marketing_api.py docs/superpowers/specs/2026-06-02-aqina-offer-reset-chatbot-runtime-design.md docs/superpowers/plans/2026-06-02-aqina-offer-reset-chatbot-runtime.md
+git diff -- backend/app/services/chatbot_settings.py backend/app/services/marketing_orchestrator.py backend/tests/test_marketing_api.py docs/superpowers/specs/2026-06-02-aqina-offer-reset-chatbot-runtime-design.md docs/superpowers/plans/2026-06-02-aqina-offer-reset-chatbot-runtime.md
 ```
 
 - [ ] **Step 2: Commit**
@@ -96,7 +102,7 @@ git diff -- backend/app/services/chatbot_settings.py backend/tests/test_marketin
 Run:
 
 ```bash
-git add backend/app/services/chatbot_settings.py backend/tests/test_marketing_api.py docs/superpowers/specs/2026-06-02-aqina-offer-reset-chatbot-runtime-design.md docs/superpowers/plans/2026-06-02-aqina-offer-reset-chatbot-runtime.md
+git add backend/app/services/chatbot_settings.py backend/app/services/marketing_orchestrator.py backend/tests/test_marketing_api.py docs/superpowers/specs/2026-06-02-aqina-offer-reset-chatbot-runtime-design.md docs/superpowers/plans/2026-06-02-aqina-offer-reset-chatbot-runtime.md
 git commit -m "feat(chatbot): migrate Aqina offer reset runtime rules"
 ```
 

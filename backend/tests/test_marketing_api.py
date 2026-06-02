@@ -110,15 +110,21 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 4)
+        self.assertEqual(payload["conversion_optimization_version"], 5)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
-        self.assertIn("You are Aqina Health Advisor", payload["system_prompt"])
-        self.assertIn("PayNow first and send back the payment screenshot", payload["system_prompt"])
-        self.assertIn("Aqina 纯鸡精是天然食品补充剂", payload["system_prompt"])
+        self.assertIn("You are Aqina WhatsApp / Messenger private sales support", payload["system_prompt"])
+        self.assertIn("1盒 = SGD47.90", payload["system_prompt"])
+        self.assertIn("2盒 = SGD79.80", payload["system_prompt"])
+        self.assertIn("French Poulet Cut Part", payload["system_prompt"])
+        self.assertIn("Aqina 是食品补养，不是药", payload["system_prompt"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["packages"])
-        for code in ["pack1", "pack2", "pack4", "pack6"]:
+        for code in ["pack1", "pack2"]:
             self.assertIn(code, payload["packages"])
+        for code in ["pack4", "pack6"]:
+            self.assertNotIn(code, payload["packages"])
         self.assertEqual(payload["packages"]["pack1"]["name_zh"], "7天启动装")
+        self.assertEqual(payload["packages"]["pack1"]["price_sgd"], 47.9)
+        self.assertEqual(payload["packages"]["pack2"]["price_sgd"], 79.8)
         self.assertEqual(payload["faq"][0]["keywords"], ["delivery"])
         self.assertEqual(payload["payment"]["paynow"]["enabled"], True)
         self.assertEqual(payload["escalation"]["private_whatsapp_number"], "+6591212369")
@@ -130,7 +136,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("chatbot_skills", payload)
         self.assertIn("ice_breaking", payload["chatbot_skills"])
         self.assertIn("usage_consultation", payload["chatbot_skills"])
-        self.assertIn("确认口感", payload["chatbot_skills"]["price_objection"]["required_questions"][0])
+        self.assertIn("普通瓶装", payload["chatbot_skills"]["price_objection"]["required_questions"][0])
         self.assertIn("Use Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["chatbot_skills"]["price_objection"]["instruction"])
         self.assertIn("Do not repeat prices", payload["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
         self.assertIn("哈喽 [顾客名字]", payload["crm_follow_up_rules"]["comment_hook"]["public_reply"]["instruction"])
@@ -140,8 +146,27 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["media_assets"]["brand_intro_images"]["en"], "/chatbot/aqina-brand-intro-en.jpg")
         self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["zh"], "/chatbot/aqina-pack2-chatbot-zh.jpg")
         self.assertEqual(payload["media_assets"]["package_images"]["pack2"]["en"], "/chatbot/aqina-pack2-chatbot-en.jpg")
+        self.assertNotIn("pack4", payload["media_assets"]["package_images"])
+        self.assertNotIn("pack6", payload["media_assets"]["package_images"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["package_images"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["media_assets"]["captions"])
+        serialized_payload = json.dumps(payload, ensure_ascii=False)
+        for retired_copy in ["SGD 75", "SGD75", "SGD 149", "SGD149", "SGD 219", "SGD219", "4盒", "6盒", "free shipping"]:
+            self.assertNotIn(retired_copy, serialized_payload)
+        for expected in [
+            "SGD47.90",
+            "SGD79.80",
+            "SGD39.90/盒",
+            "SGD16.00",
+            "French Poulet 3 Joint Wing 500g",
+            "French Poulet Minced 400g",
+            "French Poulet Boneless Breast 350g",
+            "French Poulet Whole Leg 400g",
+            "French Poulet Half Chicken Cut 4 Pieces 500g",
+            "double-boiled 双重蒸煮",
+            "100% Pure Chicken Essence",
+        ]:
+            self.assertIn(expected, serialized_payload)
 
     def test_chatbot_settings_removes_retired_trial_package_from_saved_document(self) -> None:
         self.db.seed(
@@ -203,7 +228,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 4,
+                "conversion_optimization_version": 5,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -283,7 +308,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 4)
+        self.assertEqual(payload["conversion_optimization_version"], 5)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -300,18 +325,21 @@ class MarketingApiTests(unittest.TestCase):
         serialized = json.dumps(settings_doc, ensure_ascii=False)
 
         self.assertIn("Customer-facing replies must follow the customer's language", prompt)
-        self.assertIn("NLP consultative selling rhythm", prompt)
+        self.assertIn("private sales support", prompt)
         self.assertIn("If the customer asks about price/how much/packages/offers, answer directly", prompt)
-        self.assertIn("1盒 SGD 39.90；2盒 SGD 75 免运；4盒 SGD 149", prompt)
+        self.assertIn("1盒 = SGD47.90", prompt)
+        self.assertIn("2盒 = SGD79.80", prompt)
+        self.assertIn("SGD39.90/盒", prompt)
+        self.assertIn("SGD16.00", prompt)
         self.assertIn("+6591212369", prompt)
         self.assertIn("non_product_human_help", prompt)
         self.assertIn("unknown_requires_human", prompt)
         self.assertIn("has not asked about price, package, shipping, or buying", prompt)
         self.assertIn("do not quote SGD prices again", prompt)
-        self.assertIn("Never recommend a 3-sachet trial pack", prompt)
+        self.assertIn("Never recommend retired multi-box packages", prompt)
         self.assertNotIn(RETIRED_PACKAGE_CODE, serialized)
         self.assertIn("address, phone number, payment screenshot", prompt)
-        self.assertIn("PayNow first", prompt)
+        self.assertIn("PayNow", prompt)
         self.assertIn("send back the payment screenshot", prompt)
         self.assertIn("usage_consultation", skills)
         self.assertIn("Do not turn general health", skills["usage_consultation"]["listening_goal"])
@@ -323,16 +351,17 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("reply YES", settings_doc["crm_follow_up_rules"]["t23h"]["default"]["instruction"])
         price_skill = skills["price_objection"]
         price_copy = json.dumps(price_skill, ensure_ascii=False)
-        self.assertIn("ordinary low-price bottled chicken essence", price_copy)
-        self.assertIn("premium sachet", price_copy)
-        self.assertIn("Hockhua", price_copy)
-        self.assertIn("EYS Organic", price_copy)
-        self.assertIn("BRAND'S", price_copy)
-        self.assertIn("S$2-S$3+", price_copy)
+        self.assertIn("ordinary bottled chicken essence", price_copy)
+        self.assertIn("premium sachet route", price_copy)
+        self.assertIn("MD2 黄梨酵素鸡", price_copy)
+        self.assertIn("7天慢炼", price_copy)
+        self.assertIn("SGD79.80", price_copy)
         self.assertIn("why so expensive", price_copy)
-        self.assertIn("Double Boiled", price_copy)
-        self.assertIn("not the lowest-price route", price_copy)
+        self.assertIn("double-boiled 双重蒸煮", price_copy)
+        self.assertIn("not the ordinary low-price bottled route", price_copy)
         self.assertIn("price_positioning", settings_doc["knowledge_base"])
+        for retired_copy in ["SGD 75", "SGD75", "SGD 149", "SGD149", "SGD 219", "SGD219", "4盒", "6盒", "free shipping"]:
+            self.assertNotIn(retired_copy, serialized)
 
     def test_chatbot_settings_includes_cart_hot_checkout_skill(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
@@ -814,7 +843,7 @@ class MarketingApiTests(unittest.TestCase):
                 "reply_text": "懂您，买给妈妈补身的话，我先帮您看更适合长辈的配套。",
                 "next_tag": "qualified_warm",
                 "lead_goal": "gift_elder",
-                "recommended_package_code": "pack6",
+                "recommended_package_code": "pack2",
                 "upgrade_package_code": None,
                 "selected_package_code": None,
                 "order_fields": {"name": None, "phone": None, "address": None},
@@ -1187,7 +1216,7 @@ class MarketingApiTests(unittest.TestCase):
             contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
             messages=[
                 {"role": "user", "text": "多少钱？"},
-                {"role": "assistant", "text": "1盒 SGD 39.90，2盒 SGD 75 免运。"},
+                {"role": "assistant", "text": "1盒 SGD47.90，2盒 SGD79.80，等于 SGD39.90/盒。"},
             ],
             incoming_text="我是男的，可以喝吗？",
             channel="messenger",
@@ -1207,7 +1236,7 @@ class MarketingApiTests(unittest.TestCase):
         prompt = GeminiConversationService._build_chat_prompt(
             contact={"current_tag": "qualified_warm", "lead_goal": "unknown"},
             messages=[
-                {"role": "assistant", "text": "1盒 SGD 39.90，2盒 SGD 75 免运。"},
+                {"role": "assistant", "text": "1盒 SGD47.90，2盒 SGD79.80，等于 SGD39.90/盒。"},
             ],
             incoming_text="多少钱？",
             channel="messenger",
@@ -1224,9 +1253,9 @@ class MarketingApiTests(unittest.TestCase):
                 "reply_text": "我已经为您准备好 PayNow 付款链接，您确认一下资料就可以付款了 🎈",
                 "next_tag": "cart_hot",
                 "lead_goal": "pregnancy",
-                "recommended_package_code": "pack4",
-                "upgrade_package_code": "pack6",
-                "selected_package_code": "pack4",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": "pack2",
                 "order_fields": {
                     "name": "Alice Tan",
                     "phone": "6591112222",
@@ -1246,7 +1275,7 @@ class MarketingApiTests(unittest.TestCase):
             conversation_id="conv-1",
             event_id="event-1",
             channel="whatsapp",
-            incoming_text="我要买28天月度装",
+            incoming_text="我要买2盒",
             identifier_key="wa_id",
             identifier_value="6591112222",
         )
@@ -1268,10 +1297,10 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["marketing_contact_id"], "contact-1")
         self.assertEqual(order["conversation_id"], "conv-1")
         self.assertEqual(order["channel"], "whatsapp")
-        self.assertEqual(order["subtotal_amount"], 149.0)
+        self.assertEqual(order["subtotal_amount"], 79.8)
         self.assertEqual(order["shipping_fee"], 0.0)
-        self.assertEqual(order["total_amount"], 149.0)
-        self.assertEqual(order["box_count"], 4)
+        self.assertEqual(order["total_amount"], 79.8)
+        self.assertEqual(order["box_count"], 2)
 
         sessions = self.db.collection("marketing_checkout_sessions").stream()
         self.assertEqual(len(sessions), 1)
@@ -1281,7 +1310,7 @@ class MarketingApiTests(unittest.TestCase):
 
         contact = self.db.collection("marketing_contacts").document("contact-1").get().to_dict()
         self.assertEqual(contact["current_tag"], "cart_hot")
-        self.assertEqual(contact["selected_package_code"], "pack4")
+        self.assertEqual(contact["selected_package_code"], "pack2")
         self.assertEqual(contact["order_fields"]["name"], "Alice Tan")
 
         message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
@@ -1355,7 +1384,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["customer"]["whatsapp"], "6591119999")
         self.assertEqual(order["customer"]["address"], "Jurong West Street 92 #03-211 Singapore 640831")
         self.assertEqual(order["items"][0]["product_id"], "pack2")
-        self.assertEqual(order["total_amount"], 75.0)
+        self.assertEqual(order["total_amount"], 79.8)
 
         contact = self.db.collection("marketing_contacts").document("contact-whatsapp-phone-default").get().to_dict()
         self.assertEqual(contact["current_tag"], "cart_hot")
@@ -1369,7 +1398,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("电话号码", message_calls[0][1]["text"])
 
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
-        self.assertTrue(any("Amount: SGD 75.00" in call[1]["caption"] for call in image_calls))
+        self.assertTrue(any("Amount: SGD 79.80" in call[1]["caption"] for call in image_calls))
         outbound_images = [
             snapshot.to_dict()
             for snapshot in self.db.collection("marketing_conversations")
@@ -1591,8 +1620,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         order = self.db.collection("orders").stream()[0].to_dict()
         self.assertEqual(order["items"][0]["product_id"], "pack1")
-        self.assertEqual(order["subtotal_amount"], 39.9)
-        self.assertEqual(order["shipping_fee"], 8.0)
+        self.assertEqual(order["subtotal_amount"], 47.9)
+        self.assertEqual(order["shipping_fee"], 0.0)
         self.assertEqual(order["total_amount"], 47.9)
         self.assertEqual(order["box_count"], 1)
 
@@ -1604,7 +1633,7 @@ class MarketingApiTests(unittest.TestCase):
     def test_process_inbound_message_sends_brand_and_package_images_without_url_text(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
-                "reply_text": "懂您，忙起来确实会想找简单一点的温热补给。我更建议您看【14天常备装】，刚好两盒免运费。",
+                "reply_text": "懂您，忙起来确实会想找简单一点的温热补给。我更建议您看2盒，SGD79.80，等于 SGD39.90/盒。",
                 "next_tag": "qualified_warm",
                 "lead_goal": "self_care",
                 "recommended_package_code": "pack2",
@@ -1669,11 +1698,11 @@ class MarketingApiTests(unittest.TestCase):
     def test_process_inbound_message_sends_english_chatbot_images_for_english_customer(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
-                "reply_text": "I recommend the 2-box pack because it includes free delivery.",
+                "reply_text": "I recommend the 2-box pack because it is SGD79.80 and includes one French Poulet Cut Part gift choice.",
                 "next_tag": "qualified_warm",
                 "lead_goal": "self_care",
                 "recommended_package_code": "pack2",
-                "upgrade_package_code": "pack6",
+                "upgrade_package_code": "pack1",
                 "selected_package_code": None,
                 "order_fields": {"name": None, "phone": None, "address": None},
                 "missing_order_fields": [],
@@ -1708,7 +1737,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("http", message_calls[0][1]["text"])
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
         self.assertEqual(len(image_calls), 2)
-        self.assertIn("free delivery", image_calls[1][1]["caption"].lower())
+        self.assertIn("french poulet cut part", image_calls[1][1]["caption"].lower())
 
         contact = self.db.collection("marketing_contacts").document("contact-media-en").get().to_dict()
         self.assertEqual(contact["chatbot_locale"], "en")
@@ -1722,7 +1751,7 @@ class MarketingApiTests(unittest.TestCase):
     def test_process_inbound_message_does_not_resend_seen_chatbot_images(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
-                "reply_text": "我继续建议您拿【14天常备装】，两盒刚好免运费。",
+                "reply_text": "我继续建议您拿2盒，SGD79.80，等于 SGD39.90/盒，也有 French Poulet Cut Part 赠品。",
                 "next_tag": "qualified_warm",
                 "lead_goal": "self_care",
                 "recommended_package_code": "pack2",
@@ -2559,7 +2588,7 @@ class MarketingApiTests(unittest.TestCase):
         from app.services.gemini_service import GeminiConversationService, SAFE_FOLLOW_UP_FALLBACK_TEXT
 
         service = GeminiConversationService()
-        stage_instruction = "提醒新加坡现货与 2盒免运，询问顾客要先 1盒试喝还是 2盒免运；不要发送长篇感官描述。"
+        stage_instruction = "提醒 Aqina 纯鸡精 1盒/2盒选择，询问顾客要先 1盒试喝还是 2盒更划算；不要发送长篇感官描述。"
 
         with patch.object(service, "_generate_json", return_value=None):
             result = service.generate_follow_up_reply(
@@ -2669,7 +2698,7 @@ class MarketingApiTests(unittest.TestCase):
         from app.services.gemini_service import SAFE_FOLLOW_UP_FALLBACK_TEXT
 
         reply_text, next_tag = FollowUpEngine._normalize_follow_up_result(
-            "提醒新加坡现货与 2盒免运，询问顾客要先 1盒试喝还是 2盒免运；不要发送长篇感官描述。",
+            "提醒 Aqina 纯鸡精 1盒/2盒选择，询问顾客要先 1盒试喝还是 2盒更划算；不要发送长篇感官描述。",
             checkout_url=None,
         )
 
@@ -4028,13 +4057,16 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
+                "conversion_optimization_version": 5,
                 "handoff_message": "",
                 "packages": {
                     "pack1": {
                         "code": "pack1",
                         "name_zh": "7天启动装",
                         "name_en": "7-Day Starter Pack",
-                        "price_sgd": 39.9,
+                        "description_zh": "1盒/7包，适合第一次先确认口感。",
+                        "description_en": "1 box / 7 sachets for first taste confirmation.",
+                        "price_sgd": 47.9,
                         "pack_count": 7,
                         "box_count": 1,
                         "target_audience": ["self_care"],
@@ -4045,85 +4077,26 @@ class MarketingApiTests(unittest.TestCase):
                         "code": "pack2",
                         "name_zh": "14天常备装",
                         "name_en": "14-Day Care Pack",
-                        "price_sgd": 75.0,
+                        "description_zh": "2盒/14包，等于 SGD39.90/盒，并送 French Poulet Cut Part 五选一。",
+                        "description_en": "2 boxes / 14 sachets at SGD39.90 per box, with one French Poulet Cut Part gift choice.",
+                        "price_sgd": 79.8,
                         "pack_count": 14,
                         "box_count": 2,
                         "target_audience": ["self_care"],
                         "hero": True,
                         "free_shipping_eligible": True,
                     },
-                    "pack4": {
-                        "code": "pack4",
-                        "name_zh": "28天月度装",
-                        "name_en": "28-Day Monthly Pack",
-                        "price_sgd": 149.0,
-                        "pack_count": 28,
-                        "box_count": 4,
-                        "target_audience": ["pregnancy", "postpartum"],
-                        "hero": True,
-                        "free_shipping_eligible": True,
-                    },
-                    "pack6": {
-                        "code": "pack6",
-                        "name_zh": "42天家庭装",
-                        "name_en": "42-Day Family Pack",
-                        "price_sgd": 219.0,
-                        "pack_count": 42,
-                        "box_count": 6,
-                        "target_audience": ["gift_elder", "self_care"],
-                        "hero": False,
-                        "free_shipping_eligible": True,
-                    },
-                    RETIRED_PACKAGE_CODE: {
-                        "code": RETIRED_PACKAGE_CODE,
-                        "name_zh": RETIRED_PACKAGE_NAME_ZH,
-                        "name_en": RETIRED_PACKAGE_NAME_EN,
-                        "price_sgd": 18.0,
-                        "pack_count": 3,
-                        "target_audience": ["self_care"],
-                        "hero": False,
-                        "free_shipping_eligible": False,
-                    },
-                    "energy_14": {
-                        "code": "energy_14",
-                        "name_zh": "14天常备装",
-                        "name_en": "14-Day Care Pack",
-                        "price_sgd": 75.0,
-                        "pack_count": 14,
-                        "target_audience": ["self_care"],
-                        "hero": True,
-                        "free_shipping_eligible": True,
-                    },
-                    "maternal_28": {
-                        "code": "maternal_28",
-                        "name_zh": "28天月度装",
-                        "name_en": "28-Day Monthly Pack",
-                        "price_sgd": 149.0,
-                        "pack_count": 28,
-                        "target_audience": ["pregnancy", "postpartum"],
-                        "hero": True,
-                        "free_shipping_eligible": True,
-                    },
-                    "family_42": {
-                        "code": "family_42",
-                        "name_zh": "42天家庭装",
-                        "name_en": "42-Day Family Pack",
-                        "price_sgd": 219.0,
-                        "pack_count": 42,
-                        "target_audience": ["gift_elder", "self_care"],
-                        "hero": False,
-                        "free_shipping_eligible": True,
-                    },
                 },
                 "knowledge_base": {
-                    "usps": ["无抗生素", "零脂肪", "BCAA 高蛋白"],
+                    "usps": ["MD2 黄梨酵素鸡", "double-boiled 双重蒸煮", "100% Pure Chicken Essence"],
                     "faq": [
                         {"question": "多久送到", "answer": "1-3 个工作日"},
                     ],
-                    "medical_disclaimer": "严重疾病请咨询医生",
-                    "logistics": "新加坡现货 1-3 个工作日送达",
+                    "medical_disclaimer": "Aqina 是食品补养，不是药；特殊健康状况请先问医生。",
+                    "logistics": "配送安排由客服在下单时确认。",
                     "consumption": "建议早晨空腹饮用",
-                    "comparisons": "比传统鸡精更鲜甜",
+                    "comparisons": "Aqina 纯鸡精不是 ordinary bottled chicken essence 的普通低价路线。",
+                    "price_positioning": "1盒 SGD47.90；2盒 SGD79.80，等于 SGD39.90/盒，并送 French Poulet Cut Part 五选一。",
                 },
                 "payment": {
                     "paynow": {

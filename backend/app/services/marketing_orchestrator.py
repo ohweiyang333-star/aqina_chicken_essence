@@ -1781,7 +1781,7 @@ class MarketingAutomationOrchestrator:
 
     @staticmethod
     def _shipping_fee_for(box_count: int) -> float:
-        return 0.0 if box_count >= 2 else 8.0
+        return 0.0
 
     @staticmethod
     def _money(value: float) -> float:

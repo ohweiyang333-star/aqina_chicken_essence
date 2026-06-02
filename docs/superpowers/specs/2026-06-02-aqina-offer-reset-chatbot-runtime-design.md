@@ -37,6 +37,7 @@ Update `backend/app/services/chatbot_settings.py` as the backend source of truth
 - Update price objection handling to explain source, ingredient, process, and pure chicken essence category before package choice.
 - Preserve PayNow configuration, but keep payment/order/delivery disputes and human requests as handoff-first situations.
 - Keep router keyword recognition for customer text, including old package terms, but do not let runtime recommendations produce old packages.
+- Update marketing-chat checkout amount calculation so chatbot PayNow totals match the new promotion source of truth. In this chatbot flow, `1盒` totals `SGD47.90` and `2盒` totals `SGD79.80`; shipping is not added as a separate sales lever.
 
 ## Testing Design
 
