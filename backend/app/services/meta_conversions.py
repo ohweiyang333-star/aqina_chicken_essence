@@ -12,7 +12,7 @@ from app.services.meta_client import get_meta_client
 
 logger = logging.getLogger(__name__)
 
-ALLOWED_LANDING_VERSIONS = {"home", "v2", "v3", "v4"}
+ALLOWED_LANDING_VERSIONS = {"offer_reset", "home", "v2", "v3", "v4"}
 ALLOWED_LANGUAGES = {"en", "zh"}
 
 

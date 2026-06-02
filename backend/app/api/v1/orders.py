@@ -31,10 +31,8 @@ router = APIRouter(prefix="/orders", tags=["Orders"])
 logger = logging.getLogger(__name__)
 
 LANDING_PACKAGES = {
-    "pack1": {"name": "7天启动装", "name_en": "7-Day Starter Pack", "price": 39.9, "box_count": 1, "pack_count": 7},
-    "pack2": {"name": "14天常备装", "name_en": "14-Day Care Pack", "price": 75.0, "box_count": 2, "pack_count": 14},
-    "pack4": {"name": "28天月度装", "name_en": "28-Day Monthly Pack", "price": 149.0, "box_count": 4, "pack_count": 28},
-    "pack6": {"name": "42天家庭装", "name_en": "42-Day Family Pack", "price": 219.0, "box_count": 6, "pack_count": 42},
+    "pack1": {"name": "7天启动装", "name_en": "7-Day Starter Pack", "price": 47.9, "box_count": 1, "pack_count": 7},
+    "pack2": {"name": "14天常备装", "name_en": "14-Day Care Pack", "price": 79.8, "box_count": 2, "pack_count": 14},
 }
 ALLOWED_RECEIPT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_RECEIPT_BYTES = 8 * 1024 * 1024
@@ -43,6 +41,12 @@ SINGLE_BOX_SHIPPING_FEE = 8.0
 
 def _shipping_fee_for(box_count: int) -> float:
     return 0.0 if box_count >= 2 else SINGLE_BOX_SHIPPING_FEE
+
+
+def _landing_receipt_shipping_fee_for(box_count: int) -> float:
+    """Offer-reset landing receipt checkout uses the visible package total."""
+    del box_count
+    return 0.0
 
 
 def _money(value: float) -> float:
@@ -273,7 +277,7 @@ async def create_landing_order_with_receipt(
 
     subtotal_amount = _money(float(package["price"]))
     box_count = int(package["box_count"])
-    shipping_fee = _shipping_fee_for(box_count)
+    shipping_fee = _landing_receipt_shipping_fee_for(box_count)
     total_amount = _money(subtotal_amount + shipping_fee)
     now = datetime.now()
     customer = {

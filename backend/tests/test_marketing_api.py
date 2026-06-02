@@ -1890,7 +1890,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(contact["handoff_reason"], "high_intent_checkout")
         self.assertFalse(contact.get("automation_paused", False))
 
-    def test_landing_order_with_receipt_charges_shipping_for_one_box(self) -> None:
+    def test_landing_order_with_receipt_uses_offer_reset_total_for_one_box(self) -> None:
         client = self._build_client()
 
         with patch("app.api.v1.orders.upload_public_file_to_firebase", return_value="https://storage.example.com/receipt.png"):
@@ -1907,8 +1907,8 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 201)
         payload = response.json()
-        self.assertEqual(payload["subtotal_amount"], 39.9)
-        self.assertEqual(payload["shipping_fee"], 8.0)
+        self.assertEqual(payload["subtotal_amount"], 47.9)
+        self.assertEqual(payload["shipping_fee"], 0.0)
         self.assertEqual(payload["total_amount"], 47.9)
         self.assertEqual(payload["box_count"], 1)
         self.assertEqual(payload["payment_status"], "payment_submitted")
@@ -1932,9 +1932,9 @@ class MarketingApiTests(unittest.TestCase):
                     "product_id": "pack1",
                     "marketing_consent": "accepted",
                     "marketing_event_id": "receipt_add_to_cart_test_123",
-                    "event_source_url": "https://aqina-sg.web.app/v3/zh?fbclid=test-click",
-                    "page_path": "/v3/zh",
-                    "landing_version": "v3",
+                    "event_source_url": "https://aqina-sg.web.app/zh?fbclid=test-click",
+                    "page_path": "/zh",
+                    "landing_version": "offer_reset",
                     "language": "zh",
                     "marketing_fbp": "fb.1.1710000000.browser",
                     "marketing_fbc": "fb.1.1710000001.click",
@@ -1956,13 +1956,13 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(event["event_name"], "AddToCart")
         self.assertEqual(event["event_id"], "receipt_add_to_cart_test_123")
         self.assertEqual(event["action_source"], "website")
-        self.assertEqual(event["event_source_url"], "https://aqina-sg.web.app/v3/zh?fbclid=test-click")
+        self.assertEqual(event["event_source_url"], "https://aqina-sg.web.app/zh?fbclid=test-click")
         self.assertEqual(event["custom_data"]["value"], 47.9)
         self.assertEqual(event["custom_data"]["currency"], "SGD")
         self.assertEqual(event["custom_data"]["content_ids"], ["pack1"])
-        self.assertEqual(event["custom_data"]["landing_version"], "v3")
+        self.assertEqual(event["custom_data"]["landing_version"], "offer_reset")
         self.assertEqual(event["custom_data"]["language"], "zh")
-        self.assertEqual(event["custom_data"]["page_path"], "/v3/zh")
+        self.assertEqual(event["custom_data"]["page_path"], "/zh")
         self.assertEqual(event["user_data"]["fbp"], "fb.1.1710000000.browser")
         self.assertEqual(event["user_data"]["fbc"], "fb.1.1710000001.click")
         self.assertEqual(event["user_data"]["client_ip_address"], "203.0.113.8")
@@ -2015,10 +2015,29 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 201)
         payload = response.json()
-        self.assertEqual(payload["subtotal_amount"], 75.0)
+        self.assertEqual(payload["subtotal_amount"], 79.8)
         self.assertEqual(payload["shipping_fee"], 0.0)
-        self.assertEqual(payload["total_amount"], 75.0)
+        self.assertEqual(payload["total_amount"], 79.8)
         self.assertEqual(payload["box_count"], 2)
+
+    def test_landing_order_with_receipt_rejects_retired_offer_packages(self) -> None:
+        client = self._build_client()
+
+        for product_id in ["pack4", "pack6", "unknown-pack"]:
+            with self.subTest(product_id=product_id):
+                response = client.post(
+                    "/api/v1/orders/with-receipt",
+                    data={
+                        "customer_name": "Kelvin Tan",
+                        "customer_phone": "6591234567",
+                        "customer_address": "1 Orchard Road, Singapore 238823",
+                        "product_id": product_id,
+                    },
+                    files={"payment_receipt": ("receipt.webp", b"fake-image", "image/webp")},
+                )
+
+                self.assertEqual(response.status_code, 400)
+                self.assertEqual(response.json()["detail"], "Unknown package")
 
     def test_landing_order_with_receipt_normalizes_formatted_phone(self) -> None:
         client = self._build_client()
@@ -2227,7 +2246,7 @@ class MarketingApiTests(unittest.TestCase):
                 "checkout_url": "https://aqina.example.com/paynow/token-444",
                 "status": "active",
                 "contact_id": "contact-4",
-                "total_amount": 75.0,
+                "total_amount": 79.8,
             },
         )
         self.db.seed(
@@ -2240,10 +2259,10 @@ class MarketingApiTests(unittest.TestCase):
                     "address": "1 Orchard Road, Singapore 238823",
                 },
                 "items": [],
-                "subtotal_amount": 75.0,
+                "subtotal_amount": 79.8,
                 "shipping_fee": 0.0,
                 "box_count": 2,
-                "total_amount": 75.0,
+                "total_amount": 79.8,
                 "payment_method": "paynow",
                 "payment_status": "pending",
                 "order_status": "pending",
@@ -2301,10 +2320,10 @@ class MarketingApiTests(unittest.TestCase):
             session_id="session-receipt-ok",
             event_id="event-receipt-ok",
             order_id="order_receipt_ok",
-            total_amount=75.0,
+            total_amount=79.8,
         )
         self.gemini_service.receipt_analysis = {
-            "paid_amount": 75.0,
+            "paid_amount": 79.8,
             "currency": "SGD",
             "bank_transaction_reference": "ABC123456",
             "recipient_reference": "AQINA-order_receipt_ok",
@@ -2327,8 +2346,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["payment_status"], "payment_submitted")
         self.assertEqual(order["transaction_id"], "ABC123456")
         self.assertEqual(verification["status"], "ok")
-        self.assertEqual(verification["expected_amount"], 75.0)
-        self.assertEqual(verification["extracted_amount"], 75.0)
+        self.assertEqual(verification["expected_amount"], 79.8)
+        self.assertEqual(verification["extracted_amount"], 79.8)
         self.assertEqual(verification["reference_number"], "ABC123456")
         self.assertEqual(verification["reference_normalized"], "ABC123456")
         self.assertTrue(verification["amount_match"])
@@ -2340,7 +2359,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payment["payment_verification"]["status"], "ok")
         analysis_calls = [call for call in self.gemini_service.calls if call[0] == "analyze_payment_receipt_image"]
         self.assertEqual(len(analysis_calls), 1)
-        self.assertEqual(analysis_calls[0][1]["expected_amount"], 75.0)
+        self.assertEqual(analysis_calls[0][1]["expected_amount"], 79.8)
 
     def test_whatsapp_receipt_ai_verification_warns_underpaid_without_auto_paid(self) -> None:
         self._seed_active_receipt_checkout(
@@ -2349,7 +2368,7 @@ class MarketingApiTests(unittest.TestCase):
             session_id="session-receipt-underpaid",
             event_id="event-receipt-underpaid",
             order_id="order_receipt_underpaid",
-            total_amount=75.0,
+            total_amount=79.8,
         )
         self.gemini_service.receipt_analysis = {
             "paid_amount": 67.0,
@@ -2373,7 +2392,7 @@ class MarketingApiTests(unittest.TestCase):
         verification = order["payment_verification"]
         self.assertEqual(order["payment_status"], "payment_submitted")
         self.assertEqual(verification["status"], "warning")
-        self.assertEqual(verification["expected_amount"], 75.0)
+        self.assertEqual(verification["expected_amount"], 79.8)
         self.assertEqual(verification["extracted_amount"], 67.0)
         self.assertFalse(verification["amount_match"])
         self.assertIn("Amount does not match expected total", verification["warnings"])
