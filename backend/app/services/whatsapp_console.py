@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import timedelta
 from typing import Any
 
@@ -14,6 +15,7 @@ from app.services.task_queue import get_task_queue_service
 
 
 logger = logging.getLogger(__name__)
+WHATSAPP_TEMPLATE_NAME_PATTERN = re.compile(r"^[a-z0-9_]+$")
 
 OPT_OUT_KEYWORDS = {
     "stop",
@@ -283,6 +285,45 @@ class WhatsAppConsoleService:
         ref.set(doc, merge=True)
         return {"template_id": template_id, **doc}
 
+    def submit_template(self, payload: dict[str, Any], admin: dict[str, Any]) -> dict[str, Any]:
+        name = str(payload["name"]).strip()
+        if not WHATSAPP_TEMPLATE_NAME_PATTERN.fullmatch(name):
+            raise ValueError("WhatsApp template name must use lowercase letters, numbers, and underscores only.")
+        language_code = str(payload.get("language_code") or "en_US").strip()
+        category = str(payload.get("category") or "MARKETING").strip().upper()
+        components = payload.get("components") or []
+        if not components:
+            raise ValueError("WhatsApp template components are required.")
+
+        meta_payload = {
+            "name": name,
+            "language": language_code,
+            "category": category,
+            "components": components,
+            "allow_category_change": bool(payload.get("allow_category_change", True)),
+        }
+        response = self.meta_client.create_whatsapp_template(meta_payload)
+        now = utcnow()
+        template_id = self._template_id(name, language_code)
+        doc = {
+            "name": name,
+            "language_code": language_code,
+            "category": category,
+            "status": str(response.get("status") or "PENDING").upper(),
+            "components": components,
+            "source": "meta_submission",
+            "meta_template_id": response.get("id"),
+            "meta_response": response,
+            "submitted_by": admin.get("email") or admin.get("uid"),
+            "submitted_at": now,
+            "updated_at": now,
+        }
+        ref = self.db.collection("whatsapp_templates").document(template_id)
+        if not ref.get().exists:
+            doc["created_at"] = now
+        ref.set(doc, merge=True)
+        return {"template_id": template_id, **doc}
+
     def sync_templates(self) -> dict[str, Any]:
         response = self.meta_client.list_whatsapp_templates()
         synced = []
@@ -343,6 +384,7 @@ class WhatsAppConsoleService:
             "language_code": request.language_code,
             "body_variables": request.body_variables,
             "audience_tags": request.audience_tags,
+            "customer_locale": request.customer_locale,
             "status": "draft",
             "eligible_count": preview["eligible_count"],
             "skipped_opt_out_count": preview["skipped_opt_out_count"],
@@ -403,6 +445,7 @@ class WhatsAppConsoleService:
             language_code=campaign.get("language_code", "en_US"),
             body_variables=campaign.get("body_variables", []),
             audience_tags=campaign.get("audience_tags", []),
+            customer_locale=campaign.get("customer_locale", "all"),
         )
         self._require_approved_template(request.template_name, request.language_code)
         preview = self._campaign_preview_payload(request)
@@ -416,6 +459,7 @@ class WhatsAppConsoleService:
                 "template_name": campaign["template_name"],
                 "language_code": campaign.get("language_code", "en_US"),
                 "body_variables": campaign.get("body_variables", []),
+                "customer_locale": campaign.get("customer_locale", "all"),
                 "status": "queued",
                 "provider_message_id": None,
                 "error_code": None,
@@ -472,7 +516,11 @@ class WhatsAppConsoleService:
             return {"status": "skipped_recipient_not_queued"}
 
         contact = self.contact_service.get_contact(recipient["contact_id"])
-        if not self._contact_marketing_eligible(contact, campaign.get("audience_tags", [])):
+        if not self._contact_marketing_eligible(
+            contact,
+            campaign.get("audience_tags", []),
+            campaign.get("customer_locale", "all"),
+        ):
             recipient_ref.set(
                 {
                     "status": "skipped_opt_out",
@@ -677,9 +725,10 @@ class WhatsAppConsoleService:
             wa_id = contact.get("identifiers", {}).get("wa_id") or contact.get("identifiers", {}).get("phone_e164")
             if not wa_id:
                 continue
-            if not self._contact_marketing_eligible(contact, request.audience_tags):
+            if not self._contact_marketing_eligible(contact, request.audience_tags, request.customer_locale):
                 skipped_opt_out_count += 1
                 continue
+            customer_locale = self._contact_locale(contact)
             if not self._customer_window_open(contact):
                 window_closed_count += 1
             recipients.append(
@@ -689,6 +738,7 @@ class WhatsAppConsoleService:
                     "wa_id": wa_id,
                     "customer_name": self._contact_name(contact),
                     "current_tag": contact.get("current_tag", ""),
+                    "customer_locale": customer_locale,
                     "window_open": self._customer_window_open(contact),
                 }
             )
@@ -831,7 +881,11 @@ class WhatsAppConsoleService:
         return expires_at is not None and utcnow() <= expires_at
 
     @staticmethod
-    def _contact_marketing_eligible(contact: dict[str, Any], audience_tags: list[str]) -> bool:
+    def _contact_marketing_eligible(
+        contact: dict[str, Any],
+        audience_tags: list[str],
+        customer_locale: str = "all",
+    ) -> bool:
         if contact.get("marketing_opt_in") is not True:
             return False
         if contact.get("marketing_status") == "opted_out":
@@ -840,7 +894,14 @@ class WhatsAppConsoleService:
             return False
         if audience_tags and contact.get("current_tag") not in audience_tags:
             return False
+        if customer_locale in {"zh", "en"} and WhatsAppConsoleService._contact_locale(contact) != customer_locale:
+            return False
         return True
+
+    @staticmethod
+    def _contact_locale(contact: dict[str, Any]) -> str:
+        locale = str(contact.get("chatbot_locale") or "").strip().lower()
+        return locale if locale in {"zh", "en"} else "zh"
 
     @staticmethod
     def _contact_name(contact: dict[str, Any]) -> str:

@@ -40,6 +40,8 @@ LEGACY_ENERGY_PACK_NAME_ZH = "活力" + "升级装"
 
 DEFAULT_PAYNOW_QR_IMAGE = "https://firebasestorage.googleapis.com/v0/b/aqina-chicken-essence.firebasestorage.app/o/aqina-paynow-qr-designed.png?alt=media&token=c1c0596e-b35d-478b-b47a-31206ae3edfa"
 LEGACY_PAYNOW_QR_IMAGE = "/paynow/bp-paynow-qr.png"
+DEFAULT_INITIAL_PROMOTION_IMAGE_ZH = "/chatbot/aqina-pack2-french-poulet-promotion-zh.jpg"
+DEFAULT_INITIAL_PROMOTION_IMAGE_EN = "/chatbot/aqina-pack2-french-poulet-promotion-en.jpg"
 DEFAULT_BRAND_INTRO_IMAGE_ZH = "/chatbot/aqina-purity-cycle-zh.jpg"
 DEFAULT_BRAND_INTRO_IMAGE_EN = "/chatbot/aqina-purity-cycle-en.jpg"
 DEFAULT_PACK1_IMAGE_ZH = "/chatbot/aqina-offer-gift-guide-zh.jpg"
@@ -93,6 +95,10 @@ DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
 ]
 
 DEFAULT_MEDIA_ASSETS = {
+    "initial_promotion_images": {
+        "zh": DEFAULT_INITIAL_PROMOTION_IMAGE_ZH,
+        "en": DEFAULT_INITIAL_PROMOTION_IMAGE_EN,
+    },
     "brand_intro": DEFAULT_BRAND_INTRO_IMAGE_ZH,
     "brand_intro_images": {
         "zh": DEFAULT_BRAND_INTRO_IMAGE_ZH,
@@ -107,6 +113,10 @@ DEFAULT_MEDIA_ASSETS = {
         "en": list(DEFAULT_UGC_SOCIAL_PROOF_IMAGES),
     },
     "captions": {
+        "initial_promotion": {
+            "zh": "现在买 2盒 Aqina 纯鸡精，送 1包 French Poulet Cut Part 五选一，market value SGD8。",
+            "en": "Current offer: buy 2 boxes of AQINA Pure Chicken Essence and choose 1 French Poulet Cut Part gift, market value SGD8.",
+        },
         "brand_intro": {
             "zh": "一图看懂 Aqina 纯鸡精：来源、成分、工艺。",
             "en": "Why AQINA Pure Chicken Essence: source, ingredients, and process.",
@@ -389,7 +399,7 @@ Tone & Style
 - Do not put down ordinary bottled chicken essence or other brands.
 - Do not invent facts, stock, delivery time, payment status, order status, limited-time deadlines, reviews, or live policy.
 - Never expose skill_id, internal referral, lead tag, package code, checkout_ready, escalate, intent tags, or other internal fields in reply_text.
-- Brand images, package images, and the PayNow QR may be sent separately by the system. Do not paste image URLs or checkout URLs in reply_text.
+- The initial promotion image, brand images, package images, and the PayNow QR may be sent separately by the system. Do not paste image URLs or checkout URLs in reply_text.
 - During follow-up, the system may send authorized real customer usage photos as social proof. Do not invent customer names, review quotes, medical outcomes, safety guarantees, or exact usage results. Explain them only as real customer usage references.
 
 New Promotion Source Of Truth
@@ -677,6 +687,23 @@ def _deep_merge(base: dict[str, Any], incoming: dict[str, Any]) -> dict[str, Any
 
 def _normalize_media_assets(media_assets: dict[str, Any], defaults: dict[str, Any]) -> dict[str, Any]:
     normalized = _deep_merge(defaults, media_assets or {})
+
+    initial_promotion_images = (
+        normalized.get("initial_promotion_images")
+        if isinstance(normalized.get("initial_promotion_images"), dict)
+        else {}
+    )
+    default_initial_promotion_images = defaults.get("initial_promotion_images", {})
+    if not initial_promotion_images.get("zh"):
+        initial_promotion_images["zh"] = default_initial_promotion_images.get("zh", "")
+    if (
+        not initial_promotion_images.get("en")
+        or initial_promotion_images.get("en") == default_initial_promotion_images.get("zh")
+    ):
+        initial_promotion_images["en"] = default_initial_promotion_images.get("en") or initial_promotion_images.get(
+            "zh", ""
+        )
+    normalized["initial_promotion_images"] = initial_promotion_images
 
     brand_intro = str(normalized.get("brand_intro") or "").strip()
     brand_intro_images = normalized.get("brand_intro_images") if isinstance(normalized.get("brand_intro_images"), dict) else {}

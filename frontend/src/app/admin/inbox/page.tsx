@@ -54,6 +54,7 @@ import {
   previewWhatsAppCampaign,
   saveWhatsAppTemplate,
   sendWhatsAppTemplate,
+  submitWhatsAppTemplate,
   syncWhatsAppTemplates,
 } from "@/lib/backend-whatsapp-service";
 
@@ -80,7 +81,59 @@ const emptyCampaign = {
   language_code: "en_US",
   body_variables: [] as string[],
   audience_tags: [] as string[],
+  customer_locale: "all" as "all" | "zh" | "en",
 };
+
+const promotionTemplates = [
+  {
+    label: "中文 Promotion",
+    name: "aqina_pack2_french_poulet_offer_zh",
+    language_code: "zh_CN",
+    category: "MARKETING",
+    components: [
+      {
+        type: "BODY",
+        text:
+          "Aqina 纯鸡精现在有 2盒优惠：2盒 SGD79.80，等于每盒 SGD39.90，并送 1包 French Poulet Cut Part 五选一（market value SGD8）。回复“2盒”我帮您确认赠品选择。",
+      },
+      {
+        type: "FOOTER",
+        text: "回复 STOP 可停止收到促销通知",
+      },
+      {
+        type: "BUTTONS",
+        buttons: [
+          { type: "QUICK_REPLY", text: "我要2盒" },
+          { type: "QUICK_REPLY", text: "选择赠品" },
+        ],
+      },
+    ],
+  },
+  {
+    label: "English Promotion",
+    name: "aqina_pack2_french_poulet_offer_en",
+    language_code: "en_US",
+    category: "MARKETING",
+    components: [
+      {
+        type: "BODY",
+        text:
+          "AQINA Pure Chicken Essence offer: 2 boxes for SGD79.80 (SGD39.90/box) with 1 French Poulet Cut Part gift choice, market value SGD8. Reply “2 boxes” to choose your gift.",
+      },
+      {
+        type: "FOOTER",
+        text: "Reply STOP to opt out of promotion updates",
+      },
+      {
+        type: "BUTTONS",
+        buttons: [
+          { type: "QUICK_REPLY", text: "I want 2 boxes" },
+          { type: "QUICK_REPLY", text: "Gift choices" },
+        ],
+      },
+    ],
+  },
+];
 
 export default function AdminInboxPage() {
   const router = useRouter();
@@ -361,6 +414,24 @@ export default function AdminInboxPage() {
     }
   }
 
+  async function handleSubmitPromotionTemplate(template: (typeof promotionTemplates)[number]) {
+    setIsSaving(true);
+    try {
+      await submitWhatsAppTemplate({
+        name: template.name,
+        language_code: template.language_code,
+        category: template.category,
+        components: template.components,
+        allow_category_change: true,
+      });
+      setTemplates(await listWhatsAppTemplates());
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Template submission failed");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
   async function handlePreviewCampaign() {
     setIsSaving(true);
     try {
@@ -520,7 +591,10 @@ export default function AdminInboxPage() {
                   campaignForm={campaignForm}
                   campaignPreview={campaignPreview}
                   isSaving={isSaving}
-                  onFormChange={setCampaignForm}
+                  onFormChange={(value) => {
+                    setCampaignForm(value);
+                    setCampaignPreview(null);
+                  }}
                   onPreview={() => void handlePreviewCampaign()}
                   onCreate={() => void handleCreateCampaign()}
                   onSelectCampaign={(id) => void getWhatsAppCampaign(id).then(setCampaignDetail)}
@@ -536,6 +610,7 @@ export default function AdminInboxPage() {
                   onLocalTemplateChange={setLocalTemplate}
                   onSync={() => void handleSyncTemplates()}
                   onSave={() => void handleSaveLocalTemplate()}
+                  onSubmitPromotion={(template) => void handleSubmitPromotionTemplate(template)}
                 />
               )}
             </div>
@@ -606,15 +681,16 @@ function InboxPanel({
   const canReply = Boolean(conversationDetail && windowOpen);
   const canSendTemplate = Boolean(conversationDetail?.conversation.channel === "whatsapp" && templateName);
   const [activeInspector, setActiveInspector] = useState<"customer" | "source" | "orders">("customer");
-  const [showTemplate, setShowTemplate] = useState(false);
-
-  useEffect(() => {
-    if (conversationDetail?.conversation.channel === "whatsapp") {
-      setShowTemplate(!windowOpen);
-    } else {
-      setShowTemplate(false);
-    }
-  }, [conversationDetail?.conversation.conversation_id, windowOpen]);
+  const [templateVisibilityOverride, setTemplateVisibilityOverride] = useState<{
+    conversationId: string;
+    visible: boolean;
+  } | null>(null);
+  const conversationId = conversationDetail?.conversation.conversation_id || "";
+  const defaultTemplateVisible = Boolean(conversationDetail?.conversation.channel === "whatsapp" && !windowOpen);
+  const showTemplate =
+    templateVisibilityOverride?.conversationId === conversationId
+      ? templateVisibilityOverride.visible
+      : defaultTemplateVisible;
 
   return (
     <section className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[330px_minmax(0,1fr)_340px]">
@@ -808,7 +884,7 @@ function InboxPanel({
             <div className="mt-2 border-t border-[#f0ebe4] pt-2">
               <button
                 type="button"
-                onClick={() => setShowTemplate(!showTemplate)}
+                onClick={() => setTemplateVisibilityOverride({ conversationId, visible: !showTemplate })}
                 className="inline-flex items-center gap-1 text-[11px] font-bold text-[#236b50] hover:text-[#10251d] transition-colors"
               >
                 {showTemplate ? "收起 WhatsApp 模板回复" : "展开 WhatsApp 模板回复"}
@@ -1064,6 +1140,24 @@ function CampaignPanel({
               value={campaignForm.language_code}
               onChange={(value) => onFormChange({ ...campaignForm, language_code: value })}
             />
+            <label className="grid gap-1 text-sm font-semibold">
+              语言受众
+              <select
+                id="whatsapp-campaign-customer-locale"
+                value={campaignForm.customer_locale}
+                onChange={(event) =>
+                  onFormChange({
+                    ...campaignForm,
+                    customer_locale: event.target.value as "all" | "zh" | "en",
+                  })
+                }
+                className={inputClassName}
+              >
+                <option value="all">All opted-in WhatsApp contacts</option>
+                <option value="zh">Chinese / unknown</option>
+                <option value="en">English</option>
+              </select>
+            </label>
             <LabeledInput
               id="whatsapp-campaign-tags"
               label="受众标签，逗号分隔"
@@ -1131,7 +1225,7 @@ function CampaignPanel({
                     <div>
                       <p className="font-semibold">{item.customer_name || item.wa_id}</p>
                       <p className="text-xs text-[#6b746f]">
-                        {item.current_tag || "untagged"} · {item.wa_id}
+                        {item.current_tag || "untagged"} · {item.customer_locale || "zh"} · {item.wa_id}
                       </p>
                     </div>
                     <WindowBadge isOpen={item.window_open} />
@@ -1241,6 +1335,7 @@ function TemplatePanel({
   onLocalTemplateChange,
   onSync,
   onSave,
+  onSubmitPromotion,
 }: {
   templates: WhatsAppTemplate[];
   localTemplate: { name: string; language_code: string; category: string; status: string };
@@ -1248,6 +1343,7 @@ function TemplatePanel({
   onLocalTemplateChange: (value: { name: string; language_code: string; category: string; status: string }) => void;
   onSync: () => void;
   onSave: () => void;
+  onSubmitPromotion: (template: (typeof promotionTemplates)[number]) => void;
 }) {
   return (
     <section className="grid h-full min-h-0 gap-4 xl:grid-cols-[380px_minmax(0,1fr)]">
@@ -1262,6 +1358,23 @@ function TemplatePanel({
             <RefreshCw size={16} />
             Sync from Meta
           </button>
+          <div className="rounded-md border border-[#e5ddd1] bg-[#faf8f3] p-3">
+            <p className="text-xs font-bold uppercase text-[#6b746f]">Promotion template submit</p>
+            <div className="mt-3 space-y-2">
+              {promotionTemplates.map((template) => (
+                <button
+                  key={template.name}
+                  id={`whatsapp-template-submit-${template.language_code.toLowerCase()}`}
+                  onClick={() => onSubmitPromotion(template)}
+                  disabled={isSaving}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#236b50] bg-white px-3 py-2 text-sm font-bold text-[#236b50] disabled:opacity-50"
+                >
+                  <Send size={16} />
+                  {template.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <LabeledInput
             id="whatsapp-local-template-name"
             label="Template name"
@@ -1312,6 +1425,7 @@ function TemplatePanel({
                       <p className="mt-1 text-xs text-[#6b746f]">
                         {template.language_code} · {template.category}
                       </p>
+                      {template.source && <p className="mt-1 text-xs text-[#6b746f]">{template.source}</p>}
                     </div>
                     <StatusPill status={template.status} />
                   </div>

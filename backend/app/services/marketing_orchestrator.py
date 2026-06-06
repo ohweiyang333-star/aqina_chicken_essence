@@ -40,6 +40,39 @@ FINAL_COMMENT_EVENT_STATUSES = {
 }
 MIN_PAYMENT_REFERENCE_LENGTH = 6
 DUPLICATE_PAYMENT_REFERENCE_FLAG = "duplicate_payment_reference"
+INITIAL_PROMOTION_SUPPRESSION_TERMS = (
+    "退款",
+    "投诉",
+    "退货",
+    "换货",
+    "取消订单",
+    "转人工",
+    "真人",
+    "人工",
+    "客服",
+    "负责人",
+    "订单状态",
+    "付款状态",
+    "物流",
+    "追踪",
+    "没收到",
+    "还没收到",
+    "破损",
+    "refund",
+    "complaint",
+    "complain",
+    "cancel order",
+    "order status",
+    "payment status",
+    "tracking",
+    "where is my order",
+    "already paid",
+    "paid already",
+    "person in charge",
+    "human",
+    "staff",
+    "agent",
+)
 
 
 class MarketingAutomationOrchestrator:
@@ -717,6 +750,14 @@ class MarketingAutomationOrchestrator:
             current_tag=contact.get("current_tag"),
         )
         customer_locale = _detect_customer_locale(incoming_text, contact)
+        if not self._should_skip_initial_promotion(incoming_text, contact):
+            self._send_initial_promotion_image(
+                channel=event["channel"],
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                runtime_settings=runtime_settings,
+                customer_locale=customer_locale,
+            )
         turn = self._normalize_turn(
             self.gemini_service.generate_chat_reply(
                 contact=contact,
@@ -1204,6 +1245,7 @@ class MarketingAutomationOrchestrator:
 
         contact = self.contact_service.get_contact(contact_id)
         sent_media = deepcopy(contact.get("sent_media") or {})
+        sent_media.setdefault("initial_promotion_languages", {})
         if isinstance(sent_media.get("brand_intro"), bool) and sent_media.get("brand_intro"):
             sent_media.setdefault("brand_intro_languages", {})["zh"] = True
         sent_media.setdefault("brand_intro_languages", {})
@@ -1268,6 +1310,61 @@ class MarketingAutomationOrchestrator:
                 self.contact_service.update_contact_profile(contact_id, {"sent_media": sent_media})
             except Exception as exc:  # noqa: BLE001 - media failures should not block chatbot text.
                 logger.warning("chatbot_product_media_failed contact_id=%s package_code=%s error=%s", contact_id, package_code, exc)
+
+    def _send_initial_promotion_image(
+        self,
+        *,
+        channel: str,
+        contact_id: str,
+        conversation_id: str,
+        runtime_settings: dict[str, Any],
+        customer_locale: str,
+    ) -> None:
+        media_assets = runtime_settings.get("media_assets", {}) or {}
+        promotion_image = _localized_media_value(
+            media_assets.get("initial_promotion_images"),
+            customer_locale,
+        )
+        if not promotion_image:
+            return
+
+        contact = self.contact_service.get_contact(contact_id)
+        sent_media = deepcopy(contact.get("sent_media") or {})
+        sent_media.setdefault("initial_promotion_languages", {})
+        if sent_media.get("initial_promotion") or sent_media.get("initial_promotion_languages", {}).get(
+            customer_locale
+        ):
+            return
+
+        try:
+            media_service = MetaMediaAssetService(db=self.db, meta_client=self.meta_client)
+            result = media_service.send_chatbot_image(
+                channel=channel,
+                contact=contact,
+                source_url=promotion_image,
+                cache_key=f"initial_promotion_{customer_locale}",
+                caption=_localized_media_value(
+                    (media_assets.get("captions", {}) or {}).get("initial_promotion"),
+                    customer_locale,
+                ),
+            )
+            self._append_outbound_media_message(
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                channel=channel,
+                text=f"Initial promotion image sent: {customer_locale}",
+                source="chatbot_initial_promotion_media",
+                provider_message_id=self._extract_provider_message_id(channel, result),
+            )
+            sent_media["initial_promotion"] = True
+            sent_media.setdefault("initial_promotion_languages", {})[customer_locale] = True
+            self.contact_service.update_contact_profile(contact_id, {"sent_media": sent_media})
+        except Exception as exc:  # noqa: BLE001 - media failures should not block chatbot text.
+            logger.warning(
+                "chatbot_initial_promotion_media_failed contact_id=%s error=%s",
+                contact_id,
+                exc,
+            )
 
     def _append_outbound_media_message(
         self,
@@ -1652,6 +1749,18 @@ class MarketingAutomationOrchestrator:
         return any(term in normalized for term in payment_terms) or (
             "付款" in normalized and any(term in normalized for term in screenshot_terms)
         )
+
+    @staticmethod
+    def _should_skip_initial_promotion(incoming_text: str, contact: dict[str, Any]) -> bool:
+        if contact.get("automation_paused"):
+            return True
+        if contact.get("current_tag") in {"cart_hot", "handoff_pending"}:
+            return True
+        if contact.get("checkout_session_id") or contact.get("precheckout_paynow_qr_sent"):
+            return True
+
+        normalized = str(incoming_text or "").casefold()
+        return any(term in normalized for term in INITIAL_PROMOTION_SUPPRESSION_TERMS)
 
     @staticmethod
     def _payment_ack_text() -> str:

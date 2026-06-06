@@ -141,6 +141,15 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("Do not repeat prices", payload["crm_follow_up_rules"]["t3h"]["default"]["instruction"])
         self.assertIn("哈喽 [顾客名字]", payload["crm_follow_up_rules"]["comment_hook"]["public_reply"]["instruction"])
         self.assertIn("media_assets", payload)
+        self.assertEqual(
+            payload["media_assets"]["initial_promotion_images"]["zh"],
+            "/chatbot/aqina-pack2-french-poulet-promotion-zh.jpg",
+        )
+        self.assertEqual(
+            payload["media_assets"]["initial_promotion_images"]["en"],
+            "/chatbot/aqina-pack2-french-poulet-promotion-en.jpg",
+        )
+        self.assertIn("French Poulet Cut Part", payload["media_assets"]["captions"]["initial_promotion"]["zh"])
         self.assertIn("brand_intro", payload["media_assets"])
         self.assertEqual(payload["media_assets"]["brand_intro_images"]["zh"], "/chatbot/aqina-purity-cycle-zh.jpg")
         self.assertEqual(payload["media_assets"]["brand_intro_images"]["en"], "/chatbot/aqina-purity-cycle-en.jpg")
@@ -1332,7 +1341,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(len(message_calls), 1)
         self.assertNotIn("/paynow/", message_calls[0][1]["text"])
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
-        self.assertEqual(len(image_calls), 3)
+        self.assertEqual(len(image_calls), 4)
         outbound_images = [
             snapshot.to_dict()
             for snapshot in self.db.collection("marketing_conversations")
@@ -1343,7 +1352,12 @@ class MarketingApiTests(unittest.TestCase):
         ]
         self.assertEqual(
             {item["source"] for item in outbound_images},
-            {"chatbot_brand_intro_media", "chatbot_product_media", "paynow_qr_media"},
+            {
+                "chatbot_initial_promotion_media",
+                "chatbot_brand_intro_media",
+                "chatbot_product_media",
+                "paynow_qr_media",
+            },
         )
 
     def test_process_inbound_message_uses_whatsapp_sender_phone_for_checkout(self) -> None:
@@ -1643,7 +1657,7 @@ class MarketingApiTests(unittest.TestCase):
         contact = self.db.collection("marketing_contacts").document("contact-trial").get().to_dict()
         self.assertEqual(contact["selected_package_code"], "pack1")
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
-        self.assertEqual(len(image_calls), 3)
+        self.assertEqual(len(image_calls), 4)
 
     def test_process_inbound_message_sends_brand_and_package_images_without_url_text(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -1687,7 +1701,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("firebasestorage.googleapis.com", message_calls[0][1]["text"])
         self.assertNotIn("http", message_calls[0][1]["text"])
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
-        self.assertEqual(len(image_calls), 2)
+        self.assertEqual(len(image_calls), 3)
+        call_names = [call[0] for call in self.meta_client.calls]
+        self.assertLess(call_names.index("send_whatsapp_image"), call_names.index("send_whatsapp_text"))
 
         outbound_images = [
             snapshot.to_dict()
@@ -1699,14 +1715,21 @@ class MarketingApiTests(unittest.TestCase):
         ]
         self.assertEqual(
             [item["source"] for item in outbound_images],
-            ["chatbot_brand_intro_media", "chatbot_product_media"],
+            ["chatbot_initial_promotion_media", "chatbot_brand_intro_media", "chatbot_product_media"],
         )
         contact = self.db.collection("marketing_contacts").document("contact-media").get().to_dict()
+        self.assertTrue(contact["sent_media"]["initial_promotion"])
+        self.assertTrue(contact["sent_media"]["initial_promotion_languages"]["zh"])
         self.assertTrue(contact["sent_media"]["brand_intro"])
         self.assertTrue(contact["sent_media"]["brand_intro_languages"]["zh"])
         self.assertTrue(contact["sent_media"]["package_images"]["pack2"])
+        promo_media = self.db.collection("meta_media_assets").document("initial_promotion_zh_whatsapp").get().to_dict()
         brand_media = self.db.collection("meta_media_assets").document("brand_intro_zh_whatsapp").get().to_dict()
         pack_media = self.db.collection("meta_media_assets").document("package_pack2_zh_whatsapp").get().to_dict()
+        self.assertEqual(
+            promo_media["source_url"],
+            "https://aqina.example.com/chatbot/aqina-pack2-french-poulet-promotion-zh.jpg",
+        )
         self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-purity-cycle-zh.jpg")
         self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-offer-gift-guide-zh.jpg")
 
@@ -1751,15 +1774,23 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(len(message_calls), 1)
         self.assertNotIn("http", message_calls[0][1]["text"])
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
-        self.assertEqual(len(image_calls), 2)
-        self.assertIn("french poulet cut part", image_calls[1][1]["caption"].lower())
+        self.assertEqual(len(image_calls), 3)
+        self.assertIn("current offer", image_calls[0][1]["caption"].lower())
+        self.assertIn("french poulet cut part", image_calls[2][1]["caption"].lower())
 
         contact = self.db.collection("marketing_contacts").document("contact-media-en").get().to_dict()
         self.assertEqual(contact["chatbot_locale"], "en")
+        self.assertTrue(contact["sent_media"]["initial_promotion"])
+        self.assertTrue(contact["sent_media"]["initial_promotion_languages"]["en"])
         self.assertTrue(contact["sent_media"]["brand_intro_languages"]["en"])
         self.assertTrue(contact["sent_media"]["package_images"]["pack2"])
+        promo_media = self.db.collection("meta_media_assets").document("initial_promotion_en_whatsapp").get().to_dict()
         brand_media = self.db.collection("meta_media_assets").document("brand_intro_en_whatsapp").get().to_dict()
         pack_media = self.db.collection("meta_media_assets").document("package_pack2_en_whatsapp").get().to_dict()
+        self.assertEqual(
+            promo_media["source_url"],
+            "https://aqina.example.com/chatbot/aqina-pack2-french-poulet-promotion-en.jpg",
+        )
         self.assertEqual(brand_media["source_url"], "https://aqina.example.com/chatbot/aqina-purity-cycle-en.jpg")
         self.assertEqual(pack_media["source_url"], "https://aqina.example.com/chatbot/aqina-offer-gift-guide-en.jpg")
 
@@ -1794,6 +1825,8 @@ class MarketingApiTests(unittest.TestCase):
         self.db.collection("marketing_contacts").document("contact-media-seen").set(
             {
                 "sent_media": {
+                    "initial_promotion": True,
+                    "initial_promotion_languages": {"zh": True},
                     "brand_intro": True,
                     "package_images": {"pack2": True},
                 }
@@ -2194,6 +2227,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         contact = self.db.collection("marketing_contacts").document("contact-2").get().to_dict()
         self.assertEqual(contact["current_tag"], "handoff_pending")
+        image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
+        self.assertEqual(len(image_calls), 0)
         escalation_docs = self.db.collection("marketing_escalations").stream()
         self.assertEqual(len(escalation_docs), 1)
         escalation = escalation_docs[0].to_dict()
@@ -4133,6 +4168,92 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["skipped_opt_out_count"], 1)
         self.assertEqual(payload["recipients"][0]["contact_id"], "contact-opted-in")
 
+    def test_submit_whatsapp_template_posts_to_meta_and_mirrors_pending_status(self) -> None:
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/whatsapp/templates/submit",
+            json={
+                "name": "aqina_pack2_french_poulet_offer_en",
+                "language_code": "en_US",
+                "category": "MARKETING",
+                "components": [
+                    {
+                        "type": "BODY",
+                        "text": (
+                            "AQINA Pure Chicken Essence offer: 2 boxes for SGD79.80 "
+                            "with 1 French Poulet Cut Part gift choice."
+                        ),
+                    },
+                    {"type": "FOOTER", "text": "Reply STOP to opt out"},
+                ],
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["status"], "PENDING")
+        self.assertEqual(payload["source"], "meta_submission")
+        self.assertEqual(payload["meta_template_id"], "template-created-id")
+        template_call = [call for call in self.meta_client.calls if call[0] == "create_whatsapp_template"][0]
+        self.assertEqual(template_call[1]["payload"]["language"], "en_US")
+        self.assertTrue(template_call[1]["payload"]["allow_category_change"])
+        saved = self.db.collection("whatsapp_templates").document(payload["template_id"]).get().to_dict()
+        self.assertEqual(saved["status"], "PENDING")
+        self.assertEqual(saved["name"], "aqina_pack2_french_poulet_offer_en")
+
+    def test_whatsapp_campaign_preview_filters_by_customer_locale(self) -> None:
+        self._seed_campaign_contact(
+            contact_id="contact-zh",
+            wa_id="6592100001",
+            name="Chen",
+            marketing_opt_in=True,
+            chatbot_locale="zh",
+        )
+        self._seed_campaign_contact(
+            contact_id="contact-en",
+            wa_id="6592100002",
+            name="Emily",
+            marketing_opt_in=True,
+            chatbot_locale="en",
+        )
+        self._seed_campaign_contact(
+            contact_id="contact-unknown",
+            wa_id="6592100003",
+            name="May",
+            marketing_opt_in=True,
+        )
+        self.db.seed(
+            "whatsapp_templates/campaign-template-locale",
+            {
+                "name": "aqina_pack2_french_poulet_offer_en",
+                "language_code": "en_US",
+                "category": "MARKETING",
+                "status": "APPROVED",
+                "components": [],
+                "created_at": "2026-04-10T00:00:00Z",
+                "updated_at": "2026-04-10T00:00:00Z",
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/whatsapp/campaigns/preview",
+            json={
+                "name": "Pack 2 EN",
+                "template_name": "aqina_pack2_french_poulet_offer_en",
+                "language_code": "en_US",
+                "customer_locale": "en",
+            },
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["eligible_count"], 1)
+        self.assertEqual(payload["recipients"][0]["contact_id"], "contact-en")
+        self.assertEqual(payload["recipients"][0]["customer_locale"], "en")
+
     def test_whatsapp_campaign_launch_queues_recipients_without_sync_broadcast(self) -> None:
         self._seed_campaign_contact(
             contact_id="contact-campaign-1",
@@ -4483,26 +4604,27 @@ class MarketingApiTests(unittest.TestCase):
         name: str,
         marketing_opt_in: bool,
         marketing_status: str = "opted_in",
+        chatbot_locale: str | None = None,
     ) -> None:
-        self.db.seed(
-            f"marketing_contacts/{contact_id}",
-            {
-                "channel": "whatsapp",
-                "identifiers": {"wa_id": wa_id, "phone_e164": wa_id},
-                "profile": {"name": name},
-                "order_fields": {"name": name, "phone": wa_id},
-                "current_tag": "qualified_warm",
-                "marketing_opt_in": marketing_opt_in,
-                "opt_in_source": "test",
-                "opt_in_at": "2026-04-10T00:00:00Z" if marketing_opt_in else None,
-                "opt_out_at": None if marketing_opt_in else "2026-04-10T00:00:00Z",
-                "marketing_status": marketing_status,
-                "latest_conversation_id": f"conv-{contact_id}",
-                "status": "active",
-                "created_at": "2026-04-10T00:00:00Z",
-                "updated_at": "2026-04-10T00:00:00Z",
-            },
-        )
+        contact_payload = {
+            "channel": "whatsapp",
+            "identifiers": {"wa_id": wa_id, "phone_e164": wa_id},
+            "profile": {"name": name},
+            "order_fields": {"name": name, "phone": wa_id},
+            "current_tag": "qualified_warm",
+            "marketing_opt_in": marketing_opt_in,
+            "opt_in_source": "test",
+            "opt_in_at": "2026-04-10T00:00:00Z" if marketing_opt_in else None,
+            "opt_out_at": None if marketing_opt_in else "2026-04-10T00:00:00Z",
+            "marketing_status": marketing_status,
+            "latest_conversation_id": f"conv-{contact_id}",
+            "status": "active",
+            "created_at": "2026-04-10T00:00:00Z",
+            "updated_at": "2026-04-10T00:00:00Z",
+        }
+        if chatbot_locale:
+            contact_payload["chatbot_locale"] = chatbot_locale
+        self.db.seed(f"marketing_contacts/{contact_id}", contact_payload)
         self.db.seed(
             f"marketing_conversations/conv-{contact_id}",
             {

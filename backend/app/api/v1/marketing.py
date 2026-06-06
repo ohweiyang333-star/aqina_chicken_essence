@@ -22,6 +22,7 @@ from app.models.marketing import (
     SendMarketingTextRequest,
     SendWhatsAppTemplateRequest,
     SendWhatsAppTextRequest,
+    SubmitWhatsAppTemplateRequest,
     UpdateMarketingAutomationRequest,
     UpdateMarketingContactTagRequest,
     UpdateWhatsAppAutomationRequest,
@@ -440,6 +441,17 @@ async def upsert_whatsapp_template(body: UpsertWhatsAppTemplateRequest, db: DB, 
     """Save a local WhatsApp template mirror for inbox and campaigns."""
     del admin
     return _build_whatsapp_console(db).upsert_template(body.model_dump())
+
+
+@router.post("/whatsapp/templates/submit")
+async def submit_whatsapp_template(body: SubmitWhatsAppTemplateRequest, db: DB, admin: Admin):
+    """Submit a WhatsApp template to Meta review and mirror the returned status."""
+    try:
+        return _build_whatsapp_console(db).submit_template(body.model_dump(), admin)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
 
 @router.post("/whatsapp/templates/sync")

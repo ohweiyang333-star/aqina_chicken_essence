@@ -109,6 +109,7 @@ class ChatbotSkill(BaseModel):
 class ChatbotMediaAssets(BaseModel):
     """Reusable media assets the chatbot may send as files."""
 
+    initial_promotion_images: dict[str, str] = Field(default_factory=dict)
     brand_intro: str = ""
     brand_intro_images: dict[str, str] = Field(default_factory=dict)
     package_images: dict[str, Any] = Field(default_factory=dict)

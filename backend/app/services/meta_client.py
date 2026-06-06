@@ -265,10 +265,15 @@ class MetaMessagingClient:
 
     def create_whatsapp_template(self, payload: dict[str, Any]) -> dict[str, Any]:
         """Create a WhatsApp template through the Business Management API."""
+        template_payload = dict(payload)
+        allow_category_change = template_payload.pop("allow_category_change", None)
+        params: dict[str, Any] = {"access_token": settings.meta_whatsapp_access_token}
+        if allow_category_change is not None:
+            params["allow_category_change"] = str(bool(allow_category_change)).lower()
         return self._post(
             f"/{settings.meta_whatsapp_business_account_id}/message_templates",
-            json=payload,
-            params={"access_token": settings.meta_whatsapp_access_token},
+            json=template_payload,
+            params=params,
         )
 
     def get_whatsapp_phone_number_health(self) -> dict[str, Any]:

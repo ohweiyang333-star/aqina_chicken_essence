@@ -51,6 +51,8 @@ export interface WhatsAppTemplate {
   category: string;
   status: string;
   components: Array<Record<string, unknown>>;
+  source?: string;
+  meta_template_id?: string | null;
   updated_at?: string;
 }
 
@@ -79,6 +81,7 @@ export interface WhatsAppCampaignPreview {
     wa_id: string;
     customer_name: string;
     current_tag: string;
+    customer_locale?: "zh" | "en";
     window_open: boolean;
   }>;
 }
@@ -90,6 +93,7 @@ export interface WhatsAppCampaign {
   language_code: string;
   body_variables: string[];
   audience_tags: string[];
+  customer_locale?: "all" | "zh" | "en";
   status: string;
   eligible_count: number;
   queued_count: number;
@@ -120,6 +124,7 @@ export interface WhatsAppCampaignPayload {
   language_code: string;
   body_variables: string[];
   audience_tags: string[];
+  customer_locale?: "all" | "zh" | "en";
 }
 
 export async function getWhatsAppHealth(): Promise<WhatsAppHealth> {
@@ -195,6 +200,16 @@ export async function saveWhatsAppTemplate(template: {
   components: Array<Record<string, unknown>>;
 }) {
   return apiClient.post<WhatsAppTemplate>("/api/v1/marketing/whatsapp/templates", template);
+}
+
+export async function submitWhatsAppTemplate(template: {
+  name: string;
+  language_code: string;
+  category: string;
+  components: Array<Record<string, unknown>>;
+  allow_category_change?: boolean;
+}) {
+  return apiClient.post<WhatsAppTemplate>("/api/v1/marketing/whatsapp/templates/submit", template);
 }
 
 export async function previewWhatsAppCampaign(payload: WhatsAppCampaignPayload) {

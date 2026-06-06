@@ -87,6 +87,16 @@ class UpsertWhatsAppTemplateRequest(BaseModel):
     components: list[dict[str, Any]] = Field(default_factory=list)
 
 
+class SubmitWhatsAppTemplateRequest(BaseModel):
+    """Admin payload for submitting a WhatsApp template to Meta review."""
+
+    name: str = Field(..., min_length=1, max_length=512)
+    language_code: str = Field(default="en_US", min_length=2, max_length=32)
+    category: str = Field(default="MARKETING", min_length=1, max_length=80)
+    components: list[dict[str, Any]] = Field(..., min_length=1)
+    allow_category_change: bool = True
+
+
 class WhatsAppCampaignRequest(BaseModel):
     """Draft or preview payload for a compliant WhatsApp template campaign."""
 
@@ -95,6 +105,7 @@ class WhatsAppCampaignRequest(BaseModel):
     language_code: str = Field(default="en_US", min_length=2, max_length=32)
     body_variables: list[str] = Field(default_factory=list)
     audience_tags: list[str] = Field(default_factory=list)
+    customer_locale: Literal["all", "zh", "en"] = "all"
 
 
 class LaunchWhatsAppCampaignRequest(BaseModel):
