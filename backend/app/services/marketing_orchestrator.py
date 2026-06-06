@@ -73,6 +73,36 @@ INITIAL_PROMOTION_SUPPRESSION_TERMS = (
     "staff",
     "agent",
 )
+DELIVERY_FEE_QUESTION_TERMS = (
+    "delivery fee",
+    "delivery fees",
+    "shipping fee",
+    "shipping fees",
+    "postage",
+    "delivery charge",
+    "shipping charge",
+    "delivery cost",
+    "shipping cost",
+    "运费",
+    "邮费",
+    "配送费",
+    "送货费",
+)
+DELIVERY_FEE_ANSWER_TERMS = (
+    "include singapore delivery fee",
+    "includes singapore delivery fee",
+    "included singapore delivery fee",
+    "no separate delivery fee",
+    "no extra delivery fee",
+    "delivery fee is included",
+    "delivery fees are included",
+    "已包含新加坡配送费",
+    "包含新加坡配送费",
+    "不需要另加邮费",
+    "无需另加邮费",
+    "没有额外配送费",
+    "不另收配送费",
+)
 
 
 class MarketingAutomationOrchestrator:
@@ -766,6 +796,11 @@ class MarketingAutomationOrchestrator:
                 channel=event["channel"],
                 runtime_settings=runtime_settings,
             )
+        )
+        turn.reply_text = _ensure_delivery_fee_answer(
+            incoming_text=incoming_text,
+            reply_text=turn.reply_text,
+            customer_locale=customer_locale,
         )
 
         turn_order_fields = turn.order_fields.model_dump()
@@ -2199,6 +2234,32 @@ def _detect_customer_locale(incoming_text: str, contact: dict[str, Any]) -> str:
     if previous_locale in {"zh", "en"}:
         return previous_locale
     return "zh"
+
+
+def _ensure_delivery_fee_answer(*, incoming_text: str, reply_text: str, customer_locale: str) -> str:
+    if not _asks_delivery_fee(incoming_text):
+        return reply_text
+    if _answers_delivery_fee(reply_text):
+        return reply_text
+    prefix = (
+        "The listed prices already include Singapore delivery fee, so there is no separate delivery fee."
+        if customer_locale == "en"
+        else "目前 1盒 SGD47.90、2盒 SGD79.80 已包含新加坡配送费，不需要另外加邮费。"
+    )
+    text = str(reply_text or "").strip()
+    if not text:
+        return prefix
+    return f"{prefix}\n\n{text}"
+
+
+def _asks_delivery_fee(text: str) -> bool:
+    normalized = str(text or "").strip().lower()
+    return any(term in normalized for term in DELIVERY_FEE_QUESTION_TERMS)
+
+
+def _answers_delivery_fee(text: str) -> bool:
+    normalized = str(text or "").strip().lower()
+    return any(term in normalized for term in DELIVERY_FEE_ANSWER_TERMS)
 
 
 def _localized_media_value(value: Any, locale: str) -> str:

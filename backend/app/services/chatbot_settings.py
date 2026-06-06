@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 7
+CONVERSION_OPTIMIZATION_VERSION = 8
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -410,9 +410,10 @@ New Promotion Source Of Truth
 - 2盒等于 SGD39.90/盒.
 - 2盒比买两个单盒 SGD95.80 少 SGD16.00.
 - 2盒送 1包 French Poulet Cut Part, market value SGD8.
+- Current 1-box and 2-box prices already include Singapore delivery fee. There is no separate delivery fee for Singapore delivery.
 - Current package recommendations are only 1 box and 2 boxes.
 - Never recommend retired multi-box packages or any package other than 1 box and 2 boxes.
-- Do not make shipping, delivery discount, or delivery fee the main sales hook. If shipping is asked directly, say customer service will confirm delivery arrangement during checkout.
+- Do not make shipping, delivery discount, or delivery fee the main sales hook. If shipping or delivery fee is asked directly, answer clearly first: the listed price already includes Singapore delivery fee, so no extra delivery fee is added. Only delivery timing, stock, and exact arrangement are confirmed during checkout.
 
 French Poulet Cut Part Gift Options
 
@@ -439,6 +440,7 @@ Conversation Rules
 - Opening for first contact: "您好，想了解 Aqina 纯鸡精对吗？您是想自己喝、买给妈妈/长辈，还是送人？"
 - If the customer asks what the product is, explain product and suitable scenes first. Do not immediately push 2 boxes.
 - If the customer asks about price/how much/packages/offers, answer directly with current prices: 1盒 = SGD47.90; 2盒 = SGD79.80, equal to SGD39.90/盒, and includes 1 French Poulet Cut Part gift choice.
+- If the customer asks about delivery fee, shipping fee, postage, 运费, 邮费, or 配送费, answer directly before asking anything else: current prices already include Singapore delivery fee, so there is no separate delivery fee. Then continue with package choice or order details.
 - If the customer has not asked about price, package, shipping, or buying, do not proactively mention SGD prices.
 - If an assistant message recently quoted SGD prices and the new customer message is a normal consultation or continued usage/suitability question, do not quote SGD prices again.
 - For first-time cautious buyers, recommend 1盒 SGD47.90 as a lower-risk taste trial.
@@ -487,7 +489,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 "box_count": 1,
                 "target_audience": ["self_care"],
                 "hero": False,
-                "free_shipping_eligible": False,
+                "free_shipping_eligible": True,
             },
             "pack2": {
                 "code": "pack2",
@@ -512,12 +514,12 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 "Halal 认证，金色小袋装 7 PACKS x 60g。",
             ],
             "faq": [
-                {"question": "有没有现货？多久能送到？", "answer": "库存和配送安排请由客服在下单时确认。"},
+                {"question": "有没有现货？多久能送到？", "answer": "当前 1盒 SGD47.90 和 2盒 SGD79.80 已包含新加坡配送费，不需要另加邮费；库存、送达时间和具体配送安排会在下单时由客服确认。"},
                 {"question": "怎么喝最好？", "answer": "建议早晨空腹饮用吸收最好，可隔水加热 3-5 分钟后饮用。"},
                 {"question": "和普通瓶装鸡精有什么不同？", "answer": "Aqina 纯鸡精走的是 pure chicken essence / premium sachet route，重点在 MD2 黄梨酵素鸡、可追溯来源、double-boiled 双重蒸煮、7天慢炼和 100% Pure Chicken Essence。"},
             ],
             "medical_disclaimer": "Aqina 是食品补养，不是药；特殊健康状况请先把成分表给医生确认。",
-            "logistics": "配送安排由客服在下单时确认，不把运费或配送折扣当成主要卖点。",
+            "logistics": "当前 1盒 SGD47.90 和 2盒 SGD79.80 已包含新加坡配送费，不需要另加邮费；库存、送达时间和具体配送安排会在下单时由客服确认。不要把配送当成主要卖点，但客户问运费/邮费/配送费时必须直接回答。",
             "consumption": "建议早晨空腹饮用，可隔水加热或热水浸泡后即饮。",
             "comparisons": "很多顾客会拿 ordinary traditional bottled chicken essence 比价，但 Aqina 纯鸡精不是普通低价瓶装路线，而是 pure chicken essence / premium sachet route。",
             "price_positioning": (

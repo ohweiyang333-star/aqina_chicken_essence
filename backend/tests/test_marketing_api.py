@@ -110,12 +110,14 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 7)
+        self.assertEqual(payload["conversion_optimization_version"], 8)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertIn("You are Aqina WhatsApp / Messenger private sales support", payload["system_prompt"])
         self.assertIn("1盒 = SGD47.90", payload["system_prompt"])
         self.assertIn("2盒 = SGD79.80", payload["system_prompt"])
         self.assertIn("French Poulet Cut Part", payload["system_prompt"])
+        self.assertIn("already include Singapore delivery fee", payload["system_prompt"])
+        self.assertIn("no separate delivery fee", payload["system_prompt"])
         self.assertIn("Aqina 是食品补养，不是药", payload["system_prompt"])
         self.assertNotIn(RETIRED_PACKAGE_CODE, payload["packages"])
         for code in ["pack1", "pack2"]:
@@ -246,7 +248,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 7,
+                "conversion_optimization_version": 8,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -326,7 +328,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 7)
+        self.assertEqual(payload["conversion_optimization_version"], 8)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -349,6 +351,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("2盒 = SGD79.80", prompt)
         self.assertIn("SGD39.90/盒", prompt)
         self.assertIn("SGD16.00", prompt)
+        self.assertIn("already include Singapore delivery fee", prompt)
+        self.assertIn("no separate delivery fee", prompt)
         self.assertIn("+6591212369", prompt)
         self.assertIn("non_product_human_help", prompt)
         self.assertIn("unknown_requires_human", prompt)
@@ -378,6 +382,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("double-boiled 双重蒸煮", price_copy)
         self.assertIn("not the ordinary low-price bottled route", price_copy)
         self.assertIn("price_positioning", settings_doc["knowledge_base"])
+        self.assertIn("不需要另加邮费", settings_doc["knowledge_base"]["logistics"])
         for retired_copy in ["SGD 75", "SGD75", "SGD 149", "SGD149", "SGD 219", "SGD219", "4盒", "6盒", "free shipping"]:
             self.assertNotIn(retired_copy, serialized)
 
@@ -1265,6 +1270,24 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("Incoming asks price/order/shipping: yes", prompt)
         self.assertIn("price_objection", prompt)
 
+    def test_gemini_chat_prompt_requires_direct_delivery_fee_answer(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import GeminiConversationService
+
+        prompt = GeminiConversationService._build_chat_prompt(
+            contact={"current_tag": "qualified_warm", "lead_goal": "pregnancy"},
+            messages=[],
+            incoming_text="How much is the delivery fees?",
+            channel="messenger",
+            runtime_settings=get_default_chatbot_settings(),
+        )
+
+        self.assertIn("Incoming asks price/order/shipping: yes", prompt)
+        self.assertIn("reply_text must first state clearly", prompt)
+        self.assertIn("current prices already include Singapore delivery fee", prompt)
+        self.assertIn("there is no separate delivery fee", prompt)
+        self.assertIn("Do not answer this with vague delivery-arrangement language", prompt)
+
     def test_process_inbound_message_creates_paynow_checkout_session_without_email(self) -> None:
         self.gemini_service = FakeGeminiService(
             chat_result={
@@ -1658,6 +1681,59 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(contact["selected_package_code"], "pack1")
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
         self.assertEqual(len(image_calls), 4)
+
+    def test_process_inbound_message_prepends_direct_delivery_fee_answer(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": (
+                    "Our customer service team will confirm the delivery arrangements with you during checkout. "
+                    "Would you like to start with 1 box at SGD47.90 or the 2-box value pack at SGD79.80?"
+                ),
+                "next_tag": "qualified_warm",
+                "lead_goal": "pregnancy",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-delivery-fee",
+            conversation_id="conv-delivery-fee",
+            event_id="event-delivery-fee",
+            channel="messenger",
+            incoming_text="How much is the delivery fees?",
+            identifier_key="psid",
+            identifier_value="psid-delivery-fee",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-delivery-fee"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        outbound_messages = [
+            snapshot.to_dict()
+            for snapshot in self.db.collection("marketing_conversations")
+            .document("conv-delivery-fee")
+            .collection("messages")
+            .stream()
+            if snapshot.to_dict().get("direction") == "outbound" and snapshot.to_dict().get("message_type") == "text"
+        ]
+        self.assertEqual(len(outbound_messages), 1)
+        reply_text = outbound_messages[0]["text"]
+        self.assertTrue(reply_text.startswith("The listed prices already include Singapore delivery fee"))
+        self.assertIn("there is no separate delivery fee", reply_text)
 
     def test_process_inbound_message_sends_brand_and_package_images_without_url_text(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -4378,7 +4454,7 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
-                "conversion_optimization_version": 7,
+                "conversion_optimization_version": 8,
                 "handoff_message": "",
                 "packages": {
                     "pack1": {
@@ -4392,7 +4468,7 @@ class MarketingApiTests(unittest.TestCase):
                         "box_count": 1,
                         "target_audience": ["self_care"],
                         "hero": False,
-                        "free_shipping_eligible": False,
+                        "free_shipping_eligible": True,
                     },
                     "pack2": {
                         "code": "pack2",
@@ -4414,7 +4490,7 @@ class MarketingApiTests(unittest.TestCase):
                         {"question": "多久送到", "answer": "1-3 个工作日"},
                     ],
                     "medical_disclaimer": "Aqina 是食品补养，不是药；特殊健康状况请先问医生。",
-                    "logistics": "配送安排由客服在下单时确认。",
+                    "logistics": "当前 1盒 SGD47.90 和 2盒 SGD79.80 已包含新加坡配送费，不需要另加邮费；库存、送达时间和具体配送安排会在下单时由客服确认。",
                     "consumption": "建议早晨空腹饮用",
                     "comparisons": "Aqina 纯鸡精不是 ordinary bottled chicken essence 的普通低价路线。",
                     "price_positioning": "1盒 SGD47.90；2盒 SGD79.80，等于 SGD39.90/盒，并送 French Poulet Cut Part 五选一。",

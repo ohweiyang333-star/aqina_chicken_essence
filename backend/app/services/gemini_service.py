@@ -356,6 +356,8 @@ class GeminiConversationService:
             "Do not try to resolve these boundary cases as a bot.\n"
             "If Recent assistant price quote is yes and Incoming asks price/order/shipping is no, "
             "do not repeat any SGD prices. Only answer the current consultation and ask one low-pressure scene question.\n"
+            "If Incoming asks delivery fee, shipping fee, postage, 运费, 邮费, or 配送费, reply_text must first state clearly that the current prices already include Singapore delivery fee and there is no separate delivery fee. "
+            "Do not answer this with vague delivery-arrangement language; only delivery timing, stock, and exact arrangement need checkout confirmation.\n"
             "If Channel is whatsapp and Known order fields.phone or Known channel phone is present, "
             "the known WhatsApp sender number already counts as the phone field; do not ask for the phone number again, and do not include phone in missing_order_fields.\n"
             "If Channel is not whatsapp, still collect the customer's contact phone number.\n"
