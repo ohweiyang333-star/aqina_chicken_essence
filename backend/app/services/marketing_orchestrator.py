@@ -821,6 +821,13 @@ class MarketingAutomationOrchestrator:
         )
         if detected_gift_choice:
             merged_order_fields["gift_choice"] = detected_gift_choice
+        incoming_customer_request_remark = self._normalize_customer_request_remark(
+            getattr(turn, "customer_request_remark", None)
+        )
+        customer_request_remark = self._merge_customer_request_remarks(
+            contact.get("customer_request_remark"),
+            incoming_customer_request_remark,
+        )
         missing_order_fields = self._effective_missing_order_fields(
             turn.missing_order_fields,
             order_fields=merged_order_fields,
@@ -844,6 +851,9 @@ class MarketingAutomationOrchestrator:
             "future_contact_opt_in": bool(turn.opt_in_granted),
             "chatbot_locale": customer_locale,
         }
+        if customer_request_remark:
+            update_fields["customer_request_remark"] = customer_request_remark
+            update_fields["customer_request_remark_updated_at"] = utcnow()
         if detected_gift_choice:
             update_fields["gift_choice"] = detected_gift_choice
         if hot_checkout_intent or checkout_ready:
@@ -894,6 +904,9 @@ class MarketingAutomationOrchestrator:
                 selected_package_code=turn.selected_package_code,
                 order_fields=merged_order_fields,
                 runtime_settings=runtime_settings,
+                customer_request_remark=customer_request_remark,
+                incoming_customer_request_remark=incoming_customer_request_remark,
+                latest_customer_message=incoming_text,
             )
             if self._reply_requests_phone(reply_text) and (prompt_phone_defaulted or runtime_phone_defaulted):
                 reply_text = self._checkout_ready_reply(customer_locale)
@@ -972,6 +985,32 @@ class MarketingAutomationOrchestrator:
                 )
             except Exception as exc:  # noqa: BLE001 - keep checkout conversation moving if media fails.
                 logger.warning("precheckout_paynow_qr_media_failed contact_id=%s error=%s", contact_id, exc)
+        latest_contact = self.contact_service.get_contact(contact_id)
+        if (
+            customer_request_remark
+            and not checkout_session
+            and self._should_send_customer_request_alert(
+                contact=latest_contact,
+                incoming_customer_request_remark=incoming_customer_request_remark,
+            )
+        ):
+            alert_id = self._create_customer_request_internal_alert(
+                contact=latest_contact,
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                latest_customer_message=incoming_text,
+                customer_request_remark=customer_request_remark,
+                runtime_settings=runtime_settings,
+            )
+            if alert_id:
+                self.contact_service.update_contact_profile(
+                    contact_id,
+                    {
+                        "customer_request_alert_sent": True,
+                        "customer_request_alert_id": alert_id,
+                        "customer_request_alert_remark": incoming_customer_request_remark,
+                    },
+                )
         if checkout_session:
             qr_result = self._send_checkout_qr_image(
                 channel=event["channel"],
@@ -1015,6 +1054,9 @@ class MarketingAutomationOrchestrator:
         selected_package_code: str,
         order_fields: dict[str, Any],
         runtime_settings: dict[str, Any],
+        customer_request_remark: str | None = None,
+        incoming_customer_request_remark: str | None = None,
+        latest_customer_message: str = "",
     ) -> dict[str, Any]:
         packages = runtime_settings.get("packages", {})
         package = packages.get(selected_package_code)
@@ -1030,12 +1072,42 @@ class MarketingAutomationOrchestrator:
             if existing.exists:
                 session = existing.to_dict()
                 session["session_id"] = existing.id
+                session_update: dict[str, Any] = {"updated_at": now}
                 if gift_choice:
-                    gift_update = {"gift_choice": gift_choice, "updated_at": now}
-                    self.db.collection("marketing_checkout_sessions").document(existing_id).set(gift_update, merge=True)
-                    if session.get("order_id"):
-                        self.db.collection("orders").document(session["order_id"]).set(gift_update, merge=True)
+                    session_update["gift_choice"] = gift_choice
                     session["gift_choice"] = gift_choice
+                remark = self._normalize_customer_request_remark(customer_request_remark)
+                if remark:
+                    session_update["customer_request_remark"] = remark
+                    session_update["notes"] = remark
+                    session["customer_request_remark"] = remark
+                if len(session_update) > 1:
+                    self.db.collection("marketing_checkout_sessions").document(existing_id).set(session_update, merge=True)
+                    if session.get("order_id"):
+                        self.db.collection("orders").document(session["order_id"]).set(session_update, merge=True)
+                if remark and self._should_send_customer_request_alert(
+                    contact=contact,
+                    incoming_customer_request_remark=incoming_customer_request_remark,
+                ):
+                    alert_id = self._create_customer_request_internal_alert(
+                        contact=contact,
+                        contact_id=contact_id,
+                        conversation_id=conversation_id,
+                        latest_customer_message=latest_customer_message,
+                        customer_request_remark=remark,
+                        runtime_settings=runtime_settings,
+                    )
+                    if alert_id:
+                        self.contact_service.update_contact_profile(
+                            contact_id,
+                            {
+                                "customer_request_alert_sent": True,
+                                "customer_request_alert_id": alert_id,
+                                "customer_request_alert_remark": self._normalize_customer_request_remark(
+                                    incoming_customer_request_remark
+                                ),
+                            },
+                        )
                 return session
 
         order_id = stable_id("order", contact_id, selected_package_code, now.isoformat())
@@ -1069,6 +1141,8 @@ class MarketingAutomationOrchestrator:
             "payment_status": "pending",
             "order_status": "pending",
             "payment_receipt_url": None,
+            "notes": self._normalize_customer_request_remark(customer_request_remark),
+            "customer_request_remark": self._normalize_customer_request_remark(customer_request_remark),
             "source": "marketing_chatbot",
             "created_from": "marketing_inbox",
             "source_channel": contact.get("channel"),
@@ -1099,12 +1173,92 @@ class MarketingAutomationOrchestrator:
             "box_count": box_count,
             "gift_choice": gift_choice,
             "total_amount": total_amount,
+            "customer_request_remark": self._normalize_customer_request_remark(customer_request_remark),
+            "notes": self._normalize_customer_request_remark(customer_request_remark),
             "created_at": now,
             "updated_at": now,
         }
         self.db.collection("marketing_checkout_sessions").document(session_id).set(session_payload)
         self.db.collection("orders").document(order_id).set({"checkout_session_id": session_id, "updated_at": now}, merge=True)
+        order_alert_id = self._create_order_internal_alert(
+            contact=contact,
+            contact_id=contact_id,
+            conversation_id=conversation_id,
+            order_id=order_id,
+            order_payload=order_payload,
+            latest_customer_message=latest_customer_message,
+            customer_request_remark=customer_request_remark,
+            runtime_settings=runtime_settings,
+        )
+        incoming_remark = self._normalize_customer_request_remark(incoming_customer_request_remark)
+        if order_alert_id and incoming_remark:
+            self.contact_service.update_contact_profile(
+                contact_id,
+                {
+                    "customer_request_alert_sent": True,
+                    "customer_request_alert_id": order_alert_id,
+                    "customer_request_alert_remark": incoming_remark,
+                },
+            )
         return {"session_id": session_id, **session_payload}
+
+    def _create_order_internal_alert(
+        self,
+        *,
+        contact: dict[str, Any],
+        contact_id: str,
+        conversation_id: str,
+        order_id: str,
+        order_payload: dict[str, Any],
+        latest_customer_message: str,
+        customer_request_remark: str | None,
+        runtime_settings: dict[str, Any],
+    ) -> str | None:
+        try:
+            return self._create_internal_notification(
+                contact=contact,
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                latest_customer_message=self._order_alert_message(
+                    order_id=order_id,
+                    order_payload=order_payload,
+                    latest_customer_message=latest_customer_message,
+                    customer_request_remark=customer_request_remark,
+                ),
+                reason="order_created_pending_payment",
+                runtime_settings=runtime_settings,
+                remark=customer_request_remark,
+            )
+        except Exception as exc:  # noqa: BLE001 - internal alert must not block checkout.
+            logger.warning("order_internal_alert_failed order_id=%s error=%s", order_id, exc)
+            return None
+
+    def _create_customer_request_internal_alert(
+        self,
+        *,
+        contact: dict[str, Any],
+        contact_id: str,
+        conversation_id: str,
+        latest_customer_message: str,
+        customer_request_remark: str,
+        runtime_settings: dict[str, Any],
+    ) -> str | None:
+        try:
+            return self._create_internal_notification(
+                contact=contact,
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                latest_customer_message=(
+                    "Customer special request for staff review. "
+                    f"Remark: {customer_request_remark}. Latest: {latest_customer_message}"
+                ),
+                reason="customer_request_remark",
+                runtime_settings=runtime_settings,
+                remark=customer_request_remark,
+            )
+        except Exception as exc:  # noqa: BLE001 - internal alert must not block checkout.
+            logger.warning("customer_request_internal_alert_failed contact_id=%s error=%s", contact_id, exc)
+            return None
 
     def _escalate_contact(
         self,
@@ -1117,7 +1271,6 @@ class MarketingAutomationOrchestrator:
         runtime_settings: dict[str, Any],
         send_customer_message: bool = True,
     ) -> str:
-        escalation_settings = runtime_settings.get("escalation", {})
         handoff_message = self._safe_handoff_message(runtime_settings.get("handoff_message", ""))
         if send_customer_message and handoff_message:
             self._send_channel_reply(channel=contact["channel"], contact=contact, text=handoff_message)
@@ -1133,18 +1286,41 @@ class MarketingAutomationOrchestrator:
             )
 
         self.contact_service.pause_automation(contact_id, reason=reason)
+        return self._create_internal_notification(
+            contact=contact,
+            contact_id=contact_id,
+            conversation_id=conversation_id,
+            latest_customer_message=latest_customer_message,
+            reason=reason,
+            runtime_settings=runtime_settings,
+        )
+
+    def _create_internal_notification(
+        self,
+        *,
+        contact: dict[str, Any],
+        contact_id: str,
+        conversation_id: str,
+        latest_customer_message: str,
+        reason: str,
+        runtime_settings: dict[str, Any],
+        remark: str | None = None,
+    ) -> str:
+        escalation_settings = runtime_settings.get("escalation", {}) or {}
+        recipients = self._escalation_notification_recipients(escalation_settings)
+        template_name = str(escalation_settings.get("whatsapp_template_name") or "").strip()
         escalation_id = stable_id("escalation", contact_id, conversation_id, reason, utcnow().isoformat())
         template_variables = [
             contact.get("identifiers", {}).get("wa_id") or contact.get("identifiers", {}).get("psid") or contact_id,
             reason,
-            latest_customer_message[:120],
+            str(latest_customer_message or "")[:120],
         ]
-        notification_status = "not_configured"
-        notification_error = None
         if not escalation_settings.get("enabled"):
             notification_status = "disabled"
-        elif escalation_settings.get("private_whatsapp_number") and escalation_settings.get("whatsapp_template_name"):
+        elif recipients and template_name:
             notification_status = "pending"
+        else:
+            notification_status = "not_configured"
 
         payload = {
             "contact_id": contact_id,
@@ -1152,11 +1328,14 @@ class MarketingAutomationOrchestrator:
             "reason": reason,
             "latest_customer_message": latest_customer_message,
             "status": "open",
-            "private_whatsapp_number": escalation_settings.get("private_whatsapp_number", ""),
-            "template_name": escalation_settings.get("whatsapp_template_name", ""),
+            "private_whatsapp_number": recipients[0] if recipients else "",
+            "private_whatsapp_numbers": recipients,
+            "template_name": template_name,
             "template_variables": template_variables,
             "notification_status": notification_status,
-            "notification_error": notification_error,
+            "notification_error": None,
+            "notification_results": [],
+            "remark": self._normalize_customer_request_remark(remark) or "",
             "notified_at": None,
             "resolved_at": None,
             "created_at": utcnow(),
@@ -1164,28 +1343,128 @@ class MarketingAutomationOrchestrator:
         }
         self.db.collection("marketing_escalations").document(escalation_id).set(payload)
 
-        if escalation_settings.get("enabled") and escalation_settings.get("private_whatsapp_number") and escalation_settings.get("whatsapp_template_name"):
+        if escalation_settings.get("enabled") and recipients and template_name:
+            self._send_internal_notification_templates(
+                escalation_id=escalation_id,
+                recipients=recipients,
+                template_name=template_name,
+                template_variables=template_variables,
+            )
+        return escalation_id
+
+    def _send_internal_notification_templates(
+        self,
+        *,
+        escalation_id: str,
+        recipients: list[str],
+        template_name: str,
+        template_variables: list[str],
+    ) -> None:
+        results = []
+        sent_count = 0
+        for recipient in recipients:
             try:
-                self.meta_client.send_whatsapp_template(
-                    to=escalation_settings["private_whatsapp_number"],
-                    template_name=escalation_settings["whatsapp_template_name"],
+                result = self.meta_client.send_whatsapp_template(
+                    to=recipient,
+                    template_name=template_name,
                     body_variables=template_variables,
                 )
-                self.db.collection("marketing_escalations").document(escalation_id).set(
-                    {"notification_status": "sent", "notified_at": utcnow(), "updated_at": utcnow()},
-                    merge=True,
+                sent_count += 1
+                results.append(
+                    {
+                        "to": recipient,
+                        "status": "sent",
+                        "provider_message_id": self._extract_provider_message_id("whatsapp", result),
+                    }
                 )
             except Exception as exc:  # pragma: no cover - provider failures are integration-only
-                logger.warning("escalation_notification_failed escalation_id=%s error=%s", escalation_id, exc)
-                self.db.collection("marketing_escalations").document(escalation_id).set(
-                    {
-                        "notification_status": "failed",
-                        "notification_error": str(exc),
-                        "updated_at": utcnow(),
-                    },
-                    merge=True,
-                )
-        return escalation_id
+                logger.warning("internal_notification_failed escalation_id=%s recipient=%s error=%s", escalation_id, recipient, exc)
+                results.append({"to": recipient, "status": "failed", "error": str(exc)})
+
+        if sent_count == len(recipients):
+            notification_status = "sent"
+        elif sent_count:
+            notification_status = "partial_failed"
+        else:
+            notification_status = "failed"
+
+        update = {
+            "notification_status": notification_status,
+            "notification_results": results,
+            "updated_at": utcnow(),
+        }
+        if sent_count:
+            update["notified_at"] = utcnow()
+        if sent_count < len(recipients):
+            update["notification_error"] = "One or more internal WhatsApp notifications failed"
+        self.db.collection("marketing_escalations").document(escalation_id).set(update, merge=True)
+
+    @staticmethod
+    def _escalation_notification_recipients(escalation_settings: dict[str, Any]) -> list[str]:
+        values = [escalation_settings.get("private_whatsapp_number")]
+        additional = escalation_settings.get("additional_private_whatsapp_numbers")
+        if isinstance(additional, list):
+            values.extend(additional)
+        recipients: list[str] = []
+        for value in values:
+            text = str(value or "").strip()
+            if text and text not in recipients:
+                recipients.append(text)
+        return recipients
+
+    @classmethod
+    def _merge_customer_request_remarks(cls, existing: Any, incoming: Any) -> str | None:
+        parts: list[str] = []
+        for value in (existing, incoming):
+            remark = cls._normalize_customer_request_remark(value)
+            if remark and remark not in parts:
+                parts.append(remark)
+        merged = " | ".join(parts)
+        return merged[:1000] or None
+
+    @staticmethod
+    def _normalize_customer_request_remark(value: Any) -> str | None:
+        text = re.sub(r"\s+", " ", str(value or "")).strip()
+        return text[:1000] or None
+
+    @classmethod
+    def _should_send_customer_request_alert(
+        cls,
+        *,
+        contact: dict[str, Any],
+        incoming_customer_request_remark: str | None,
+    ) -> bool:
+        incoming = cls._normalize_customer_request_remark(incoming_customer_request_remark)
+        if not incoming:
+            return False
+        return incoming != cls._normalize_customer_request_remark(contact.get("customer_request_alert_remark"))
+
+    @staticmethod
+    def _order_alert_message(
+        *,
+        order_id: str,
+        order_payload: dict[str, Any],
+        latest_customer_message: str,
+        customer_request_remark: str | None,
+    ) -> str:
+        customer = order_payload.get("customer") if isinstance(order_payload.get("customer"), dict) else {}
+        item = (order_payload.get("items") or [{}])[0]
+        product_name = item.get("product_name_zh") or item.get("product_name") or item.get("product_id") or "Order"
+        parts = [
+            "New chatbot order pending PayNow receipt",
+            f"Order #{order_id[-8:]}",
+            f"Channel: {order_payload.get('source_channel') or order_payload.get('channel') or '-'}",
+            f"Customer: {customer.get('name') or '-'} / {customer.get('whatsapp') or '-'}",
+            f"Item: {product_name}",
+            f"Total: SGD {float(order_payload.get('total_amount') or 0):.2f}",
+        ]
+        remark = MarketingAutomationOrchestrator._normalize_customer_request_remark(customer_request_remark)
+        if remark:
+            parts.append(f"Remark: {remark}")
+        message = MarketingAutomationOrchestrator._normalize_customer_request_remark(latest_customer_message)
+        if message:
+            parts.append(f"Latest: {message}")
+        return " | ".join(parts)
 
     def _send_channel_reply(self, *, channel: str, contact: dict[str, Any], text: str) -> dict[str, Any]:
         identifiers = contact.get("identifiers", {})

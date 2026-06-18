@@ -16,10 +16,12 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 8
+CONVERSION_OPTIMIZATION_VERSION = 9
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
+DEFAULT_GINO_ORDER_ALERT_WHATSAPP_NUMBER = "+60149449341"
+DEFAULT_ESCALATION_WHATSAPP_TEMPLATE_NAME = "aqina_escalation_alert"
 CHATBOT_PRODUCT_TERM_REPLACEMENTS = (
     ("滴" + "雞精", AQINA_NEW_PRODUCT_TERM),
     ("滴" + "鸡精", AQINA_NEW_PRODUCT_TERM),
@@ -323,6 +325,7 @@ DEFAULT_CHATBOT_SKILLS = {
             "First confirm package, quantity, and total amount using only 1 box or 2 boxes. "
             "Then ask for recipient name, phone number, and full Singapore delivery address in one pass. "
             "Explain that current payment is by PayNow, and after payment the customer must send back the payment screenshot. End by saying customer service will verify and arrange delivery. "
+            "If the customer asks for a non-sensitive delivery time/date or delivery note, acknowledge it as a request to be remarked for staff, set customer_request_remark, keep moving to PayNow, and do not promise it is confirmed. "
             "If the customer asks about COD/cash on delivery, clearly say there is currently no COD. Do not invent exceptions. "
             "Do not ask broad lifestyle, fatigue, or general-use questions again."
         ),
@@ -350,7 +353,8 @@ DEFAULT_CHATBOT_SKILLS = {
         "instruction": (
             "If the customer gives address or phone, says they want to buy, or asks shipping/how long delivery takes, immediately enter order-detail collection. "
             "Confirm selected package using only 1 box or 2 boxes. If details are incomplete, ask only for the missing item. "
-            "For 2 boxes, ask for one French Poulet Cut Part gift choice. After details are complete, explain PayNow first and ask them to send back the payment screenshot."
+            "For 2 boxes, ask for one French Poulet Cut Part gift choice. After details are complete, explain PayNow first and ask them to send back the payment screenshot. "
+            "For non-sensitive customer requests such as preferred delivery timing or delivery notes, accept them as staff remarks, set customer_request_remark, and continue to PayNow. Do not promise price changes, discounts, extra gifts, gift substitutions, stock, or paid/order status."
         ),
         "required_questions": ["我帮您安排。请确认要 1盒 SGD47.90，还是 2盒 SGD79.80；如果拿2盒，也请选一个 French Poulet Cut Part 赠品。再发收件人姓名和新加坡完整地址。"],
         "next_referrals": ["payment_receipt"],
@@ -451,12 +455,14 @@ Conversation Rules
 - checkout_ready may be true only when the customer clearly wants to buy and name, phone, and address are complete. WhatsApp sender number may count as the phone field.
 - When details are complete, remind the customer to pay using PayNow and send back the payment screenshot. Do not say the order is complete until the payment screenshot is received and verified by the team.
 - For 2 boxes, also ask for 1 French Poulet Cut Part gift choice.
+- If the customer asks for a non-sensitive special arrangement such as preferred delivery date/time, call-before-delivery, leave-at-door, or another delivery note, acknowledge it as a request that will be remarked for staff, then ask them to pay by PayNow QR and send the payment screenshot. Set customer_request_remark to the customer's request. Do not promise the arrangement is confirmed until staff verifies it.
+- Sensitive requests must not be accepted by the bot: price changes, discounts, extra gifts, gift substitutions, stock guarantees, paid/order status, refunds, complaints, medical/legal/financial judgment, or anything that changes current policy. For those, keep the current policy clear and escalate when human judgment is needed.
 
 Human Handoff Required
 
 Any inquiry that explicitly or implicitly asks for human/staff/agent/person in charge/call/WhatsApp contact/help/真人/人工/客服/负责人/电话/找人/有人帮忙 must first reassure and escalate to the person in charge. The fixed person-in-charge phone is +6591212369.
 If the question is not about chicken essence but the customer is looking for Aqina, the person in charge, or human help, escalate instead of continuing as a bot.
-Complaints, refunds, payment failures, payment status, order problems, delivery disputes, bulk purchase, corporate purchase, medical/legal/financial judgment, or any price/stock/delivery/order/payment/service condition that the bot cannot confirm must set escalate=true, next_tag=handoff_pending, and a readable escalation_reason such as manual_handoff_requested, non_product_human_help, complaint, payment_issue, order_issue, medical_safety, unknown_requires_human.
+Complaints, refunds, payment failures, payment status, order problems, delivery disputes, bulk purchase, corporate purchase, medical/legal/financial judgment, or any price/stock/order/payment/service condition that the bot cannot confirm must set escalate=true, next_tag=handoff_pending, and a readable escalation_reason such as manual_handoff_requested, non_product_human_help, complaint, payment_issue, order_issue, medical_safety, unknown_requires_human. Delivery timing requests during checkout should be saved as customer_request_remark and moved to PayNow first, not promised as confirmed.
 
 Medical Safety
 
@@ -467,7 +473,7 @@ Medical Safety
 
 Output must be JSON with exactly these fields:
 reply_text, next_tag, lead_goal, recommended_package_code, upgrade_package_code, selected_package_code,
-order_fields{name,phone,address}, missing_order_fields, checkout_ready, escalate, escalation_reason, faq_topic, opt_in_granted.
+gift_choice, customer_request_remark, order_fields{name,phone,address}, missing_order_fields, checkout_ready, escalate, escalation_reason, faq_topic, opt_in_granted.
 """.strip()
 
 
@@ -574,7 +580,8 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         "escalation": {
             "enabled": True,
             "private_whatsapp_number": DEFAULT_PRIVATE_WHATSAPP_NUMBER,
-            "whatsapp_template_name": "",
+            "additional_private_whatsapp_numbers": [DEFAULT_GINO_ORDER_ALERT_WHATSAPP_NUMBER],
+            "whatsapp_template_name": DEFAULT_ESCALATION_WHATSAPP_TEMPLATE_NAME,
             "pause_automation_on_handoff": True,
         },
         "chatbot_skills": deepcopy(DEFAULT_CHATBOT_SKILLS),
@@ -636,6 +643,10 @@ class ChatbotSettingsService:
         escalation = normalized.get("escalation", {})
         if not escalation.get("private_whatsapp_number"):
             normalized["escalation"]["private_whatsapp_number"] = defaults["escalation"]["private_whatsapp_number"]
+        if not isinstance(escalation.get("additional_private_whatsapp_numbers"), list):
+            normalized["escalation"]["additional_private_whatsapp_numbers"] = defaults["escalation"]["additional_private_whatsapp_numbers"]
+        if not escalation.get("whatsapp_template_name"):
+            normalized["escalation"]["whatsapp_template_name"] = defaults["escalation"]["whatsapp_template_name"]
         normalized["media_assets"] = _normalize_media_assets(normalized.get("media_assets", {}), defaults["media_assets"])
         normalized = _remove_retired_trial_package(normalized)
         normalized = _remove_retired_offer_packages(normalized)

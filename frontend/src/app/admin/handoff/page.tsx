@@ -237,7 +237,14 @@ export default function AdminHandoffPage() {
                     <div className="grid gap-3 md:grid-cols-2">
                       <InfoRow label="Contact ID" value={selected.contact_id} />
                       <InfoRow label="Conversation" value={selected.conversation_id || "-"} />
-                      <InfoRow label="Alert number" value={selected.private_whatsapp_number || "-"} />
+                      <InfoRow
+                        label="Alert numbers"
+                        value={
+                          selected.private_whatsapp_numbers?.length
+                            ? selected.private_whatsapp_numbers.join(", ")
+                            : selected.private_whatsapp_number || "-"
+                        }
+                      />
                       <InfoRow label="Template" value={selected.template_name || "-"} />
                       <InfoRow label="Notified" value={formatTime(selected.notified_at)} />
                       <InfoRow label="Resolved" value={formatTime(selected.resolved_at || undefined)} />

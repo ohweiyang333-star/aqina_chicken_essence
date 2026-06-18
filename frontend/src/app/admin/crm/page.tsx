@@ -819,6 +819,26 @@ export default function AdminCRMPage() {
                                 },
                               }
                             : current,
+                          )
+                        }
+                    />
+                    <LabeledInput
+                      label="额外通知号码"
+                      value={(settings.escalation.additional_private_whatsapp_numbers || []).join(", ")}
+                      onChange={(value) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                escalation: {
+                                  ...current.escalation,
+                                  additional_private_whatsapp_numbers: value
+                                    .split(",")
+                                    .map((item) => item.trim())
+                                    .filter(Boolean),
+                                },
+                              }
+                            : current,
                         )
                       }
                     />

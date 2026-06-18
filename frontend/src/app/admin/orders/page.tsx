@@ -452,6 +452,20 @@ export default function AdminOrdersPage() {
                     )}
                   </div>
 
+                  {order.customerRequestRemark && (
+                    <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+                      <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-700" />
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-amber-700">
+                          Staff Remark
+                        </p>
+                        <p className="mt-1 font-medium leading-5">
+                          {order.customerRequestRemark}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-2">
                     {order.paymentReceiptUrl && (
                       <a

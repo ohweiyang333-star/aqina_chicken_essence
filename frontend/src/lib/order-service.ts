@@ -68,6 +68,8 @@ export interface Order {
   transactionId?: string;
   paymentVerification?: PaymentVerification;
   riskFlags: string[];
+  notes?: string;
+  customerRequestRemark?: string;
   source?: string;
   sourceChannel?: string;
   marketingContactId?: string;
@@ -410,6 +412,9 @@ function normalizeOrder(id: string, data: RawRecord): Order {
     transactionId: stringOrUndefined(data.transaction_id),
     paymentVerification: normalizePaymentVerification(data.payment_verification),
     riskFlags: normalizeStringArray(data.risk_flags),
+    notes: stringOrUndefined(data.notes),
+    customerRequestRemark:
+      stringOrUndefined(data.customer_request_remark) ?? stringOrUndefined(data.notes),
     source: stringOrUndefined(data.source) ?? 'landing_page',
     sourceChannel: stringOrUndefined(data.source_channel),
     marketingContactId: stringOrUndefined(data.marketing_contact_id),

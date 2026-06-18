@@ -76,6 +76,7 @@ class EscalationSettings(BaseModel):
 
     enabled: bool = True
     private_whatsapp_number: str = ""
+    additional_private_whatsapp_numbers: list[str] = Field(default_factory=list)
     whatsapp_template_name: str = ""
     pause_automation_on_handoff: bool = True
 
@@ -172,6 +173,7 @@ class SalesConversationTurn(BaseModel):
     upgrade_package_code: str | None = None
     selected_package_code: str | None = None
     gift_choice: Any | None = None
+    customer_request_remark: str | None = Field(default=None, max_length=1000)
     order_fields: OrderFields = Field(default_factory=OrderFields)
     missing_order_fields: list[str] = Field(default_factory=list)
     checkout_ready: bool = False
@@ -202,8 +204,10 @@ class EscalationRecord(BaseModel):
     latest_customer_message: str = ""
     status: Literal["open", "acknowledged", "resolved", "archived"] = "open"
     private_whatsapp_number: str = ""
+    private_whatsapp_numbers: list[str] = Field(default_factory=list)
     template_name: str = ""
     template_variables: list[str] = Field(default_factory=list)
+    notification_results: list[dict[str, Any]] = Field(default_factory=list)
     remark: str = ""
     remark_updated_at: Any | None = None
     archived_at: Any | None = None

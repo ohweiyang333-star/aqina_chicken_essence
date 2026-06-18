@@ -77,6 +77,7 @@ export interface ChatbotSettings {
   escalation: {
     enabled: boolean;
     private_whatsapp_number: string;
+    additional_private_whatsapp_numbers: string[];
     whatsapp_template_name: string;
     pause_automation_on_handoff: boolean;
   };

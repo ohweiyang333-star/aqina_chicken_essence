@@ -110,7 +110,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 8)
+        self.assertEqual(payload["conversion_optimization_version"], 9)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertIn("You are Aqina WhatsApp / Messenger private sales support", payload["system_prompt"])
         self.assertIn("1盒 = SGD47.90", payload["system_prompt"])
@@ -130,6 +130,8 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(payload["faq"][0]["keywords"], ["delivery"])
         self.assertEqual(payload["payment"]["paynow"]["enabled"], True)
         self.assertEqual(payload["escalation"]["private_whatsapp_number"], "+6591212369")
+        self.assertEqual(payload["escalation"]["additional_private_whatsapp_numbers"], ["+60149449341"])
+        self.assertEqual(payload["escalation"]["whatsapp_template_name"], "aqina_escalation_alert")
         self.assertEqual(payload["escalation"]["pause_automation_on_handoff"], True)
         self.assertTrue(payload["facebook_comment_automation"]["enabled"])
         self.assertIn("price", payload["facebook_comment_automation"]["keywords"])
@@ -248,7 +250,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 8,
+                "conversion_optimization_version": 9,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -328,13 +330,43 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 8)
+        self.assertEqual(payload["conversion_optimization_version"], 9)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
         self.assertEqual(payload["escalation"]["private_whatsapp_number"], "+6599999999")
+        self.assertEqual(payload["escalation"]["additional_private_whatsapp_numbers"], ["+60149449341"])
+        self.assertEqual(payload["escalation"]["whatsapp_template_name"], "custom_template")
         self.assertFalse(payload["facebook_comment_automation"]["enabled"])
         self.assertIn("paynow", payload["facebook_comment_automation"]["keywords"])
+
+    def test_chatbot_settings_fills_missing_escalation_template(self) -> None:
+        self.db.seed(
+            "chatbotSettings/default",
+            {
+                "conversion_optimization_version": 9,
+                "system_prompt": "Current prompt",
+                "packages": {},
+                "knowledge_base": {},
+                "escalation": {
+                    "enabled": True,
+                    "private_whatsapp_number": "+6591212369",
+                    "additional_private_whatsapp_numbers": ["+60149449341"],
+                    "whatsapp_template_name": "",
+                    "pause_automation_on_handoff": True,
+                },
+            },
+        )
+
+        client = self._build_client()
+        response = client.get(
+            "/api/v1/chatbot/settings",
+            headers={"Authorization": "Bearer admin-token"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["escalation"]["whatsapp_template_name"], "aqina_escalation_alert")
 
     def test_chatbot_conversion_playbook_covers_planned_sales_scenarios(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
@@ -363,6 +395,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("address, phone number, payment screenshot", prompt)
         self.assertIn("PayNow", prompt)
         self.assertIn("send back the payment screenshot", prompt)
+        self.assertIn("customer_request_remark", prompt)
+        self.assertIn("Delivery timing requests during checkout", prompt)
+        self.assertIn("price changes, discounts, extra gifts", prompt)
         self.assertIn("usage_consultation", skills)
         self.assertIn("Do not turn general health", skills["usage_consultation"]["listening_goal"])
         self.assertIn("usage, suitability, or body-condition question", skills["usage_consultation"]["instruction"])
@@ -395,6 +430,7 @@ class MarketingApiTests(unittest.TestCase):
 
         for expected in ["confirm package", "recipient name", "phone number", "full Singapore delivery address", "PayNow", "付款截图", "客服"]:
             self.assertIn(expected, serialized)
+        self.assertIn("customer_request_remark", serialized)
         self.assertIn("好的，我先帮您确认", serialized)
         self.assertIn("目前我们没有货到付款", serialized)
         self.assertIn("cart_hot", settings_doc["crm_follow_up_rules"]["t15m"])
@@ -1628,6 +1664,158 @@ class MarketingApiTests(unittest.TestCase):
             if snapshot.to_dict().get("message_type") == "image"
         ]
         self.assertNotIn("paynow_qr_media", {item["source"] for item in outbound_images})
+
+    def test_process_inbound_message_records_customer_request_remark_and_alerts_internal_numbers(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "可以，我先帮您备注星期五傍晚后送。您先用 PayNow QR 付款，付款后把截图发回来，客服会按备注跟进。",
+                "next_tag": "cart_hot",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": "pack2",
+                "gift_choice": "French Poulet Whole Leg 400g",
+                "customer_request_remark": "Customer requested delivery on Friday after 6pm.",
+                "order_fields": {
+                    "name": "Ben Lim",
+                    "phone": "6592223333",
+                    "address": "20 Tampines Central, Singapore 529538",
+                    "gift_choice": "French Poulet Whole Leg 400g",
+                },
+                "missing_order_fields": [],
+                "checkout_ready": True,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-delivery-remark",
+            conversation_id="conv-delivery-remark",
+            event_id="event-delivery-remark",
+            channel="messenger",
+            incoming_text="我要两盒，星期五傍晚后可以送吗？Ben Lim 6592223333 20 Tampines Central Singapore 529538",
+            identifier_key="psid",
+            identifier_value="psid-delivery-remark",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-delivery-remark"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.json()["checkout_session_id"])
+
+        order = self.db.collection("orders").stream()[0].to_dict()
+        self.assertEqual(order["payment_status"], "pending")
+        self.assertEqual(order["customer_request_remark"], "Customer requested delivery on Friday after 6pm.")
+        self.assertEqual(order["notes"], "Customer requested delivery on Friday after 6pm.")
+
+        contact = self.db.collection("marketing_contacts").document("contact-delivery-remark").get().to_dict()
+        self.assertEqual(contact["customer_request_remark"], "Customer requested delivery on Friday after 6pm.")
+
+        escalations = [snapshot.to_dict() for snapshot in self.db.collection("marketing_escalations").stream()]
+        order_alert = next(item for item in escalations if item["reason"] == "order_created_pending_payment")
+        self.assertEqual(order_alert["remark"], "Customer requested delivery on Friday after 6pm.")
+        self.assertEqual(order_alert["notification_status"], "sent")
+        self.assertEqual(order_alert["private_whatsapp_numbers"], ["6599990000", "+60149449341"])
+        template_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_template"]
+        self.assertEqual([call[1]["to"] for call in template_calls], ["6599990000", "+60149449341"])
+
+    def test_process_inbound_message_alerts_new_request_on_existing_checkout_session(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "可以，我先帮您备注明天上午10点送。您先用 PayNow QR 付款，付款后把截图发回来，客服会按备注跟进。",
+                "next_tag": "cart_hot",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": "pack2",
+                "gift_choice": "French Poulet Whole Leg 400g",
+                "customer_request_remark": "Customer requested delivery tomorrow at 10am.",
+                "order_fields": {
+                    "name": "Ben Lim",
+                    "phone": "6592223333",
+                    "address": "20 Tampines Central, Singapore 529538",
+                    "gift_choice": "French Poulet Whole Leg 400g",
+                },
+                "missing_order_fields": [],
+                "checkout_ready": True,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-existing-request",
+            conversation_id="conv-existing-request",
+            event_id="event-existing-request",
+            channel="messenger",
+            incoming_text="我已经下单了，可以明天上午10点送吗？",
+            identifier_key="psid",
+            identifier_value="psid-existing-request",
+        )
+        self.db.collection("marketing_contacts").document("contact-existing-request").set(
+            {
+                "checkout_session_id": "session-existing-request",
+                "selected_package_code": "pack2",
+                "customer_request_alert_sent": True,
+                "customer_request_alert_id": "old-alert",
+                "customer_request_alert_remark": "Customer requested Friday after 6pm.",
+            },
+            merge=True,
+        )
+        self.db.seed(
+            "marketing_checkout_sessions/session-existing-request",
+            {
+                "contact_id": "contact-existing-request",
+                "conversation_id": "conv-existing-request",
+                "order_id": "order-existing-request",
+                "checkout_url": "https://aqina.example/paynow/session-existing-request",
+                "payment_reference": "AQINA-order-existing-request",
+                "total_amount": 79.8,
+                "package_code": "pack2",
+            },
+        )
+        self.db.seed(
+            "orders/order-existing-request",
+            {
+                "order_id": "order-existing-request",
+                "payment_status": "pending",
+                "order_status": "pending",
+                "total_amount": 79.8,
+            },
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-existing-request"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["checkout_session_id"], "session-existing-request")
+
+        order = self.db.collection("orders").document("order-existing-request").get().to_dict()
+        self.assertEqual(order["customer_request_remark"], "Customer requested delivery tomorrow at 10am.")
+        self.assertEqual(order["notes"], "Customer requested delivery tomorrow at 10am.")
+
+        contact = self.db.collection("marketing_contacts").document("contact-existing-request").get().to_dict()
+        self.assertEqual(contact["customer_request_alert_remark"], "Customer requested delivery tomorrow at 10am.")
+
+        escalations = [snapshot.to_dict() for snapshot in self.db.collection("marketing_escalations").stream()]
+        request_alert = next(item for item in escalations if item["reason"] == "customer_request_remark")
+        self.assertEqual(request_alert["remark"], "Customer requested delivery tomorrow at 10am.")
+        self.assertEqual(request_alert["notification_status"], "sent")
+        self.assertEqual(request_alert["private_whatsapp_numbers"], ["6599990000", "+60149449341"])
 
     def test_process_inbound_message_creates_pack1_checkout_with_shipping(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -4454,7 +4642,7 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
-                "conversion_optimization_version": 8,
+                "conversion_optimization_version": 9,
                 "handoff_message": "",
                 "packages": {
                     "pack1": {

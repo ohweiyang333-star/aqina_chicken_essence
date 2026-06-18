@@ -8,8 +8,17 @@ export interface EscalationRecord {
   latest_customer_message: string;
   status: "open" | "acknowledged" | "resolved" | "archived";
   private_whatsapp_number: string;
+  private_whatsapp_numbers?: string[];
   template_name: string;
   template_variables: string[];
+  notification_status?: string;
+  notification_results?: Array<{
+    to: string;
+    status: string;
+    provider_message_id?: string | null;
+    error?: string;
+  }>;
+  notification_error?: string | null;
   notified_at?: string;
   resolved_at?: string | null;
   remark?: string;

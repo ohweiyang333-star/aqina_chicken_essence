@@ -254,6 +254,8 @@ class GeminiConversationService:
             normalized["order_fields"] = {}
         if not isinstance(normalized.get("missing_order_fields"), list):
             normalized["missing_order_fields"] = []
+        customer_request_remark = str(normalized.get("customer_request_remark") or "").strip()
+        normalized["customer_request_remark"] = customer_request_remark[:1000] or None
         for key in ["checkout_ready", "escalate", "opt_in_granted"]:
             normalized[key] = bool(normalized.get(key))
 
@@ -352,19 +354,24 @@ class GeminiConversationService:
             f"or the question is not about chicken essence but asks for Aqina/person-in-charge help, reply_text must reassure first and provide {ESCALATION_PHONE_NUMBER}; "
             "set next_tag=handoff_pending, escalate=true, and use a readable escalation_reason.\n"
             "Complaints, refunds, payment failure, order issue, delivery dispute, bulk purchase, corporate purchase, and medical/legal/financial judgment must be escalated. "
-            "If the bot cannot confirm price, stock, delivery, order, payment status, or service conditions, escalate with escalation_reason=unknown_requires_human. "
+            "If the bot cannot confirm price, stock, order, payment status, or service conditions, escalate with escalation_reason=unknown_requires_human. "
             "Do not try to resolve these boundary cases as a bot.\n"
             "If Recent assistant price quote is yes and Incoming asks price/order/shipping is no, "
             "do not repeat any SGD prices. Only answer the current consultation and ask one low-pressure scene question.\n"
             "If Incoming asks delivery fee, shipping fee, postage, 运费, 邮费, or 配送费, reply_text must first state clearly that the current prices already include Singapore delivery fee and there is no separate delivery fee. "
             "Do not answer this with vague delivery-arrangement language; only delivery timing, stock, and exact arrangement need checkout confirmation.\n"
+            "If the customer asks for a non-sensitive special arrangement such as preferred delivery date/time, call-before-delivery, leave-at-door, or another delivery note, "
+            "acknowledge it as a request to be remarked for staff, keep the sale moving to PayNow QR, and set customer_request_remark to the exact customer request. "
+            "Do not promise the arrangement is confirmed. Do not set escalate=true only because of this delivery-timing request.\n"
+            "Sensitive requests must not be accepted by the bot: price changes, discounts, extra gifts, gift substitutions, stock guarantees, paid/order status, refunds, complaints, medical/legal/financial judgment, or any policy-changing exception. "
+            "For those, keep the current policy clear and escalate when human judgment is needed.\n"
             "If Channel is whatsapp and Known order fields.phone or Known channel phone is present, "
             "the known WhatsApp sender number already counts as the phone field; do not ask for the phone number again, and do not include phone in missing_order_fields.\n"
             "If Channel is not whatsapp, still collect the customer's contact phone number.\n"
             "If selected_package_code is pack2 and the customer chooses one French Poulet gift, set gift_choice to the matching allowed gift code or object, "
             "and also put the same value in order_fields.gift_choice. If no gift is selected, use null. Do not invent gift choices.\n"
             "Output JSON with exactly these fields: reply_text, next_tag, lead_goal, recommended_package_code, "
-            "upgrade_package_code, selected_package_code, gift_choice, order_fields, missing_order_fields, "
+            "upgrade_package_code, selected_package_code, gift_choice, customer_request_remark, order_fields, missing_order_fields, "
             "checkout_ready, escalate, escalation_reason, faq_topic, opt_in_granted.\n"
             "next_tag must be one of: lead_cold, qualified_warm, cart_hot, handoff_pending.\n"
             "lead_goal must be one of: self_care, pregnancy, postpartum, gift_elder, unknown.\n"
