@@ -12,7 +12,12 @@ from app.models.chatbot import SalesConversationTurn
 from app.models.marketing import NormalizedMarketingEvent
 from app.services.meta_media_assets import MetaMediaAssetService
 from app.services.chatbot_settings import ChatbotSettingsService, DEFAULT_FACEBOOK_COMMENT_KEYWORDS
-from app.services.chatbot_skill_router import is_cart_hot_checkout_intent, should_send_paynow_qr_for_checkout_intent
+from app.services.chatbot_skill_router import (
+    has_typed_organic_message,
+    is_cart_hot_checkout_intent,
+    is_templated_opener_text,
+    should_send_paynow_qr_for_checkout_intent,
+)
 from app.services.follow_up import FollowUpEngine
 from app.services.gift_choices import normalize_gift_choice
 from app.services.marketing_contacts import MarketingContactService
@@ -465,6 +470,27 @@ class MarketingAutomationOrchestrator:
             "raw_referral": deepcopy(referral) if referral else None,
         }
 
+    @staticmethod
+    def _whatsapp_acquisition(message: dict[str, Any]) -> dict[str, Any]:
+        """Map a Click-to-WhatsApp ad referral on the inbound message to acquisition data.
+
+        Click-to-WhatsApp ads attach a ``referral`` block to the first message with the ad
+        source and the prefilled ``body`` the customer tapped to send. Capturing it tells us
+        the lead came from an ad click (not organic typing) and ties the order back to the ad.
+        """
+        referral = message.get("referral")
+        if not isinstance(referral, dict) or not referral:
+            return {}
+        source_type = referral.get("source_type") or "ad"
+        source_id = referral.get("source_id")
+        return {
+            "source": source_type,
+            "ref": referral.get("ctwa_clid") or referral.get("source_url"),
+            "ad_id": source_id if source_type == "ad" else None,
+            "post_id": source_id if source_type == "post" else None,
+            "raw_referral": deepcopy(referral),
+        }
+
     def ingest_whatsapp_webhook(self, payload: dict[str, Any]) -> int:
         accepted = 0
         for entry in payload.get("entry", []):
@@ -501,6 +527,7 @@ class MarketingAutomationOrchestrator:
                         current_tag="lead_cold",
                         status="active",
                         interaction_time=occurred_at,
+                        acquisition=self._whatsapp_acquisition(message) or None,
                     )
                     self.contact_service.append_message(
                         contact_id=contact_id,
@@ -779,6 +806,15 @@ class MarketingAutomationOrchestrator:
             incoming_text,
             current_tag=contact.get("current_tag"),
         )
+        templated_openers = runtime_settings.get("templated_openers") or []
+        templated_opener_turn = (
+            is_templated_opener_text(incoming_text, templated_openers)
+            and not has_typed_organic_message(messages, templated_openers)
+        )
+        if templated_opener_turn:
+            # A tapped Ice Breaker / preset ad opener (possibly a misclick) is not buying
+            # intent — qualify gently instead of forcing a hot-lead close or payment dump.
+            hot_checkout_intent = False
         customer_locale = _detect_customer_locale(incoming_text, contact)
         if not self._should_skip_initial_promotion(incoming_text, contact):
             self._send_initial_promotion_image(
@@ -841,6 +877,8 @@ class MarketingAutomationOrchestrator:
             phone_defaulted=prompt_phone_defaulted or runtime_phone_defaulted,
         )
         effective_next_tag = "cart_hot" if checkout_ready or hot_checkout_intent else turn.next_tag
+        if templated_opener_turn and not checkout_ready and effective_next_tag == "cart_hot":
+            effective_next_tag = "qualified_warm"
         update_fields = {
             "lead_goal": turn.lead_goal,
             "recommended_package_code": turn.recommended_package_code,
@@ -916,6 +954,9 @@ class MarketingAutomationOrchestrator:
                 total_amount=checkout_session["total_amount"],
                 paynow_settings=runtime_settings.get("payment", {}).get("paynow", {}),
             )
+            checkout_url = checkout_session.get("checkout_url")
+            if checkout_url:
+                reply_text = self._append_checkout_url(reply_text, checkout_url)
 
         if effective_next_tag != contact.get("current_tag"):
             self.contact_service.update_contact_tag(
@@ -950,7 +991,7 @@ class MarketingAutomationOrchestrator:
             runtime_settings=runtime_settings,
             customer_locale=customer_locale,
         )
-        if self._should_send_precheckout_paynow_qr(
+        if not templated_opener_turn and self._should_send_precheckout_paynow_qr(
             contact=self.contact_service.get_contact(contact_id),
             incoming_text=incoming_text,
             selected_package_code=precheckout_qr_selected_package_code,
@@ -1009,6 +1050,36 @@ class MarketingAutomationOrchestrator:
                         "customer_request_alert_sent": True,
                         "customer_request_alert_id": alert_id,
                         "customer_request_alert_remark": incoming_customer_request_remark,
+                    },
+                )
+        should_alert_hot_lead = (
+            checkout_session is None
+            and not templated_opener_turn
+            and not latest_contact.get("hot_lead_alert_sent")
+            and (
+                bool(selected_package_code)
+                or checkout_ready
+                or self._valid_order_field("name", merged_order_fields)
+                or self._valid_order_field("address", merged_order_fields)
+            )
+        )
+        if should_alert_hot_lead:
+            hot_alert_id = self._create_hot_lead_internal_alert(
+                contact=latest_contact,
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                latest_customer_message=incoming_text,
+                selected_package_code=selected_package_code,
+                order_fields=merged_order_fields,
+                runtime_settings=runtime_settings,
+            )
+            if hot_alert_id:
+                self.contact_service.update_contact_profile(
+                    contact_id,
+                    {
+                        "hot_lead_alert_sent": True,
+                        "hot_lead_alert_id": hot_alert_id,
+                        "hot_lead_alert_at": utcnow(),
                     },
                 )
         if checkout_session:
@@ -1258,6 +1329,47 @@ class MarketingAutomationOrchestrator:
             )
         except Exception as exc:  # noqa: BLE001 - internal alert must not block checkout.
             logger.warning("customer_request_internal_alert_failed contact_id=%s error=%s", contact_id, exc)
+            return None
+
+    def _create_hot_lead_internal_alert(
+        self,
+        *,
+        contact: dict[str, Any],
+        contact_id: str,
+        conversation_id: str,
+        latest_customer_message: str,
+        selected_package_code: str | None,
+        order_fields: dict[str, Any],
+        runtime_settings: dict[str, Any],
+    ) -> str | None:
+        """Notify staff about a high-intent lead that has not completed an order.
+
+        Reuses the escalation notification path so the configured person-in-charge is
+        pinged and the lead appears in the Handoff queue, but does NOT pause automation
+        so the bot keeps nurturing while a human can step in to close.
+        """
+        try:
+            known_details = {
+                key: order_fields.get(key)
+                for key in ("name", "phone", "address", "gift_choice")
+                if order_fields.get(key)
+            }
+            summary = (
+                "High-intent lead with no completed order yet — a human can step in to close. "
+                f"Selected package: {selected_package_code or 'not chosen'}. "
+                f"Known details: {known_details or 'none'}. "
+                f"Latest message: {str(latest_customer_message or '')[:160]}"
+            )
+            return self._create_internal_notification(
+                contact=contact,
+                contact_id=contact_id,
+                conversation_id=conversation_id,
+                latest_customer_message=summary,
+                reason="cart_hot_no_order",
+                runtime_settings=runtime_settings,
+            )
+        except Exception as exc:  # noqa: BLE001 - internal alert must not block the reply.
+            logger.warning("hot_lead_internal_alert_failed contact_id=%s error=%s", contact_id, exc)
             return None
 
     def _escalate_contact(

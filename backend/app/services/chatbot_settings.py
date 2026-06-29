@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 9
+CONVERSION_OPTIMIZATION_VERSION = 10
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -94,6 +94,21 @@ DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
     "付款",
     "paynow",
     "receipt",
+]
+
+# Known Facebook Ice Breaker / Click-to-WhatsApp preset opener texts. A first message that
+# matches one of these was tapped or auto-sent (not typed by the customer), so it is treated
+# as a low-intent opener: the bot answers briefly and qualifies instead of hard-closing, and
+# the lead is NOT auto-marked cart_hot. Editable in admin settings as `templated_openers`.
+DEFAULT_TEMPLATED_OPENERS = [
+    "What is the nutritional content?",
+    "📦 How much is shipping & delivery time?",
+    "How much is shipping & delivery time?",
+    "🍲 Does it have a strong or gamey smell?",
+    "Is it suitable for people with dietary restrictions?",
+    "Hi Aqina SG, I'm interested in your premium chicken essence.",
+    "请问运费怎么算？下单后多久能收到？",
+    "为什么你们的鸡是吃“黄梨酵素”长大的？有什么特别？",
 ]
 
 DEFAULT_MEDIA_ASSETS = {
@@ -323,10 +338,10 @@ DEFAULT_CHATBOT_SKILLS = {
         "listening_goal": "When the customer has asked about price, delivery, payment, COD, or selected quantity, move directly from conversation -> cart_hot -> order instead of returning to broad diagnosis.",
         "instruction": (
             "First confirm package, quantity, and total amount using only 1 box or 2 boxes. "
-            "Then ask for recipient name, phone number, and full Singapore delivery address in one pass. "
-            "Explain that current payment is by PayNow, and after payment the customer must send back the payment screenshot. End by saying customer service will verify and arrange delivery. "
+            "Then collect order details step by step: ask only for the fields still missing (recipient name, full Singapore delivery address, and phone number only if it is not already known from WhatsApp). Briefly confirm what the customer already gave and never re-ask an answered field. "
+            "Explain that payment is by PayNow and a tappable payment link plus QR will be sent so paying takes only a few taps; after payment the customer must send back the payment screenshot. End by saying customer service will verify and arrange delivery. "
             "If the customer asks for a non-sensitive delivery time/date or delivery note, acknowledge it as a request to be remarked for staff, set customer_request_remark, keep moving to PayNow, and do not promise it is confirmed. "
-            "If the customer asks about COD/cash on delivery, clearly say there is currently no COD. Do not invent exceptions. "
+            "If the customer asks about COD/cash on delivery, clearly say there is currently no COD; we use PayNow and the payment link makes paying quick. Do not invent exceptions, and keep moving to the order. "
             "Do not ask broad lifestyle, fatigue, or general-use questions again."
         ),
         "required_questions": [
@@ -353,7 +368,7 @@ DEFAULT_CHATBOT_SKILLS = {
         "instruction": (
             "If the customer gives address or phone, says they want to buy, or asks shipping/how long delivery takes, immediately enter order-detail collection. "
             "Confirm selected package using only 1 box or 2 boxes. If details are incomplete, ask only for the missing item. "
-            "For 2 boxes, ask for one French Poulet Cut Part gift choice. After details are complete, explain PayNow first and ask them to send back the payment screenshot. "
+            "For 2 boxes, ask for one French Poulet Cut Part gift choice. After details are complete, explain that a tappable PayNow payment link and QR will be sent so paying takes only a few taps, and ask them to send back the payment screenshot. Never re-ask a field the customer already gave. "
             "For non-sensitive customer requests such as preferred delivery timing or delivery notes, accept them as staff remarks, set customer_request_remark, and continue to PayNow. Do not promise price changes, discounts, extra gifts, gift substitutions, stock, or paid/order status."
         ),
         "required_questions": ["我帮您安排。请确认要 1盒 SGD47.90，还是 2盒 SGD79.80；如果拿2盒，也请选一个 French Poulet Cut Part 赠品。再发收件人姓名和新加坡完整地址。"],
@@ -453,10 +468,15 @@ Conversation Rules
 - If the customer gives address, phone number, payment screenshot, or says 我要/下单/order/buy/拿一盒/拿两盒, stop product education and enter order-detail collection.
 - Required order fields: recipient name, contact phone, full Singapore delivery address, selected package and quantity. If Channel is whatsapp and the system already has the sender number, do not ask for phone again.
 - checkout_ready may be true only when the customer clearly wants to buy and name, phone, and address are complete. WhatsApp sender number may count as the phone field.
-- When details are complete, remind the customer to pay using PayNow and send back the payment screenshot. Do not say the order is complete until the payment screenshot is received and verified by the team.
+- When details are complete, tell the customer a tappable PayNow payment link (and QR) will be sent so they can pay in a few taps, then ask them to send back the payment screenshot. Do not say the order is complete until the payment screenshot is received and verified by the team.
 - For 2 boxes, also ask for 1 French Poulet Cut Part gift choice.
+- Move toward the order once intent is clear. After you have answered the customer's main question and they show interest (ask price more than once, say a package sounds good, give any order detail, or choose a quantity), make a clear but warm assumptive close: recommend the 2-box promotion and ask for the order, instead of asking another open diagnostic question.
+- Collect order details step by step. Ask only for the specific fields still missing (name, address, and phone if not on WhatsApp); briefly confirm what the customer already gave; never re-ask a question the customer has already answered earlier in the conversation.
+- If the customer asks about COD / 货到付款 / cash on delivery, say clearly there is no COD; we use PayNow, and a tappable PayNow payment link will be sent so paying takes only a few taps. Then continue collecting the order, do not drop the customer.
+- Keep momentum on a hot lead: if the customer goes quiet after choosing a package or giving partial details, gently continue from the exact missing step; do not restart the consultation from the beginning.
 - If the customer asks for a non-sensitive special arrangement such as preferred delivery date/time, call-before-delivery, leave-at-door, or another delivery note, acknowledge it as a request that will be remarked for staff, then ask them to pay by PayNow QR and send the payment screenshot. Set customer_request_remark to the customer's request. Do not promise the arrangement is confirmed until staff verifies it.
-- Sensitive requests must not be accepted by the bot: price changes, discounts, extra gifts, gift substitutions, stock guarantees, paid/order status, refunds, complaints, medical/legal/financial judgment, or anything that changes current policy. For those, keep the current policy clear and escalate when human judgment is needed.
+- The standard 2-box promotion is the approved closing offer and should be used confidently to ask for the order: 2盒 SGD79.80, equal to SGD39.90/盒, saving SGD16.00 versus two single boxes, plus 1 free French Poulet Cut Part gift choice. Present this as the reason to order now.
+- Beyond this standard promotion, sensitive requests must not be accepted by the bot: price changes, discounts, extra gifts, gift substitutions, stock guarantees, paid/order status, refunds, complaints, medical/legal/financial judgment, or anything that changes current policy. Do not invent any new discount or extra gift. For those, keep the current policy clear and escalate when human judgment is needed.
 
 Human Handoff Required
 
@@ -587,6 +607,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
         "chatbot_skills": deepcopy(DEFAULT_CHATBOT_SKILLS),
         "media_assets": deepcopy(DEFAULT_MEDIA_ASSETS),
         "faq": [],
+        "templated_openers": list(DEFAULT_TEMPLATED_OPENERS),
     }
 
 

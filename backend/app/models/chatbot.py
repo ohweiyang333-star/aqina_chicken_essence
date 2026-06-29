@@ -135,6 +135,7 @@ class ChatbotSettingsResponse(BaseModel):
     chatbot_skills: dict[str, ChatbotSkill] = Field(default_factory=dict)
     media_assets: ChatbotMediaAssets = Field(default_factory=ChatbotMediaAssets)
     faq: list[FAQItem] = Field(default_factory=list)
+    templated_openers: list[str] = Field(default_factory=list)
 
 
 class UpdateChatbotSettingsRequest(BaseModel):
@@ -152,6 +153,7 @@ class UpdateChatbotSettingsRequest(BaseModel):
     chatbot_skills: dict[str, ChatbotSkill] | None = None
     media_assets: ChatbotMediaAssets | None = None
     faq: list[FAQItem] | None = None
+    templated_openers: list[str] | None = None
 
 
 class OrderFields(BaseModel):

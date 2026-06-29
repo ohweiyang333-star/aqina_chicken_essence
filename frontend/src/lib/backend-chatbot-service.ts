@@ -83,6 +83,7 @@ export interface ChatbotSettings {
   };
   media_assets: ChatbotMediaAssets;
   faq: FAQItem[];
+  templated_openers?: string[];
 }
 
 export async function getChatbotSettings(): Promise<ChatbotSettings> {

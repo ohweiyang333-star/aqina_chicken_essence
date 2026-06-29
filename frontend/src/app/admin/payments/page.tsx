@@ -1,7 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { getPayments, updatePaymentStatus, type Payment, type PaymentFilters, type PaymentStatus } from '@/lib/backend-payment-service';
+import { subscribeToAuthChanges, isAdminUser, logout } from '@/lib/auth-service';
 import { format } from 'date-fns';
 
 const PAYMENT_PAGE_SIZE = 20;
@@ -13,6 +15,8 @@ export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState<PaymentStatus | 'all'>('all');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const router = useRouter();
 
   const loadPayments = useCallback(async () => {
     try {
@@ -35,8 +39,28 @@ export default function PaymentsPage() {
   }, [page, statusFilter]);
 
   useEffect(() => {
+    const unsubscribe = subscribeToAuthChanges((user) => {
+      void (async () => {
+        if (!user) {
+          router.push('/admin/login');
+          return;
+        }
+        const isAdmin = await isAdminUser(user);
+        if (!isAdmin) {
+          await logout();
+          router.push('/admin/login');
+          return;
+        }
+        setIsAuthLoading(false);
+      })();
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthLoading) return;
     loadPayments();
-  }, [loadPayments]);
+  }, [loadPayments, isAuthLoading]);
 
   const handleStatusChange = async (paymentId: string, newStatus: PaymentStatus) => {
     try {
@@ -54,6 +78,14 @@ export default function PaymentsPage() {
     failed: 'bg-red-100 text-red-800',
     refunded: 'bg-gray-100 text-gray-800',
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-8">

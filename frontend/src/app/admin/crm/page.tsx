@@ -454,6 +454,27 @@ export default function AdminCRMPage() {
                     </FieldBlock>
                   </div>
 
+                  <FieldBlock label="广告预设开场白清单（每行一条；点选/自动发出的 Ice Breaker 或预填消息，不当作热单，回复时先简答再筛选）">
+                    <textarea
+                      value={(settings.templated_openers ?? []).join("\n")}
+                      onChange={(event) =>
+                        setSettings((current) =>
+                          current
+                            ? {
+                                ...current,
+                                templated_openers: event.target.value
+                                  .split("\n")
+                                  .map((line) => line.trim())
+                                  .filter(Boolean),
+                              }
+                            : current,
+                        )
+                      }
+                      className={textareaClassName}
+                      rows={6}
+                    />
+                  </FieldBlock>
+
                   <div className="grid gap-6 lg:grid-cols-3">
                     <LabeledTextarea
                       label="医疗免责"

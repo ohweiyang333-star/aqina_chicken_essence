@@ -7,7 +7,11 @@ from typing import Any
 
 from app.core.config import settings
 from app.models.chatbot import FollowUpTurnResult, SalesConversationTurn
-from app.services.chatbot_skill_router import ChatbotSkillRouter
+from app.services.chatbot_skill_router import (
+    ChatbotSkillRouter,
+    has_typed_organic_message,
+    is_templated_opener_text,
+)
 from app.services.gift_choices import allowed_gift_choice_prompt_payload
 
 
@@ -314,6 +318,11 @@ class GeminiConversationService:
         )
         recently_quoted_price = GeminiConversationService._recent_assistant_message_mentions_price(messages)
         incoming_requests_price_or_order = GeminiConversationService._incoming_requests_price_or_order(incoming_text)
+        templated_openers = runtime_settings.get("templated_openers") or []
+        is_preset_opener = (
+            is_templated_opener_text(incoming_text, templated_openers)
+            and not has_typed_organic_message(messages, templated_openers)
+        )
         available_packages = runtime_settings.get("packages", {})
         package_codes = sorted(str(code) for code in available_packages.keys())
         packages = json.dumps(available_packages, ensure_ascii=False)
@@ -343,6 +352,7 @@ class GeminiConversationService:
             f"Knowledge base: {knowledge_base}\n"
             f"Recent assistant price quote: {'yes' if recently_quoted_price else 'no'}\n"
             f"Incoming asks price/order/shipping: {'yes' if incoming_requests_price_or_order else 'no'}\n"
+            f"Incoming is preset ad opener (tapped/auto, not typed): {'yes' if is_preset_opener else 'no'}\n"
             f"Incoming message: {incoming_text}\n"
             f"Conversation history:\n{history}\n\n"
             "Use only Active chatbot skills as the current scene playbook. Do not include rules from skills that were not injected.\n"
@@ -365,6 +375,16 @@ class GeminiConversationService:
             "Do not promise the arrangement is confirmed. Do not set escalate=true only because of this delivery-timing request.\n"
             "Sensitive requests must not be accepted by the bot: price changes, discounts, extra gifts, gift substitutions, stock guarantees, paid/order status, refunds, complaints, medical/legal/financial judgment, or any policy-changing exception. "
             "For those, keep the current policy clear and escalate when human judgment is needed.\n"
+            "The standard 2-box promotion is the approved closing offer: 2盒 SGD79.80, equal to SGD39.90/盒, saving SGD16.00 versus two single boxes, plus one free French Poulet Cut Part gift. "
+            "Use it confidently to ask for the order, but do not invent any extra discount or gift beyond it.\n"
+            "Once the customer's need is clear or they have asked about price more than once, make a warm assumptive close: recommend the 2-box promotion and ask for the order, instead of asking yet another diagnostic question.\n"
+            "Collect order details step by step: ask only for the fields still missing, confirm what the customer already gave, and never re-ask a question already answered earlier in Conversation history.\n"
+            "When name, address, and (for non-WhatsApp) phone are collected, the system automatically sends a tappable PayNow payment link and QR. "
+            "Tell the customer they can tap the link to pay in a few taps and then send back the payment screenshot. Do not paste the link yourself and do not walk them through manual bank-transfer steps.\n"
+            "If the customer asks about COD / 货到付款 / cash on delivery, say clearly there is no COD; we use PayNow and the payment link makes paying quick, then continue collecting the order.\n"
+            "If Incoming is preset ad opener is yes, the customer tapped a preset Facebook/WhatsApp button or it was auto-sent, and it may be a misclick. "
+            "Give a brief one-line answer to that opener's topic, then ask exactly ONE qualifying question (self-use, elders/gifting, or pregnancy/postpartum). "
+            "Do NOT quote SGD prices, do NOT push a package, and do NOT start order or payment collection on this turn. Keep it short and warm.\n"
             "If Channel is whatsapp and Known order fields.phone or Known channel phone is present, "
             "the known WhatsApp sender number already counts as the phone field; do not ask for the phone number again, and do not include phone in missing_order_fields.\n"
             "If Channel is not whatsapp, still collect the customer's contact phone number.\n"

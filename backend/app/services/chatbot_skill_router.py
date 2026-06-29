@@ -283,9 +283,13 @@ def should_send_paynow_qr_for_checkout_intent(
     text = _normalize(incoming_text)
     if selected_package_code:
         return True
+    # "下单后/下单後" means "after placing an order" — it is a delivery-timing question,
+    # not a buying action. Strip it so it does not falsely match the "下单" order verb
+    # (e.g. "请问运费怎么算？下单后多久能收到？" must not auto-dump a PayNow QR).
+    order_intent_text = text.replace("下单后", "").replace("下单後", "")
     if _normalize(current_tag) == "cart_hot" and _contains_any(text, PAYMENT_KEYWORDS):
         return True
-    if _contains_any(text, PAYMENT_KEYWORDS) or _contains_any(text, PAYNOW_QR_DIRECT_ORDER_KEYWORDS):
+    if _contains_any(text, PAYMENT_KEYWORDS) or _contains_any(order_intent_text, PAYNOW_QR_DIRECT_ORDER_KEYWORDS):
         return True
     return _contains_any(text, PAYNOW_QR_BARE_QUANTITY_KEYWORDS) and not _contains_any(text, PAYNOW_QR_CONSIDERATION_KEYWORDS)
 
@@ -296,3 +300,48 @@ def _contains_any(text: str, keywords: set[str]) -> bool:
 
 def _normalize(value: Any) -> str:
     return str(value or "").casefold().strip()
+
+
+def normalize_opener_text(value: Any) -> str:
+    """Collapse a message to alphanumeric/CJK characters only.
+
+    Emoji, spacing, and punctuation differences between a configured preset opener and the
+    inbound message are ignored, so "📦 How much is shipping & delivery time?" matches the
+    same template the customer tapped.
+    """
+    return "".join(ch for ch in _normalize(value) if ch.isalnum())
+
+
+def is_templated_opener_text(incoming_text: Any, openers: Any) -> bool:
+    """True if the message matches a configured Facebook/WhatsApp preset opener.
+
+    A match means the customer tapped an Ice Breaker / Click-to-WhatsApp prefilled message
+    (or it was auto-sent) rather than typing the question themselves.
+    """
+    if not openers:
+        return False
+    target = normalize_opener_text(incoming_text)
+    if not target:
+        return False
+    for opener in openers:
+        normalized = normalize_opener_text(opener)
+        if normalized and normalized == target:
+            return True
+    return False
+
+
+def has_typed_organic_message(messages: Any, openers: Any) -> bool:
+    """True if the customer has sent at least one message that is NOT a preset opener.
+
+    Distinguishes a customer who actually typed/asked something from one who has only ever
+    tapped preset buttons.
+    """
+    if not isinstance(messages, list):
+        return False
+    for item in messages:
+        if str((item or {}).get("role") or "").casefold() != "user":
+            continue
+        text = str((item or {}).get("text") or "").strip()
+        if text and not is_templated_opener_text(text, openers):
+            return True
+    return False

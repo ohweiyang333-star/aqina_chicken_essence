@@ -110,7 +110,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 9)
+        self.assertEqual(payload["conversion_optimization_version"], 10)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertIn("You are Aqina WhatsApp / Messenger private sales support", payload["system_prompt"])
         self.assertIn("1盒 = SGD47.90", payload["system_prompt"])
@@ -250,7 +250,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 9,
+                "conversion_optimization_version": 10,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -330,7 +330,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 9)
+        self.assertEqual(payload["conversion_optimization_version"], 10)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -344,7 +344,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 9,
+                "conversion_optimization_version": 10,
                 "system_prompt": "Current prompt",
                 "packages": {},
                 "knowledge_base": {},
@@ -1398,7 +1398,7 @@ class MarketingApiTests(unittest.TestCase):
 
         message_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_text"]
         self.assertEqual(len(message_calls), 1)
-        self.assertNotIn("/paynow/", message_calls[0][1]["text"])
+        self.assertIn("/paynow/", message_calls[0][1]["text"])
         image_calls = [call for call in self.meta_client.calls if call[0] == "send_whatsapp_image"]
         self.assertEqual(len(image_calls), 4)
         outbound_images = [
@@ -1418,6 +1418,231 @@ class MarketingApiTests(unittest.TestCase):
                 "paynow_qr_media",
             },
         )
+
+    def test_process_inbound_message_alerts_staff_for_hot_lead_without_order(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "好的，2盒 SGD79.80 很适合您。麻烦发我新加坡收货地址，我就帮您安排付款链接。",
+                "next_tag": "cart_hot",
+                "lead_goal": "self_care",
+                "recommended_package_code": "pack2",
+                "upgrade_package_code": None,
+                "selected_package_code": "pack2",
+                "gift_choice": None,
+                "order_fields": {"name": "May Tan"},
+                "missing_order_fields": ["address"],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-hot",
+            conversation_id="conv-hot",
+            event_id="event-hot",
+            channel="whatsapp",
+            incoming_text="我要 2 盒",
+            identifier_key="wa_id",
+            identifier_value="6591234567",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-hot"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        # No order is created because the delivery address is still missing.
+        self.assertEqual(len(self.db.collection("orders").stream()), 0)
+        # Staff are alerted so a human can step in and close the hot lead.
+        escalations = [snapshot.to_dict() for snapshot in self.db.collection("marketing_escalations").stream()]
+        hot_alert = next(item for item in escalations if item["reason"] == "cart_hot_no_order")
+        self.assertEqual(hot_alert["status"], "open")
+        contact = self.db.collection("marketing_contacts").document("contact-hot").get().to_dict()
+        self.assertTrue(contact.get("hot_lead_alert_sent"))
+        # Automation is NOT paused — the bot keeps nurturing while a human can also close.
+        self.assertFalse(contact.get("automation_paused"))
+
+    def test_should_not_send_paynow_qr_for_delivery_timing_question(self) -> None:
+        from app.services.chatbot_skill_router import should_send_paynow_qr_for_checkout_intent
+
+        # "下单后多久能收到" is a delivery-timing question, not a buying action, so it must
+        # not auto-dump a PayNow QR before the customer has shown real buying intent.
+        self.assertFalse(
+            should_send_paynow_qr_for_checkout_intent("请问运费怎么算？下单后多久能收到？")
+        )
+        # A genuine order verb still triggers the QR.
+        self.assertTrue(should_send_paynow_qr_for_checkout_intent("我要下单"))
+        # An explicit quantity selection still triggers the QR.
+        self.assertTrue(should_send_paynow_qr_for_checkout_intent("我要 2 盒"))
+
+    def test_default_settings_include_seeded_templated_openers(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+
+        openers = get_default_chatbot_settings()["templated_openers"]
+        self.assertIsInstance(openers, list)
+        self.assertIn("请问运费怎么算？下单后多久能收到？", openers)
+
+    def test_templated_opener_detection_helpers(self) -> None:
+        from app.services.chatbot_skill_router import has_typed_organic_message, is_templated_opener_text
+
+        openers = ["📦 How much is shipping & delivery time?", "请问运费怎么算？下单后多久能收到？"]
+        # Emoji / spacing / punctuation differences are ignored.
+        self.assertTrue(is_templated_opener_text("How much is shipping & delivery time?", openers))
+        self.assertTrue(is_templated_opener_text("请问运费怎么算？下单后多久能收到？", openers))
+        # A genuinely typed question is not a preset opener.
+        self.assertFalse(is_templated_opener_text("运费多少？我想买给妈妈", openers))
+        # Organic-history detection.
+        only_template = [{"role": "user", "text": "请问运费怎么算？下单后多久能收到？"}]
+        self.assertFalse(has_typed_organic_message(only_template, openers))
+        self.assertTrue(has_typed_organic_message(only_template + [{"role": "user", "text": "我想买给妈妈"}], openers))
+
+    def test_gemini_chat_prompt_flags_preset_ad_opener(self) -> None:
+        from app.services.chatbot_settings import get_default_chatbot_settings
+        from app.services.gemini_service import GeminiConversationService
+
+        runtime_settings = get_default_chatbot_settings()
+        opener_prompt = GeminiConversationService._build_chat_prompt(
+            contact={"current_tag": "lead_cold", "lead_goal": "unknown"},
+            messages=[],
+            incoming_text="请问运费怎么算？下单后多久能收到？",
+            channel="messenger",
+            runtime_settings=runtime_settings,
+        )
+        self.assertIn("Incoming is preset ad opener (tapped/auto, not typed): yes", opener_prompt)
+        self.assertIn("ask exactly ONE qualifying question", opener_prompt)
+
+        typed_prompt = GeminiConversationService._build_chat_prompt(
+            contact={"current_tag": "lead_cold", "lead_goal": "unknown"},
+            messages=[],
+            incoming_text="运费多少？我想买给妈妈试试",
+            channel="messenger",
+            runtime_settings=runtime_settings,
+        )
+        self.assertIn("Incoming is preset ad opener (tapped/auto, not typed): no", typed_prompt)
+
+    def test_templated_opener_first_message_is_not_marked_hot(self) -> None:
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "新加坡现货通常 1-3 个工作日送达，价格已含运费。请问您是自己喝、送长辈，还是孕期调理呢？",
+                "next_tag": "cart_hot",
+                "lead_goal": "unknown",
+                "recommended_package_code": None,
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "gift_choice": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            }
+        )
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-tpl",
+            conversation_id="conv-tpl",
+            event_id="event-tpl",
+            channel="messenger",
+            incoming_text="请问运费怎么算？下单后多久能收到？",
+            identifier_key="psid",
+            identifier_value="psid-tpl",
+        )
+
+        client = self._build_client()
+        response = client.post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-tpl"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        contact = self.db.collection("marketing_contacts").document("contact-tpl").get().to_dict()
+        # An over-eager LLM cart_hot is downgraded — a tapped preset opener is not a hot lead.
+        self.assertNotEqual(contact.get("current_tag"), "cart_hot")
+        # No staff hot-lead alert for a preset opener.
+        escalations = [s.to_dict() for s in self.db.collection("marketing_escalations").stream()]
+        self.assertFalse(any(e["reason"] == "cart_hot_no_order" for e in escalations))
+        # No PayNow QR dumped on a preset opener.
+        outbound_images = [
+            s.to_dict()
+            for s in self.db.collection("marketing_conversations").document("conv-tpl").collection("messages").stream()
+            if s.to_dict().get("message_type") == "image"
+        ]
+        self.assertNotIn("paynow_qr_media", {item["source"] for item in outbound_images})
+
+    def test_whatsapp_click_to_whatsapp_referral_is_captured(self) -> None:
+        self._seed_runtime_settings()
+        self.gemini_service = FakeGeminiService(
+            chat_result={
+                "reply_text": "您好！很高兴为您介绍 Aqina 纯鸡精。",
+                "next_tag": "lead_cold",
+                "lead_goal": "unknown",
+                "recommended_package_code": None,
+                "upgrade_package_code": None,
+                "selected_package_code": None,
+                "order_fields": {"name": None, "phone": None, "address": None},
+                "missing_order_fields": [],
+                "checkout_ready": False,
+                "escalate": False,
+                "escalation_reason": None,
+                "faq_topic": None,
+                "opt_in_granted": False,
+            },
+        )
+        client = self._build_client()
+        payload = {
+            "entry": [
+                {
+                    "changes": [
+                        {
+                            "field": "messages",
+                            "value": {
+                                "messages": [
+                                    {
+                                        "from": "6591119988",
+                                        "id": "wamid.ctwa.1",
+                                        "timestamp": "1777957353",
+                                        "type": "text",
+                                        "text": {"body": "Hi, I saw your ad"},
+                                        "referral": {
+                                            "source_url": "https://fb.me/abc",
+                                            "source_id": "120200000000000",
+                                            "source_type": "ad",
+                                            "headline": "Aqina Pure Chicken Essence",
+                                            "body": "Hi Aqina SG, I'm interested in your premium chicken essence.",
+                                            "ctwa_clid": "ctwa-123",
+                                        },
+                                    }
+                                ]
+                            },
+                        }
+                    ]
+                }
+            ]
+        }
+        response = client.post(
+            "/api/v1/marketing/webhooks/whatsapp",
+            content=json.dumps(payload).encode("utf-8"),
+            headers={
+                "X-Hub-Signature-256": self._signature_for(payload),
+                "Content-Type": "application/json",
+            },
+        )
+
+        self.assertEqual(response.status_code, 202)
+        contacts = [s.to_dict() for s in self.db.collection("marketing_contacts").stream()]
+        self.assertEqual(len(contacts), 1)
+        acquisition = contacts[0].get("acquisition") or {}
+        self.assertEqual(acquisition.get("source"), "ad")
+        self.assertEqual(acquisition.get("ad_id"), "120200000000000")
 
     def test_process_inbound_message_uses_whatsapp_sender_phone_for_checkout(self) -> None:
         self.gemini_service = FakeGeminiService(
@@ -4642,7 +4867,7 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
-                "conversion_optimization_version": 9,
+                "conversion_optimization_version": 10,
                 "handoff_message": "",
                 "packages": {
                     "pack1": {
