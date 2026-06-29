@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 11
+CONVERSION_OPTIMIZATION_VERSION = 12
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -543,11 +543,15 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 "100% Pure Chicken Essence / 无添加。",
                 "double-boiled 双重蒸煮 / 7天慢炼。",
                 "Halal 认证，金色小袋装 7 PACKS x 60g。",
+                "SFA 注册、HACCP、GMP 认证。",
+                "营养：零脂肪、零胆固醇、高蛋白质，含 BCAA 支链氨基酸；无防腐剂、无味精、无加水。",
             ],
             "faq": [
                 {"question": "有没有现货？多久能送到？", "answer": "当前 1盒 SGD47.90 和 2盒 SGD79.80 已包含新加坡配送费，不需要另加邮费；库存、送达时间和具体配送安排会在下单时由客服确认。"},
                 {"question": "怎么喝最好？", "answer": "建议早晨空腹饮用吸收最好，可隔水加热 3-5 分钟后饮用。"},
                 {"question": "和普通瓶装鸡精有什么不同？", "answer": "Aqina 纯鸡精走的是 pure chicken essence / premium sachet route，重点在 MD2 黄梨酵素鸡、可追溯来源、double-boiled 双重蒸煮、7天慢炼和 100% Pure Chicken Essence。"},
+                {"question": "有什么认证？", "answer": "Aqina 纯鸡精有 SFA 注册、HACCP、GMP，以及 Halal 认证。"},
+                {"question": "营养含量是怎样的？", "answer": "零脂肪、零胆固醇、高蛋白质，含 BCAA 支链氨基酸；无防腐剂、无味精、无加水。"},
             ],
             "medical_disclaimer": "Aqina 是食品补养，不是药；特殊健康状况请先把成分表给医生确认。",
             "logistics": "当前 1盒 SGD47.90 和 2盒 SGD79.80 已包含新加坡配送费，不需要另加邮费；库存、送达时间和具体配送安排会在下单时由客服确认。不要把配送当成主要卖点，但客户问运费/邮费/配送费时必须直接回答。",
