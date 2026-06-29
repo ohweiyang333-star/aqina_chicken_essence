@@ -11,6 +11,7 @@ import {
   getOrders,
   getOrderContactContext,
   sendOrderWhatsAppNotification,
+  trackOrderPurchase,
   updateOrderPaymentStatus,
   updateOrderStatus,
   Order,
@@ -186,6 +187,11 @@ export default function AdminOrdersPage() {
         ),
       );
       if (newStatus === "paid") {
+        // Best-effort: fire the Meta Purchase conversion so ads optimize on real buyers.
+        // Never block the paid flow on this.
+        void trackOrderPurchase(orderId).catch((err) => {
+          console.error("Failed to track purchase conversion", err);
+        });
         await handleOpenContactPanel(orderId);
       }
     } catch {

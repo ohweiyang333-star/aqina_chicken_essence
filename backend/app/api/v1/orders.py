@@ -565,6 +565,55 @@ async def update_order_status(
     return OrderResponse(**order_data)
 
 
+@router.post("/{order_id}/track-purchase")
+async def track_order_purchase(order_id: str, db: DB, admin: Admin):
+    """Fire a Meta Purchase CAPI event for a confirmed-paid order (idempotent, best-effort).
+
+    Called by admin after marking an order paid so Meta's optimizer learns what a real buyer
+    looks like and the order is attributable. Never fails the request on CAPI errors — the
+    paid status is already persisted client-side.
+    """
+    doc = db.collection("orders").document(order_id).get()
+    if not doc.exists:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    order = doc.to_dict()
+    existing = order.get("meta_capi") if isinstance(order.get("meta_capi"), dict) else {}
+    existing_purchase = existing.get("purchase") if isinstance(existing.get("purchase"), dict) else None
+    if existing_purchase and existing_purchase.get("status") == "sent":
+        return {"status": "already_sent", "order_id": order_id, "event_id": existing_purchase.get("event_id")}
+
+    items = order.get("items") or []
+    first_item = items[0] if items and isinstance(items[0], dict) else {}
+    product_id = str(first_item.get("product_id") or first_item.get("product_name") or "aqina_order")
+    product_name = str(first_item.get("product_name") or first_item.get("product_name_zh") or "Aqina")
+    customer = order.get("customer") if isinstance(order.get("customer"), dict) else {}
+
+    event_input = MetaAddToCartEventInput(
+        order_id=order_id,
+        product_id=product_id,
+        product_name=product_name,
+        value=float(order.get("total_amount") or 0.0),
+        customer_name=str(customer.get("name") or ""),
+        customer_phone=str(customer.get("whatsapp") or customer.get("phone") or ""),
+        currency="SGD",
+        quantity=int(order.get("box_count") or 1),
+        marketing_consent=order.get("marketing_consent"),
+        event_id=f"{order_id}_purchase",
+    )
+    result = MetaConversionsService(meta_client=get_meta_client()).send_purchase(event_input)
+
+    update = {"meta_capi": {**existing, "purchase": result}, "updated_at": SERVER_TIMESTAMP}
+    if not order.get("paid_at"):
+        update["paid_at"] = SERVER_TIMESTAMP
+    try:
+        db.collection("orders").document(order_id).set(update, merge=True)
+    except Exception as exc:  # pragma: no cover - diagnostics only
+        logger.warning("purchase_capi_status_write_failed order_id=%s error=%s", order_id, exc)
+
+    return {"status": result.get("status"), "order_id": order_id, "event_id": result.get("event_id")}
+
+
 def _send_meta_receipt_add_to_cart_event(
     *,
     db,

@@ -2513,6 +2513,82 @@ class MarketingApiTests(unittest.TestCase):
         self.assertEqual(order["meta_capi"]["add_to_cart"]["status"], "sent")
         self.assertEqual(order["meta_capi"]["add_to_cart"]["event_id"], "receipt_add_to_cart_test_123")
 
+    def test_track_order_purchase_sends_meta_capi_purchase_and_is_idempotent(self) -> None:
+        self.db.seed(
+            "orders/order-paid-1",
+            {
+                "items": [{"product_id": "pack2", "product_name": "14天常备装", "quantity": 1}],
+                "customer": {
+                    "name": "Janice Lee",
+                    "whatsapp": "6598765432",
+                    "address": "20 Tanjong Pagar Road, Singapore 088443",
+                },
+                "total_amount": 79.8,
+                "box_count": 2,
+                "payment_status": "paid",
+                "order_status": "pending",
+            },
+        )
+        client = self._build_client()
+        with (
+            patch("app.services.meta_conversions.settings.meta_pixel_id", "pixel-123"),
+            patch("app.services.meta_conversions.settings.meta_conversions_access_token", "capi-token"),
+            patch("app.services.meta_conversions.settings.meta_conversions_test_event_code", ""),
+        ):
+            response = client.post(
+                "/api/v1/orders/order-paid-1/track-purchase",
+                headers={"Authorization": "Bearer admin-token"},
+            )
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.json()["status"], "sent")
+
+            calls = [call for call in self.meta_client.calls if call[0] == "send_conversion_event"]
+            self.assertEqual(len(calls), 1)
+            event = calls[0][1]["events"][0]
+            self.assertEqual(event["event_name"], "Purchase")
+            self.assertEqual(event["custom_data"]["value"], 79.8)
+            self.assertEqual(event["custom_data"]["currency"], "SGD")
+            self.assertEqual(
+                event["user_data"]["ph"],
+                [hashlib.sha256("6598765432".encode("utf-8")).hexdigest()],
+            )
+            order = self.db.collection("orders").document("order-paid-1").get().to_dict()
+            self.assertEqual(order["meta_capi"]["purchase"]["status"], "sent")
+
+            # Idempotent: a second call does not fire another Purchase event.
+            second = client.post(
+                "/api/v1/orders/order-paid-1/track-purchase",
+                headers={"Authorization": "Bearer admin-token"},
+            )
+            self.assertEqual(second.status_code, 200)
+            self.assertEqual(second.json()["status"], "already_sent")
+            calls_after = [call for call in self.meta_client.calls if call[0] == "send_conversion_event"]
+            self.assertEqual(len(calls_after), 1)
+
+    def test_track_order_purchase_skips_when_consent_declined(self) -> None:
+        self.db.seed(
+            "orders/order-declined",
+            {
+                "items": [{"product_id": "pack1", "product_name": "7天启动装"}],
+                "customer": {"name": "Sam", "whatsapp": "6591110000"},
+                "total_amount": 47.9,
+                "box_count": 1,
+                "marketing_consent": "declined",
+            },
+        )
+        client = self._build_client()
+        with (
+            patch("app.services.meta_conversions.settings.meta_pixel_id", "pixel-123"),
+            patch("app.services.meta_conversions.settings.meta_conversions_access_token", "capi-token"),
+        ):
+            response = client.post(
+                "/api/v1/orders/order-declined/track-purchase",
+                headers={"Authorization": "Bearer admin-token"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "skipped")
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_conversion_event"])
+
     def test_landing_order_with_receipt_does_not_send_meta_capi_without_consent(self) -> None:
         client = self._build_client()
 

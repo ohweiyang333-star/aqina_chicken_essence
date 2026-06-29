@@ -370,6 +370,14 @@ export const sendOrderWhatsAppNotification = async (
   };
 };
 
+/**
+ * Fire a Meta Purchase conversion for a confirmed-paid order so ads optimize on real buyers.
+ * Best-effort: callers should not block the paid-status update on this.
+ */
+export const trackOrderPurchase = async (orderId: string): Promise<void> => {
+  await apiClient.post(`/api/v1/orders/${orderId}/track-purchase`, {});
+};
+
 type RawRecord = Record<string, unknown>;
 
 function normalizeOrder(id: string, data: RawRecord): Order {

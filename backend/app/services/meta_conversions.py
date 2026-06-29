@@ -74,10 +74,52 @@ class MetaConversionsService:
             logger.warning("meta_capi_add_to_cart_failed order_id=%s error=%s", event_input.order_id, exc)
             return {"status": "failed", "event_id": event_id, "error": str(exc)[:300]}
 
+    def send_purchase(self, event_input: MetaAddToCartEventInput) -> dict[str, Any]:
+        """Send a Purchase event to Meta CAPI when an order is confirmed paid.
+
+        Unlike AddToCart this is not gated on opt-in consent — a completed purchase is a
+        transaction, not marketing tracking — but it still skips customers who explicitly
+        declined. Failures are swallowed so they never block the paid-status update.
+        """
+        event_id = _safe_text(event_input.event_id) or f"{event_input.order_id}_purchase"
+
+        if event_input.marketing_consent == "declined":
+            return {"status": "skipped", "reason": "marketing_consent_declined", "event_id": event_id}
+
+        if not settings.meta_pixel_id or not settings.meta_conversions_access_token:
+            return {"status": "skipped", "reason": "meta_conversions_not_configured", "event_id": event_id}
+
+        try:
+            event = self._build_commerce_event(event_input, event_id, event_name="Purchase")
+            response = self.meta_client.send_conversion_event(
+                pixel_id=settings.meta_pixel_id,
+                access_token=settings.meta_conversions_access_token,
+                events=[event],
+                test_event_code=settings.meta_conversions_test_event_code or None,
+            )
+            return {
+                "status": "sent",
+                "event_id": event_id,
+                "events_received": response.get("events_received"),
+                "fbtrace_id": response.get("fbtrace_id"),
+            }
+        except Exception as exc:  # pragma: no cover - exercised through integration logs
+            logger.warning("meta_capi_purchase_failed order_id=%s error=%s", event_input.order_id, exc)
+            return {"status": "failed", "event_id": event_id, "error": str(exc)[:300]}
+
     def _build_add_to_cart_event(
         self,
         event_input: MetaAddToCartEventInput,
         event_id: str,
+    ) -> dict[str, Any]:
+        return self._build_commerce_event(event_input, event_id, event_name="AddToCart")
+
+    def _build_commerce_event(
+        self,
+        event_input: MetaAddToCartEventInput,
+        event_id: str,
+        *,
+        event_name: str,
     ) -> dict[str, Any]:
         page_path = _safe_page_path(event_input.page_path)
         landing_version = _safe_enum(event_input.landing_version, ALLOWED_LANDING_VERSIONS)
@@ -108,7 +150,7 @@ class MetaConversionsService:
             custom_data["language"] = language
 
         return {
-            "event_name": "AddToCart",
+            "event_name": event_name,
             "event_time": int(time.time()),
             "event_id": event_id,
             "action_source": "website",
