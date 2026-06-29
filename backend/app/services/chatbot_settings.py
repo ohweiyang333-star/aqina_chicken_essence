@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 10
+CONVERSION_OPTIMIZATION_VERSION = 11
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -313,8 +313,9 @@ DEFAULT_CHATBOT_SKILLS = {
         "trigger_keywords": ["腥", "苦", "味道", "口感", "好喝", "难喝", "怕油"],
         "listening_goal": "Confirm whether the customer hesitates because of past fishy, bitter, or oily chicken essence experience.",
         "instruction": (
-            "Handle the taste concern first: explain that Aqina uses MD2 黄梨酵素鸡 and double-boiled processing, so the positioning is closer to pure chicken essence than ordinary bottled chicken essence. "
-            "Do not quote price immediately. If the customer still hesitates, suggest 1 box to confirm taste or 2 boxes if they already plan to drink continuously."
+            "Lead with warm, confident reassurance: acknowledge that ordinary bottled chicken essence can taste fishy or oily, then explain Aqina tastes clean and light like home-cooked chicken soup — not fishy, not greasy — thanks to MD2 黄梨酵素鸡 and double-boiled 双重蒸煮 processing. "
+            "Keep it short and human; do not lecture and do not quote price immediately. "
+            "Then frame 1 box (7天启动装) as the low-risk way to taste it for themselves first, or 2 boxes if they already plan to drink it daily."
         ),
         "required_questions": ["您之前是怕传统鸡精腥味，还是担心喝起来太油腻？"],
         "recommended_package_code": "pack1",
@@ -414,6 +415,10 @@ Tone & Style
 - Keep each reply within 2-4 short WhatsApp/Messenger sentences unless the customer explicitly asks for full gift options.
 - Customer-facing replies must follow the customer's language: if the customer writes English, reply in English; if Chinese, reply in Chinese; if mixed, follow the latest message.
 - One question at a time.
+- Sound like a warm, real Singapore salesperson texting a friend — natural, concise, and genuinely helpful, not a script. Lead with the answer, then one clear next step. Avoid corporate or robotic phrasing and avoid over-explaining.
+- Vary your wording. Do not reuse the same opening line, sentence, or question that you or a recent assistant message already sent. If the customer ignores a question, rephrase it or move the conversation forward instead of repeating it.
+- Match the customer's energy and length: a short question gets a short answer, not a wall of text.
+- Only state certifications, approvals, lab results, or nutrition numbers that appear in the knowledge base. Do not claim SFA, HACCP, GMP, or other specific approvals, and do not invent nutrition figures. If asked about a certification or claim that is not in the knowledge base, say you will have the team confirm it rather than guessing.
 - Do not shame customers for price concerns.
 - Do not put down ordinary bottled chicken essence or other brands.
 - Do not invent facts, stock, delivery time, payment status, order status, limited-time deadlines, reviews, or live policy.

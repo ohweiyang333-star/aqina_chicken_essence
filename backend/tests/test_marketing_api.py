@@ -110,7 +110,7 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("packages", payload)
         self.assertIn("knowledge_base", payload)
         self.assertIn("crm_follow_up_rules", payload)
-        self.assertEqual(payload["conversion_optimization_version"], 10)
+        self.assertEqual(payload["conversion_optimization_version"], 11)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertIn("You are Aqina WhatsApp / Messenger private sales support", payload["system_prompt"])
         self.assertIn("1盒 = SGD47.90", payload["system_prompt"])
@@ -250,7 +250,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 10,
+                "conversion_optimization_version": 11,
                 "system_prompt": f"Aqina {legacy_term} advisor prompt",
                 "knowledge_base": {
                     "medical_disclaimer": f"Aqina {legacy_term}是食品补充剂，请咨询主治医生。",
@@ -330,7 +330,7 @@ class MarketingApiTests(unittest.TestCase):
 
         self.assertEqual(response.status_code, 200)
         payload = response.json()
-        self.assertEqual(payload["conversion_optimization_version"], 10)
+        self.assertEqual(payload["conversion_optimization_version"], 11)
         self.assertIn("Pace -> Answer -> Diagnose -> Bridge -> Choice", payload["system_prompt"])
         self.assertEqual(payload["payment"]["paynow"]["account_name"], "Custom PayNow Name")
         self.assertEqual(payload["payment"]["paynow"]["payment_reference_prefix"], "CUSTOM")
@@ -344,7 +344,7 @@ class MarketingApiTests(unittest.TestCase):
         self.db.seed(
             "chatbotSettings/default",
             {
-                "conversion_optimization_version": 10,
+                "conversion_optimization_version": 11,
                 "system_prompt": "Current prompt",
                 "packages": {},
                 "knowledge_base": {},
@@ -398,6 +398,9 @@ class MarketingApiTests(unittest.TestCase):
         self.assertIn("customer_request_remark", prompt)
         self.assertIn("Delivery timing requests during checkout", prompt)
         self.assertIn("price changes, discounts, extra gifts", prompt)
+        self.assertIn("Vary your wording", prompt)
+        self.assertIn("Only state certifications, approvals, lab results, or nutrition numbers", prompt)
+        self.assertIn("clean and light like home-cooked chicken soup", skills["taste_objection"]["instruction"])
         self.assertIn("usage_consultation", skills)
         self.assertIn("Do not turn general health", skills["usage_consultation"]["listening_goal"])
         self.assertIn("usage, suitability, or body-condition question", skills["usage_consultation"]["instruction"])
@@ -4943,7 +4946,7 @@ class MarketingApiTests(unittest.TestCase):
             "chatbotSettings/default",
             {
                 "system_prompt": "Aqina health advisor prompt",
-                "conversion_optimization_version": 10,
+                "conversion_optimization_version": 11,
                 "handoff_message": "",
                 "packages": {
                     "pack1": {
