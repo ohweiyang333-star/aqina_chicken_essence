@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 12
+CONVERSION_OPTIMIZATION_VERSION = 13  # 13: reconcile certification copy (KB ↔ system prompt), JAKIM Halal precise
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -101,6 +101,24 @@ DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
 # as a low-intent opener: the bot answers briefly and qualifies instead of hard-closing, and
 # the lead is NOT auto-marked cart_hot. Editable in admin settings as `templated_openers`.
 DEFAULT_TEMPLATED_OPENERS = [
+    # 2026-07-08 ad↔chat alignment: the CTWA Ice Breaker IS the pre-filled first message, so it
+    # frames the whole conversation. Prefer consultative openers (scene / taste / source /
+    # package) over shipping/price, so the customer arrives ready to be qualified instead of
+    # anchored on logistics. Set the SAME texts as the Ice Breakers in Meta Ads Manager and keep
+    # them in sync with the running ad creatives.
+    "我想先了解适合谁喝，再决定",
+    "I'd like to understand who it suits before I decide.",
+    "买给妈妈/长辈，想先问怎么选",
+    "Buying for my mum / elders — how should I choose?",
+    "月子/产后想送，先问阶段和口味",
+    "想问 1盒还是 2盒适合我",
+    "1 box or 2 boxes — which suits me?",
+    "为什么比普通瓶装鸡精贵？",
+    "Why is it pricier than an ordinary bottle?",
+    "🍲 怕味道腥或太厚？",
+    "黄梨酵素鸡有什么特别？",
+    # Legacy openers kept only so the bot still recognizes them if an old ad is still live.
+    # Prefer the consultative openers above; retire these from Meta Ice Breakers.
     "What is the nutritional content?",
     "📦 How much is shipping & delivery time?",
     "How much is shipping & delivery time?",
@@ -418,7 +436,7 @@ Tone & Style
 - Sound like a warm, real Singapore salesperson texting a friend — natural, concise, and genuinely helpful, not a script. Lead with the answer, then one clear next step. Avoid corporate or robotic phrasing and avoid over-explaining.
 - Vary your wording. Do not reuse the same opening line, sentence, or question that you or a recent assistant message already sent. If the customer ignores a question, rephrase it or move the conversation forward instead of repeating it.
 - Match the customer's energy and length: a short question gets a short answer, not a wall of text.
-- Only state certifications, approvals, lab results, or nutrition numbers that appear in the knowledge base. Do not claim SFA, HACCP, GMP, or other specific approvals, and do not invent nutrition figures. If asked about a certification or claim that is not in the knowledge base, say you will have the team confirm it rather than guessing.
+- Only state certifications, approvals, lab results, or nutrition numbers that appear in the knowledge base, and word them exactly as the knowledge base does (cite Halal as JAKIM Halal, not MUIS). Do not generalize, upgrade, or invent any certification, approval, or nutrition figure beyond the knowledge base. If asked about a certification or claim that is not in the knowledge base, say you will have the team confirm it rather than guessing.
 - Do not shame customers for price concerns.
 - Do not put down ordinary bottled chicken essence or other brands.
 - Do not invent facts, stock, delivery time, payment status, order status, limited-time deadlines, reviews, or live policy.
@@ -542,7 +560,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 "使用 MD2 黄梨酵素鸡 / Pineapple Chicken。",
                 "100% Pure Chicken Essence / 无添加。",
                 "double-boiled 双重蒸煮 / 7天慢炼。",
-                "Halal 认证，金色小袋装 7 PACKS x 60g。",
+                "JAKIM Halal 认证，金色小袋装 7 PACKS x 60g。",
                 "SFA 注册、HACCP、GMP 认证。",
                 "营养：零脂肪、零胆固醇、高蛋白质，含 BCAA 支链氨基酸；无防腐剂、无味精、无加水。",
             ],
@@ -550,7 +568,7 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 {"question": "有没有现货？多久能送到？", "answer": "当前 1盒 SGD47.90 和 2盒 SGD79.80 已包含新加坡配送费，不需要另加邮费；库存、送达时间和具体配送安排会在下单时由客服确认。"},
                 {"question": "怎么喝最好？", "answer": "建议早晨空腹饮用吸收最好，可隔水加热 3-5 分钟后饮用。"},
                 {"question": "和普通瓶装鸡精有什么不同？", "answer": "Aqina 纯鸡精走的是 pure chicken essence / premium sachet route，重点在 MD2 黄梨酵素鸡、可追溯来源、double-boiled 双重蒸煮、7天慢炼和 100% Pure Chicken Essence。"},
-                {"question": "有什么认证？", "answer": "Aqina 纯鸡精有 SFA 注册、HACCP、GMP，以及 Halal 认证。"},
+                {"question": "有什么认证？", "answer": "Aqina 纯鸡精有 SFA 注册、HACCP、GMP，以及 JAKIM Halal 认证。"},
                 {"question": "营养含量是怎样的？", "answer": "零脂肪、零胆固醇、高蛋白质，含 BCAA 支链氨基酸；无防腐剂、无味精、无加水。"},
             ],
             "medical_disclaimer": "Aqina 是食品补养，不是药；特殊健康状况请先把成分表给医生确认。",
