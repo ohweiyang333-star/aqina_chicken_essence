@@ -79,12 +79,18 @@ export default function useLandingProducts({
             const fallbackProduct = fallbackProductsByPack.get(packKey);
 
             if (!fallbackProduct) {
-              productsByPack.set(packKey, displayProduct);
+              productsByPack.set(packKey, { ...displayProduct, id: packKey });
               return;
             }
 
             productsByPack.set(packKey, {
               ...displayProduct,
+              // Key the product by its resolved pack, not the Firestore doc id: callers select
+              // packs by `pack1` / `pack2` (and CheckoutModal re-derives the same key before
+              // persisting the order). Leaving the raw doc id here made `find(p => p.id === tab)`
+              // miss and silently fall back to products[0] — i.e. picking "2 boxes" checked out
+              // 1 box.
+              id: packKey,
               name:
                 displayProduct.name === displayProduct.id
                   ? fallbackProduct.name

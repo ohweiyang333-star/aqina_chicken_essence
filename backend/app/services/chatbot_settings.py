@@ -16,7 +16,7 @@ FOLLOW_UP_STAGE_DELAYS = {
     "t23h": 1380,
 }
 
-CONVERSION_OPTIMIZATION_VERSION = 13  # 13: reconcile certification copy (KB ↔ system prompt), JAKIM Halal precise
+CONVERSION_OPTIMIZATION_VERSION = 14  # 14: KB answers the three landing-page objections (herbs/taste/pregnancy) + per-sachet price math
 TERMINOLOGY_MIGRATION_VERSION = 1
 AQINA_NEW_PRODUCT_TERM = "纯鸡精"
 DEFAULT_PRIVATE_WHATSAPP_NUMBER = "+6591212369"
@@ -101,11 +101,23 @@ DEFAULT_FACEBOOK_COMMENT_KEYWORDS = [
 # as a low-intent opener: the bot answers briefly and qualifies instead of hard-closing, and
 # the lead is NOT auto-marked cart_hot. Editable in admin settings as `templated_openers`.
 DEFAULT_TEMPLATED_OPENERS = [
-    # 2026-07-08 ad↔chat alignment: the CTWA Ice Breaker IS the pre-filled first message, so it
-    # frames the whole conversation. Prefer consultative openers (scene / taste / source /
-    # package) over shipping/price, so the customer arrives ready to be qualified instead of
-    # anchored on logistics. Set the SAME texts as the Ice Breakers in Meta Ads Manager and keep
-    # them in sync with the running ad creatives.
+    # 2026-07-25 ad ↔ landing ↔ chat alignment: these four are the SAME four intents the landing
+    # page offers as its primary CTA (see frontend/src/lib/marketplace-offer-content.ts
+    # INTENT_OPTIONS), so the ad promise, the page headline and the first WhatsApp line all say
+    # the same thing and the lead arrives pre-sorted by stage instead of by logistics.
+    # CTWA carries a referral (which ad was tapped), so answer against that intent rather than
+    # replying with one generic welcome.
+    # NOTE: set the SAME texts as the Ice Breakers in Meta Ads Manager — that is a manual step in
+    # Meta, not something this file changes.
+    "我在孕期，想问适不适合",
+    "I'm pregnant — is it suitable for me?",
+    "我在坐月子／家人刚生产",
+    "I'm in confinement / a family member just gave birth",
+    "送给妈妈或长辈",
+    "Buying for my mum or an elder",
+    "我自己想先试口感",
+    "I want to try the taste first",
+    # Previous consultative set — kept so ads already running keep being recognized as presets.
     "我想先了解适合谁喝，再决定",
     "I'd like to understand who it suits before I decide.",
     "买给妈妈/长辈，想先问怎么选",
@@ -570,6 +582,21 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 {"question": "和普通瓶装鸡精有什么不同？", "answer": "Aqina 纯鸡精走的是 pure chicken essence / premium sachet route，重点在 MD2 黄梨酵素鸡、可追溯来源、double-boiled 双重蒸煮、7天慢炼和 100% Pure Chicken Essence。"},
                 {"question": "有什么认证？", "answer": "Aqina 纯鸡精有 SFA 注册、HACCP、GMP，以及 JAKIM Halal 认证。"},
                 {"question": "营养含量是怎样的？", "answer": "零脂肪、零胆固醇、高蛋白质，含 BCAA 支链氨基酸；无防腐剂、无味精、无加水。"},
+                # 2026-07-25: the landing page's three real objections, so chat and page answer
+                # the same way. Sourced from 公司文件_Aqina鸡精介绍PDF (composition) and the
+                # 2026-05-23 inbox analysis, where a real customer asked "Made with chinese herbs".
+                {
+                    "question": "会不会燥？里面有没有当归、人参这类药材？",
+                    "answer": "没有药材。Aqina 纯鸡精是 100% 鸡骨与鸡肉熬制，不加水、不加防腐剂、不加味精，配方里没有当归、人参这类中药材，所以不是药材燥补那一路。",
+                },
+                {
+                    "question": "会不会腥？会不会油腻？",
+                    "answer": "双重蒸煮会把多余油脂和腥味滤掉，喝起来比较像熬久了的清鸡汤，清爽不油腻、有自然回甘。不确定合不合口味，建议先拿1盒7天装试，不用一次买多。",
+                },
+                {
+                    "question": "孕期／月子可以喝吗？",
+                    "answer": "Aqina 纯鸡精是日常食品补养，不是药，配方里也没有药材。孕期、哺乳期、正在治疗或服药的顾客，请按自己的身体状况和医生建议安排；需要更确定的话，我可以请真人客服跟您确认。",
+                },
             ],
             "medical_disclaimer": "Aqina 是食品补养，不是药；特殊健康状况请先把成分表给医生确认。",
             "logistics": "当前 1盒 SGD47.90 和 2盒 SGD79.80 已包含新加坡配送费，不需要另加邮费；库存、送达时间和具体配送安排会在下单时由客服确认。不要把配送当成主要卖点，但客户问运费/邮费/配送费时必须直接回答。",
@@ -579,6 +606,12 @@ def get_default_chatbot_settings() -> dict[str, Any]:
                 "1盒 SGD47.90；2盒 SGD79.80，等于 SGD39.90/盒。"
                 "2盒比买两个单盒 SGD95.80 少 SGD16.00，并送 1包 French Poulet Cut Part，market value SGD8。"
                 "价值解释必须讲清楚来源、原料和工艺：Aqina farm 可追溯、MD2 黄梨酵素鸡、double-boiled 双重蒸煮、7天慢炼、100% Pure Chicken Essence。"
+                # 2026-07-25: per-sachet math so the bot can answer 嫌贵 with a concrete unit price
+                # instead of only an abstract 'premium route' argument. Matches the landing page.
+                "顾客嫌贵时，用每袋单价把价值讲清楚：1盒 SGD47.90 ÷ 7袋 ≈ 每袋 SGD6.84；"
+                "2盒 SGD79.80 ÷ 14袋 ≈ 每袋 SGD5.70，每袋都是 60g。"
+                "同规格的 premium 有机滴鸡精，每袋通常贵不少，所以 Aqina 是同级里比较划算的一个。"
+                "不要点名比较竞品品牌，也不要报竞品价格；顾客主动提到别的牌子时，只讲 Aqina 自己的每袋单价和来源工艺。"
             ),
         },
         "crm_follow_up_rules": {
