@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { useLocale } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import { Globe2 } from 'lucide-react';
 import Image from 'next/image';
 import { IMAGES } from '@/lib/image-utils';
@@ -40,26 +39,18 @@ export default function Header() {
   const languageHref = getLanguageHref(pathname, nextLocale);
   const isOfferResetEntry = pathname === '/en' || pathname === '/zh';
   const plansHref = isOfferResetEntry ? '#offer-reset-products' : '#products';
-  const [isScrolled, setIsScrolled] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
   return (
-    <header
-      className={[
-        'fixed inset-x-0 top-0 z-[100] border-b transition-all duration-300',
-        // Solid in both states: the main landing page is a light "paper" world, and a
-        // translucent dark bar over cream blurs into muddy olive with the gold logo
-        // (which is drawn for dark backgrounds) sitting on top of it.
-        isScrolled
-          ? 'border-primary/18 bg-background-dark shadow-[0_10px_40px_rgba(0,0,0,0.28)]'
-          : 'border-transparent bg-background-dark',
-      ].join(' ')}
-    >
+    // The scrolled affordance (border + shadow) is driven by CSS scroll-timeline in
+    // `.header-scroll-shade`, not React state. Scroll restoration fires the scroll
+    // handler *during* hydration, so a `useState` version re-rendered the header
+    // before hydration committed and React reported a className mismatch against the
+    // server's unscrolled HTML. CSS has no hydration surface, and this also drops a
+    // scroll listener that ran on every frame.
+    //
+    // Solid in both states: the main landing page is a light "paper" world, and a
+    // translucent dark bar over cream blurs into muddy olive with the gold logo
+    // (which is drawn for dark backgrounds) sitting on top of it.
+    <header className="header-scroll-shade fixed inset-x-0 top-0 z-[100] border-b border-transparent bg-background-dark">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4">
         <Link href={homeHref} className="flex items-center">
           <div className="relative h-10 w-24 sm:h-12 sm:w-28">

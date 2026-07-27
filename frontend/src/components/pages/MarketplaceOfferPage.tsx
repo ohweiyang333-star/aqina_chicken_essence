@@ -760,11 +760,6 @@ export default function MarketplaceOfferPage() {
           ))}
         </RevealGroup>
 
-        <Reveal>
-          <p className={`mt-12 max-w-[62ch] border-t ${RULE} pt-6 text-[0.95rem] leading-[1.8] text-ink-soft`}>
-            {t(COPY.proofHonesty)}
-          </p>
-        </Reveal>
       </section>
 
       {/* ───────────────────── 11. FAQ ───────────────────── */}

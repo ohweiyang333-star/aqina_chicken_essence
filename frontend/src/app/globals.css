@@ -186,6 +186,33 @@ button {
   }
 }
 
+/* ---- Header scrolled affordance, without React state ---------------------
+   Replaces a useState + scroll listener that mismatched during hydration when
+   the browser restored scroll before hydration committed. Where scroll-driven
+   animation is unsupported the header simply keeps its resting border. */
+@keyframes header-shade {
+  from {
+    border-bottom-color: transparent;
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  to {
+    border-bottom-color: color-mix(in srgb, var(--color-primary) 18%, transparent);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.28);
+  }
+}
+
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .header-scroll-shade {
+      animation: header-shade linear both;
+      /* scroll(root), not scroll(): the header is position:fixed, so it has no
+         nearest scrolling ancestor to bind a default timeline to. */
+      animation-timeline: scroll(root);
+      animation-range: 0 120px;
+    }
+  }
+}
+
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

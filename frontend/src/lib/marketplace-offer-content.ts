@@ -565,10 +565,9 @@ export const COPY: Record<string, L> = {
   },
   proofProductHeading: { zh: '产品实拍', en: 'The product itself' },
   proofSceneHeading: { zh: '使用场景', en: 'In use' },
-  proofHonesty: {
-    zh: '我们没有在这一页放评分、销量或署名好评。真实顾客的原话，要等顾客本人授权之后才会刊登——在那之前，我们宁可让你看产品本身。',
-    en: 'You will not find a rating, a units-sold figure or a signed testimonial on this page. Real customer words go up only after that customer has given permission — until then we would rather show you the product itself.',
-  },
+  // NOTE: do not add copy here that announces what the page lacks. Declining to show
+  // ratings or testimonials is the right call; telling the visitor they are missing
+  // plants the doubt it pretends to answer. The discipline is internal, not a headline.
 
   offersTitle: { zh: '选配套', en: 'Choose your pack' },
   giftsTitle: { zh: '2 盒专享：French Poulet 赠品五选一', en: '2-box exclusive: pick one French Poulet gift' },
