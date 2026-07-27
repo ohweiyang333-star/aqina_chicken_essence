@@ -127,10 +127,6 @@ export const CONCERNS: Concern[] = [
       zh: '配方是 100% 鸡骨与鸡肉熬制，不加水、不加防腐剂、不加味精。里面没有当归、人参这类药材，所以不是药材燥补那一路。',
       en: 'It is brewed from 100% chicken bone and chicken meat, with no added water, no preservatives and no MSG. There are no herbs such as dang gui or ginseng — it is not a herbal tonic.',
     },
-    note: {
-      zh: '真的有顾客问过「是不是加了中药材」，答案是没有。',
-      en: 'A real customer asked us whether it contains Chinese herbs. It does not.',
-    },
   },
   {
     id: 'fishy',
@@ -151,10 +147,6 @@ export const CONCERNS: Concern[] = [
     answer: {
       zh: '这是食品补养，不是药。配方里没有药材。孕期、哺乳期、正在治疗或服药的话，请按自己的身体状况和医生建议安排，也可以先 WhatsApp 问清楚再决定。',
       en: 'This is food nourishment, not medicine, and the formula contains no herbs. If you are pregnant, breastfeeding, under treatment or on medication, please follow your own condition and your doctor’s advice — or ask us on WhatsApp first.',
-    },
-    note: {
-      zh: '我们不会跟你说「一定要喝」。说不满的话，你也不会信。',
-      en: 'We will not tell you that you must drink it. An overclaim would not earn your trust anyway.',
     },
   },
 ];
@@ -185,8 +177,8 @@ export const SOURCE_CHAIN: SourceStep[] = [
     id: 'chicken',
     title: { zh: 'MD2 黄梨酵素喂养，70 天自然成长', en: 'MD2 pineapple enzyme feed, 70 days of natural growth' },
     body: {
-      zh: '鸡只饲料里加入源自 MD2 黄梨的天然菠萝蛋白酶，在农场慢慢养到 70 天。70 天说的是鸡的成长天数，不是熬煮时间。',
-      en: 'The feed includes natural bromelain from MD2 pineapple, and the birds grow on the farm for 70 days. The 70 days refers to how long the chicken is raised — not to brewing time.',
+      zh: '鸡只的饲料里加入源自 MD2 黄梨的天然菠萝蛋白酶，在农场慢慢养足 70 天才出栏，肉质更细、腥味更低。',
+      en: 'The feed carries natural bromelain from MD2 pineapple, and the birds are given a full 70 days on the farm before they leave it — finer meat, less of the gamey note.',
     },
   },
   {
