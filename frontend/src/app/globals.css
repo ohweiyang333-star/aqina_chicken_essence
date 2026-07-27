@@ -19,6 +19,19 @@
   --font-heading: var(--font-cormorant);
   --font-body: var(--font-jakarta);
   --font-sans: var(--font-jakarta);
+
+  /* ---- Warm provisions world (the /[locale] offer page) -------------------
+     One committed palette: paper, ink, gold. Warm greys only — no cool greys
+     mixed in, no second accent. Shadows are tinted from the paper hue rather
+     than black, so elevation reads as light falling on paper.            */
+  --color-paper: #fbf7f0;
+  --color-paper-deep: #f4ece0;
+  --color-paper-edge: #e7dbc9;
+  --color-ink: #1b1510;
+  --color-ink-soft: #5c4f42;
+  --color-ink-faint: #8b7c6c;
+  --color-gold: #b8862b;
+  --color-gold-deep: #8a6318;
 }
 
 :root {
@@ -64,6 +77,113 @@ button {
 
 .font-body {
   font-family: var(--font-jakarta), sans-serif;
+}
+
+/* ---- Warm provisions world: type + surface utilities ---------------------
+   Scoped to .world-paper so the deprecated dark v2/v3/v4 pages are untouched. */
+.world-paper {
+  /* Latin/figures get Fraunces + Jakarta; Chinese falls through to the
+     platform face, which beats any webfont we could ship for CJK. */
+  --stack-display: var(--font-display), "Songti SC", "Noto Serif CJK SC", Georgia, serif;
+  --stack-body: var(--font-body-latin), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans CJK SC", ui-sans-serif, system-ui, sans-serif;
+
+  font-family: var(--stack-body);
+  color: var(--color-ink);
+  background-color: var(--color-paper);
+  font-synthesis-weight: none;
+}
+
+.world-paper .display {
+  font-family: var(--stack-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  font-weight: 600;
+}
+
+/* Prices and any figure that gets compared column-to-column. */
+.world-paper .figure {
+  font-family: var(--stack-display);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.02em;
+}
+
+.world-paper p {
+  text-wrap: pretty;
+}
+
+/* Elevation: declared once, tinted from the paper hue — never black at low alpha. */
+.world-paper .lift {
+  box-shadow:
+    0 1px 2px rgba(87, 62, 30, 0.05),
+    0 12px 28px -12px rgba(87, 62, 30, 0.16);
+}
+
+.world-paper .lift-lg {
+  box-shadow:
+    0 1px 2px rgba(87, 62, 30, 0.06),
+    0 28px 60px -24px rgba(87, 62, 30, 0.22);
+}
+
+/* Paper grain. Fixed, non-interactive, very low contrast — breaks digital flatness
+   without reading as a filter. */
+.world-paper::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  /* Sits above content but below the sticky bar (z-40) and the checkout modal.
+     pointer-events:none so it never intercepts a tap. Must NOT be paired with a
+     `.world-paper > *` z-index lift — that would override position:fixed on the
+     sticky bar and drop it into the flow. */
+  z-index: 30;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* ---- The one authored moment -------------------------------------------
+   Content settles in as it enters the viewport. The resting state is the
+   DEFAULT: if scroll-driven animations are unsupported, or reduced-motion is
+   on, `.reveal` is simply visible. Nothing on this page is ever hidden behind
+   a script. Elements already in view at load land past the range end, so they
+   render settled without a flash. */
+@keyframes reveal-settle {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .world-paper .reveal {
+      animation: reveal-settle linear both;
+      animation-timeline: view();
+      /* Settle early: content is fully readable well before it reaches the middle of
+         the viewport, so the motion never delays reading. */
+      animation-range: entry calc(0% + var(--reveal-offset, 0%)) entry
+        calc(34% + var(--reveal-offset, 0%));
+    }
+  }
+}
+
+/* Keyboard focus that belongs to the palette. */
+.world-paper :is(a, button, select, input, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-gold-deep);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 .hide-scrollbar {

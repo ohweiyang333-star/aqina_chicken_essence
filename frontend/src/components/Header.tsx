@@ -52,9 +52,12 @@ export default function Header() {
     <header
       className={[
         'fixed inset-x-0 top-0 z-[100] border-b transition-all duration-300',
+        // Solid in both states: the main landing page is a light "paper" world, and a
+        // translucent dark bar over cream blurs into muddy olive with the gold logo
+        // (which is drawn for dark backgrounds) sitting on top of it.
         isScrolled
-          ? 'border-primary/18 bg-background-dark/88 shadow-[0_10px_40px_rgba(0,0,0,0.35)] backdrop-blur-md'
-          : 'border-transparent bg-background-dark/60 backdrop-blur-sm',
+          ? 'border-primary/18 bg-background-dark shadow-[0_10px_40px_rgba(0,0,0,0.28)]'
+          : 'border-transparent bg-background-dark',
       ].join(' ')}
     >
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-4 sm:gap-4">

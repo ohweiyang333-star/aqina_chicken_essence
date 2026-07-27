@@ -3,25 +3,12 @@
 import { useState } from 'react';
 import { useLocale } from 'next-intl';
 import Image from 'next/image';
-import {
-  Award,
-  Building2,
-  CalendarDays,
-  Check,
-  ChevronRight,
-  Gift,
-  HelpCircle,
-  Info,
-  MessageCircle,
-  QrCode,
-  ShieldCheck,
-  Truck,
-  Utensils,
-} from 'lucide-react';
+import { Check, ChevronRight, MessageCircle, QrCode } from 'lucide-react';
 import CheckoutModal from '@/components/CheckoutModal';
 import useLandingProducts from '@/hooks/useLandingProducts';
 import { getWhatsAppHref } from '@/lib/site-config';
 import { trackLandingFunnelEvent } from '@/lib/marketing-analytics';
+import { Reveal, RevealGroup, RevealItem } from '@/components/motion/Reveal';
 import {
   COOKING_USES,
   COPY,
@@ -46,10 +33,16 @@ import {
 
 const LANDING_VERSION = 'marketplace_offer';
 
+/** One shared measure for the page. */
+const SHELL = 'mx-auto w-full max-w-[76rem] px-5 md:px-8';
+/** Hairline rule — the page's primary structural device instead of card borders. */
+const RULE = 'border-paper-edge';
+
 export default function MarketplaceOfferPage() {
   const locale = useLocale();
   const lang = normalizeMarketplaceLocale(locale);
   const t = (entry: Record<'en' | 'zh', string>) => entry[lang];
+  const zh = lang === 'zh';
 
   const { products, selectedProduct, isCheckoutOpen, handleBuyNow, closeCheckout } =
     useLandingProducts();
@@ -79,702 +72,776 @@ export default function MarketplaceOfferPage() {
       product_id: activeProduct.id,
       product_value: Number(activeProduct.price),
     });
-    const giftLabel = GIFT_OPTIONS.find((g) => g.value === selectedGift);
+    const gift = GIFT_OPTIONS.find((g) => g.value === selectedGift);
     handleBuyNow({
       ...activeProduct,
       label:
-        activeTab === 'pack2' && giftLabel
-          ? `${activeProduct.label} (${lang === 'zh' ? '已选赠品' : 'gift'}: ${giftLabel.name} ${giftLabel.weight})`
+        activeTab === 'pack2' && gift
+          ? `${activeProduct.label} (${zh ? '已选赠品' : 'gift'}: ${gift.name} ${gift.weight})`
           : activeProduct.label,
     });
   };
 
-  const trustChips = [COPY.trustStrip1, COPY.trustStrip2, COPY.trustStrip3, COPY.trustStrip4];
+  const priceRows = [
+    {
+      key: 'competitor',
+      name: `${VALUE_EQUATION.competitor.brand} ${t(VALUE_EQUATION.competitor.product)}`,
+      spec: `60g × ${VALUE_EQUATION.competitor.sachets} · SGD ${VALUE_EQUATION.competitor.packPrice.toFixed(2)}`,
+      per: VALUE_EQUATION.competitor.perSachet,
+      ours: false,
+    },
+    {
+      key: 'pack1',
+      name: zh ? 'Aqina 纯鸡精 · 1 盒' : 'Aqina Pure Chicken Essence · 1 box',
+      spec: '60g × 7 · SGD 47.90',
+      per: PER_SACHET.pack1,
+      ours: true,
+    },
+    {
+      key: 'pack2',
+      name: zh ? 'Aqina 纯鸡精 · 2 盒' : 'Aqina Pure Chicken Essence · 2 boxes',
+      spec: '60g × 14 · SGD 79.80',
+      per: PER_SACHET.pack2,
+      ours: true,
+    },
+  ];
+
+  const primaryBtn =
+    'inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl bg-[#1f8a4c] px-6 text-[0.95rem] font-semibold text-white transition duration-200 hover:bg-[#1a763f] active:translate-y-px';
+  const secondaryBtn =
+    'inline-flex min-h-[3.25rem] items-center justify-center gap-2 rounded-xl border border-ink/25 px-6 text-[0.95rem] font-semibold text-ink transition duration-200 hover:border-ink/50 hover:bg-ink/[0.04] active:translate-y-px';
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] pb-24 text-charcoal font-sans md:pb-0">
-      {/* Verifiable trust strip — replaces the old rating / units-sold row */}
-      <div className="w-full border-b border-primary/20 bg-[#1b261b] px-4 py-2.5 text-[#f2e7d5]">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-3 gap-y-1 text-[11px] font-bold tracking-wide md:px-6 md:text-xs">
-          {trustChips.map((chip, i) => (
-            <span key={t(chip)} className="flex items-center gap-3">
-              {i > 0 && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
-              <span>{t(chip)}</span>
+    // pt-16 clears the shared fixed header (h-16); without it the masthead strip
+    // renders underneath it.
+    <div className="world-paper min-h-screen pt-16 pb-28 md:pb-0">
+      {/* ── Masthead rule: verifiable facts, set as a hairline strip, not a second dark bar ── */}
+      <div className={`border-b ${RULE} bg-paper-deep/60`}>
+        <div className={`${SHELL} flex flex-wrap items-center justify-center gap-x-6 gap-y-1 py-2.5`}>
+          {[COPY.trustStrip1, COPY.trustStrip2, COPY.trustStrip3, COPY.trustStrip4].map((chip) => (
+            <span key={t(chip)} className="text-[0.7rem] font-medium tracking-wide text-ink-soft">
+              {t(chip)}
             </span>
           ))}
         </div>
       </div>
 
-      {/* ---------------------------------------------------------- 1. HERO */}
-      <section className="mx-auto max-w-7xl px-4 pt-8 md:px-8 md:pt-12">
-        <div className="grid items-start gap-8 lg:grid-cols-12">
-          <div className="space-y-5 lg:col-span-6">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#9b6b1f]">
+      {/* ───────────────────────────────── 1. HERO ───────────────────────────────── */}
+      <header className={`${SHELL} pt-14 md:pt-24`}>
+        <div className="grid gap-12 lg:grid-cols-12 lg:items-end lg:gap-10">
+          <Reveal className="lg:col-span-7">
+            <p className="text-[0.78rem] font-medium tracking-wide text-gold-deep">
               {t(COPY.heroEyebrow)}
             </p>
-            <h1 className="text-3xl font-black leading-tight tracking-tight text-charcoal md:text-5xl">
+            <h1 className="display mt-5 text-[2.6rem] leading-[1.05] md:text-[4.4rem] md:leading-[0.98]">
               {t(COPY.heroTitle)}
             </h1>
-            <p className="text-base font-semibold leading-8 text-charcoal/70 md:text-lg">
+            <p className="mt-6 max-w-[46ch] text-[1.05rem] leading-[1.75] text-ink-soft md:text-[1.15rem]">
               {t(COPY.heroSub)}
             </p>
 
-            {/* price at a glance — so 390px screen 1 answers "how much" */}
-            <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 rounded-2xl border border-primary/25 bg-white px-4 py-3">
-              <span className="text-sm font-bold text-charcoal/60">
-                {lang === 'zh' ? '1 盒 7 袋' : '1 box · 7 sachets'}
+            {/* Price stated as a line of type, not boxed in a card. */}
+            <div className={`mt-9 flex flex-wrap items-baseline gap-x-8 gap-y-3 border-t ${RULE} pt-6`}>
+              <span className="flex items-baseline gap-2.5">
+                <span className="text-[0.8rem] text-ink-faint">{zh ? '1 盒 7 袋' : '1 box · 7'}</span>
+                <span className="figure text-[1.7rem] font-semibold text-ink">47.90</span>
               </span>
-              <span className="text-lg font-black text-primary">SGD 47.90</span>
-              <span className="text-sm font-bold text-charcoal/60">
-                {lang === 'zh' ? '2 盒 14 袋' : '2 boxes · 14 sachets'}
+              <span className="flex items-baseline gap-2.5">
+                <span className="text-[0.8rem] text-ink-faint">{zh ? '2 盒 14 袋' : '2 boxes · 14'}</span>
+                <span className="figure text-[1.7rem] font-semibold text-ink">79.80</span>
               </span>
-              <span className="text-lg font-black text-primary">SGD 79.80</span>
-              <span className="text-xs font-bold text-charcoal/45">
-                {lang === 'zh' ? '（每盒 39.90，含配送）' : '(SGD 39.90 a box, delivery included)'}
+              <span className="text-[0.78rem] text-ink-faint">
+                {zh ? 'SGD · 每盒 39.90 · 含配送' : 'SGD · 39.90 a box · delivery included'}
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => openWhatsApp('hero_primary')}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-4 text-sm font-bold tracking-wide text-white shadow-lg shadow-[#25d366]/20 transition hover:brightness-105 active:scale-[0.99]"
-            >
-              <MessageCircle fill="currentColor" size={18} />
-              <span>{t(COPY.ctaWhatsApp)}</span>
-            </button>
-          </div>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button type="button" onClick={() => openWhatsApp('hero_primary')} className={primaryBtn}>
+                <MessageCircle size={18} />
+                {t(COPY.ctaWhatsApp)}
+              </button>
+              <a href="#offer-reset-products" className={secondaryBtn}>
+                {t(COPY.offersTitle)}
+                <ChevronRight size={16} />
+              </a>
+            </div>
+          </Reveal>
 
-          <div className="lg:col-span-6">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-charcoal/5 bg-white shadow-xl">
+          {/* Image bleeds past the text column baseline for asymmetry. */}
+          <Reveal className="lg:col-span-5" index={1}>
+            <figure className="lift-lg relative aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-paper-deep lg:-mb-16">
               <Image
                 src="/proof/product-unboxing-bowl.webp"
                 alt={
-                  lang === 'zh'
+                  zh
                     ? 'Aqina 纯鸡精盒装、独立小袋与倒出的金汤'
                     : 'Aqina Pure Chicken Essence box, sachet and poured golden broth'
                 }
                 fill
                 priority
-                sizes="(max-width: 1024px) 92vw, 46vw"
+                sizes="(max-width: 1024px) 92vw, 40vw"
                 className="object-cover"
               />
-            </div>
-          </div>
+            </figure>
+          </Reveal>
         </div>
-      </section>
+      </header>
 
-      {/* ------------------------------------------- 2. VALUE EQUATION */}
-      <section className="mx-auto mt-10 max-w-7xl px-4 md:px-8">
-        <div className="rounded-3xl border border-primary/25 bg-white p-6 shadow-lg md:p-8">
-          <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t(COPY.valueTitle)}</h2>
-          <p className="mt-2 text-sm font-semibold text-charcoal/60">{t(COPY.valueSubtitle)}</p>
+      {/* ─────────────────── 2. VALUE EQUATION — a ruled comparison ─────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <Reveal>
+          <div className="max-w-[52ch]">
+            <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+              {t(COPY.valueTitle)}
+            </h2>
+            <p className="mt-3 text-[1rem] leading-[1.7] text-ink-soft">{t(COPY.valueSubtitle)}</p>
+          </div>
+        </Reveal>
 
-          <div className="mt-6 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-charcoal/10 bg-[#faf8f5] p-5">
-              <p className="text-xs font-bold text-charcoal/50">{VALUE_EQUATION.competitor.brand}</p>
-              <p className="mt-1 text-sm font-bold leading-6">
-                {t(VALUE_EQUATION.competitor.product)}
-              </p>
-              <p className="mt-3 text-xs font-semibold text-charcoal/50">
-                60g × {VALUE_EQUATION.competitor.sachets} · SGD{' '}
-                {VALUE_EQUATION.competitor.packPrice.toFixed(2)}
-              </p>
-              <p className="mt-1 text-2xl font-black text-charcoal">
-                SGD {VALUE_EQUATION.competitor.perSachet.toFixed(2)}
-                <span className="ml-1 text-xs font-bold text-charcoal/50">
-                  {t(COPY.valuePerSachet)}
-                </span>
-              </p>
-            </div>
-
-            <div className="rounded-2xl border-2 border-primary bg-primary/5 p-5">
-              <p className="text-xs font-bold text-primary">Aqina {lang === 'zh' ? '纯鸡精' : 'Pure Chicken Essence'}</p>
-              <p className="mt-1 text-sm font-bold leading-6">
-                {lang === 'zh' ? '1 盒 · 7 袋 · SGD 47.90' : '1 box · 7 sachets · SGD 47.90'}
-              </p>
-              <p className="mt-3 text-xs font-semibold text-charcoal/50">60g × 7</p>
-              <p className="mt-1 text-2xl font-black text-primary">
-                SGD {PER_SACHET.pack1.toFixed(2)}
-                <span className="ml-1 text-xs font-bold text-charcoal/50">
-                  {t(COPY.valuePerSachet)}
-                </span>
-              </p>
-            </div>
-
-            <div className="rounded-2xl border-2 border-primary bg-primary/5 p-5">
-              <p className="text-xs font-bold text-primary">Aqina {lang === 'zh' ? '纯鸡精' : 'Pure Chicken Essence'}</p>
-              <p className="mt-1 text-sm font-bold leading-6">
-                {lang === 'zh' ? '2 盒 · 14 袋 · SGD 79.80' : '2 boxes · 14 sachets · SGD 79.80'}
-              </p>
-              <p className="mt-3 text-xs font-semibold text-charcoal/50">60g × 14</p>
-              <p className="mt-1 text-2xl font-black text-primary">
-                SGD {PER_SACHET.pack2.toFixed(2)}
-                <span className="ml-1 text-xs font-bold text-charcoal/50">
-                  {t(COPY.valuePerSachet)}
-                </span>
-              </p>
-            </div>
+        <RevealGroup className="mt-10" as="dl">
+          <div
+            className={`hidden border-b ${RULE} pb-2 text-[0.72rem] tracking-wide text-ink-faint md:grid md:grid-cols-[1fr_auto_9rem] md:gap-6`}
+          >
+            <span>{zh ? '同规格产品' : 'Like-for-like product'}</span>
+            <span className="text-right">{zh ? '规格与售价' : 'Pack & price'}</span>
+            <span className="text-right">{zh ? '每袋' : 'Per sachet'}</span>
           </div>
 
-          <p className="mt-5 flex gap-2 text-[11px] leading-5 text-charcoal/45">
-            <Info size={14} className="mt-0.5 shrink-0" />
-            <span>{t(COPY.valueDisclaimer)}</span>
-          </p>
-        </div>
-      </section>
-
-      {/* ------------------------------------------- 3. INTENT ROUTER */}
-      <section className="mx-auto mt-12 max-w-7xl px-4 md:px-8">
-        <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t(COPY.intentTitle)}</h2>
-        <p className="mt-2 text-sm font-semibold text-charcoal/60">{t(COPY.intentSubtitle)}</p>
-        <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {INTENT_OPTIONS.map((option) => (
-            <button
-              key={option.id}
-              type="button"
-              onClick={() => openWhatsApp(`intent_${option.id}`, option.id)}
-              className="group flex min-h-[7rem] flex-col justify-between rounded-2xl border-2 border-charcoal/10 bg-white p-5 text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+          {priceRows.map((row, i) => (
+            <RevealItem
+              key={row.key}
+              index={i}
+              className={`grid grid-cols-[1fr_auto] items-baseline gap-x-6 gap-y-1 border-b ${RULE} py-5 md:grid-cols-[1fr_auto_9rem]`}
             >
-              <span className="text-sm font-black leading-6">{t(option.label)}</span>
-              <span className="mt-3 flex items-center gap-1.5 text-xs font-bold text-primary">
-                <MessageCircle size={13} />
-                {t(option.hint)}
-                <ChevronRight size={13} className="transition group-hover:translate-x-0.5" />
-              </span>
-            </button>
+              <dt
+                className={`text-[1rem] leading-snug md:text-[1.05rem] ${
+                  row.ours ? 'font-semibold text-ink' : 'text-ink-soft'
+                }`}
+              >
+                {row.name}
+              </dt>
+              <dd className="figure order-3 text-[0.82rem] text-ink-faint md:order-none md:text-right">
+                {row.spec}
+              </dd>
+              <dd
+                className={`figure justify-self-end text-[1.65rem] md:text-[1.9rem] ${
+                  row.ours ? 'font-semibold text-gold-deep' : 'font-normal text-ink-faint'
+                }`}
+              >
+                {row.per.toFixed(2)}
+              </dd>
+            </RevealItem>
           ))}
-        </div>
+        </RevealGroup>
+
+        <Reveal>
+          <p className="mt-5 max-w-[74ch] text-[0.78rem] leading-[1.7] text-ink-faint">
+            {t(COPY.valueDisclaimer)}
+          </p>
+        </Reveal>
       </section>
 
-      {/* ------------------------------------------- 4. BUY BOX */}
-      {/* id matches the shared Header/Footer "选配套" anchor (Header.tsx:42, Footer.tsx:27) */}
-      <section id="offer-reset-products" className="mx-auto mt-12 max-w-7xl px-4 md:px-8">
-        <div className="grid gap-6 lg:grid-cols-12">
-          <div className="space-y-4 lg:col-span-7">
-            <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t(COPY.offersTitle)}</h2>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  id: 'pack2' as const,
-                  title: lang === 'zh' ? '2 盒 · 14 袋' : '2 boxes · 14 sachets',
-                  sub: lang === 'zh' ? '每盒 SGD 39.90 + 赠品' : 'SGD 39.90 a box + gift',
-                  price: 'SGD 79.80',
-                },
-                {
-                  id: 'pack1' as const,
-                  title: lang === 'zh' ? '1 盒 · 7 袋' : '1 box · 7 sachets',
-                  sub: lang === 'zh' ? '先试口感' : 'Try the taste first',
-                  price: 'SGD 47.90',
-                },
-              ].map((pack) => (
-                <button
-                  key={pack.id}
-                  type="button"
-                  onClick={() => setActiveTab(pack.id)}
-                  className={`relative flex flex-col justify-between rounded-2xl border-2 p-4 text-left transition ${
-                    activeTab === pack.id
-                      ? 'border-primary bg-primary/5 ring-4 ring-primary/5'
-                      : 'border-charcoal/10 bg-white hover:border-charcoal/30'
-                  }`}
-                >
-                  <span className="text-sm font-black">{pack.title}</span>
-                  <span className="mt-1 text-xs text-charcoal/60">{pack.sub}</span>
-                  <span className="mt-3 text-sm font-black text-primary">{pack.price}</span>
-                </button>
-              ))}
-            </div>
+      {/* ───────────────────────── 3. INTENT ROUTER ───────────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <Reveal>
+          <h2 className="display max-w-[20ch] text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+            {t(COPY.intentTitle)}
+          </h2>
+          <p className="mt-3 max-w-[52ch] text-[1rem] leading-[1.7] text-ink-soft">
+            {t(COPY.intentSubtitle)}
+          </p>
+        </Reveal>
 
-            {activeTab === 'pack2' && (
-              <div className="space-y-3 rounded-2xl border border-charcoal/5 bg-white p-5">
-                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-primary">
-                  <Gift size={14} />
-                  <span>{t(COPY.giftsTitle)}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                  {GIFT_OPTIONS.map((gift) => (
+        <RevealGroup className={`mt-9 border-t ${RULE}`} as="ul">
+          {INTENT_OPTIONS.map((option, i) => (
+            <RevealItem key={option.id} as="li" index={i}>
+              <button
+                type="button"
+                onClick={() => openWhatsApp(`intent_${option.id}`, option.id)}
+                className={`group flex w-full items-center justify-between gap-6 border-b ${RULE} py-6 text-left transition-colors duration-200 hover:bg-paper-deep/50`}
+              >
+                <span className="min-w-0">
+                  <span className="block text-[1.1rem] font-medium leading-snug text-ink md:text-[1.3rem]">
+                    {t(option.label)}
+                  </span>
+                  <span className="mt-1 block text-[0.85rem] text-ink-faint">{t(option.hint)}</span>
+                </span>
+                <span className="flex shrink-0 items-center gap-2 text-[0.82rem] font-medium text-gold-deep">
+                  <span className="hidden sm:inline">{t(COPY.ctaWhatsApp)}</span>
+                  <ChevronRight
+                    size={17}
+                    className="transition-transform duration-200 group-hover:translate-x-1"
+                  />
+                </span>
+              </button>
+            </RevealItem>
+          ))}
+        </RevealGroup>
+      </section>
+
+      {/* ───────────────────────── 4. OFFER + BUY BOX ───────────────────────── */}
+      <section id="offer-reset-products" className={`${SHELL} pt-24 md:pt-36`}>
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-14">
+          <div className="lg:col-span-7">
+            <Reveal>
+              <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+                {t(COPY.offersTitle)}
+              </h2>
+            </Reveal>
+
+            <RevealGroup className={`mt-8 border-t ${RULE}`} as="ul">
+              {(
+                [
+                  {
+                    id: 'pack2' as const,
+                    title: zh ? '2 盒 · 14 袋' : '2 boxes · 14 sachets',
+                    sub: zh ? '每盒 SGD 39.90，含 French Poulet 赠品' : 'SGD 39.90 a box, with a French Poulet gift',
+                    price: '79.80',
+                  },
+                  {
+                    id: 'pack1' as const,
+                    title: zh ? '1 盒 · 7 袋' : '1 box · 7 sachets',
+                    sub: zh ? '先确认口味再决定' : 'Confirm the taste first',
+                    price: '47.90',
+                  },
+                ]
+              ).map((pack) => {
+                const on = activeTab === pack.id;
+                return (
+                  <RevealItem key={pack.id} as="li">
                     <button
-                      key={gift.value}
                       type="button"
-                      onClick={() => setSelectedGift(gift.value)}
-                      className={`overflow-hidden rounded-xl border-2 text-left transition ${
-                        selectedGift === gift.value
-                          ? 'border-primary ring-2 ring-primary/20'
-                          : 'border-charcoal/10 hover:border-charcoal/30'
+                      onClick={() => setActiveTab(pack.id)}
+                      aria-pressed={on}
+                      className={`flex w-full items-center gap-4 border-b ${RULE} py-6 text-left transition-colors duration-200 ${
+                        on ? 'bg-paper-deep/70' : 'hover:bg-paper-deep/40'
                       }`}
                     >
-                      <div className="relative aspect-square bg-[#f8ecd5]">
-                        <Image
-                          src={gift.image}
-                          alt={`${gift.name} ${gift.weight}`}
-                          fill
-                          sizes="(max-width: 640px) 45vw, 15vw"
-                          className="object-cover"
-                        />
-                        {selectedGift === gift.value && (
-                          <span className="absolute right-1.5 top-1.5 rounded-full bg-primary p-1 text-charcoal-dark">
-                            <Check size={11} strokeWidth={3} />
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-2">
-                        <p className="text-[10px] font-black leading-tight">{gift.name}</p>
-                        <p className="text-[10px] font-bold text-primary">{gift.weight}</p>
-                      </div>
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${
+                          on ? 'border-gold-deep bg-gold-deep' : 'border-ink/30'
+                        }`}
+                      >
+                        {on && <Check size={12} strokeWidth={3} className="text-paper" />}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[1.1rem] font-medium text-ink md:text-[1.2rem]">
+                          {pack.title}
+                        </span>
+                        <span className="mt-0.5 block text-[0.85rem] text-ink-faint">{pack.sub}</span>
+                      </span>
+                      <span className="figure shrink-0 text-[1.5rem] font-semibold text-ink">
+                        {pack.price}
+                      </span>
                     </button>
-                  ))}
+                  </RevealItem>
+                );
+              })}
+            </RevealGroup>
+
+            {activeTab === 'pack2' && (
+              <div className="mt-9">
+                <p className="text-[0.85rem] font-medium text-ink-soft">{t(COPY.giftsTitle)}</p>
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-5">
+                  {GIFT_OPTIONS.map((gift) => {
+                    const on = selectedGift === gift.value;
+                    return (
+                      <button
+                        key={gift.value}
+                        type="button"
+                        onClick={() => setSelectedGift(gift.value)}
+                        aria-pressed={on}
+                        className="group text-left"
+                      >
+                        <span
+                          className={`relative block aspect-square overflow-hidden rounded-lg bg-paper-deep transition duration-200 ${
+                            on ? 'ring-2 ring-gold-deep ring-offset-2 ring-offset-paper' : 'opacity-80 group-hover:opacity-100'
+                          }`}
+                        >
+                          <Image
+                            src={gift.image}
+                            alt={`${gift.name} ${gift.weight}`}
+                            fill
+                            sizes="(max-width: 640px) 45vw, 14vw"
+                            className="object-cover"
+                          />
+                        </span>
+                        {/* Fixed two-line box so every weight lands on the same baseline
+                            regardless of how long the product name is. */}
+                        <span className="mt-2 flex h-[2.1rem] items-start text-[0.72rem] font-medium leading-[1.05rem] text-ink">
+                          {gift.name}
+                        </span>
+                        <span className="figure block text-[0.72rem] text-ink-faint">{gift.weight}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="lg:col-span-5">
-            <div className="space-y-4 rounded-3xl border border-charcoal/5 bg-white p-6 shadow-xl md:p-7">
-              <div className="flex items-baseline justify-between">
-                <span className="text-xs font-bold text-charcoal/55">
+          {/* The one place elevation is earned: the transaction. */}
+          <Reveal className="lg:col-span-5" index={1}>
+            <div className="lift-lg sticky top-8 rounded-[1.25rem] bg-white/70 p-7 backdrop-blur-sm md:p-8">
+              <div className="flex items-baseline justify-between gap-4">
+                <span className="text-[0.85rem] text-ink-soft">
                   {activeTab === 'pack1'
-                    ? lang === 'zh'
+                    ? zh
                       ? '1 盒 · 7 袋'
                       : '1 box · 7 sachets'
-                    : lang === 'zh'
+                    : zh
                       ? '2 盒 · 14 袋'
                       : '2 boxes · 14 sachets'}
                 </span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-xs font-bold text-primary">SGD</span>
-                  <span className="text-3xl font-black text-primary">{activePrice.toFixed(2)}</span>
-                </div>
+                <span className="figure text-[2.6rem] font-semibold leading-none text-ink">
+                  {activePrice.toFixed(2)}
+                </span>
               </div>
 
-              <ul className="space-y-2 border-t border-charcoal/5 pt-4 text-xs font-semibold text-charcoal/65">
+              <ul className={`mt-6 space-y-3 border-t ${RULE} pt-6`}>
                 {[
-                  lang === 'zh' ? '新加坡现货，2–3 天冷链送达' : 'Singapore stock, 2–3 day cold-chain delivery',
-                  lang === 'zh' ? '配送已含在价格内' : 'Delivery already included in the price',
-                  lang === 'zh'
+                  zh ? '新加坡现货，2–3 天冷链送达' : 'Singapore stock, 2–3 day cold-chain delivery',
+                  zh ? '配送已含在价格内' : 'Delivery already included in the price',
+                  zh
                     ? 'PayNow 转账给 Boong Poultry Pte Ltd，真人核对'
                     : 'PayNow to Boong Poultry Pte Ltd, checked by a real person',
                 ].map((line) => (
-                  <li key={line} className="flex gap-2">
-                    <Check size={14} className="mt-0.5 shrink-0 text-primary" />
+                  <li key={line} className="flex gap-2.5 text-[0.88rem] leading-[1.6] text-ink-soft">
+                    <Check size={15} className="mt-0.5 shrink-0 text-gold-deep" />
                     <span>{line}</span>
                   </li>
                 ))}
               </ul>
 
-              <div className="space-y-3 pt-1">
+              <div className="mt-7 grid gap-2.5">
                 <button
                   type="button"
                   onClick={() => openWhatsApp('buybox_whatsapp')}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] py-4 text-sm font-bold tracking-wide text-white shadow-lg shadow-[#25d366]/20 transition hover:brightness-105 active:scale-[0.99]"
+                  className={`${primaryBtn} w-full`}
                 >
-                  <MessageCircle fill="currentColor" size={18} />
-                  <span>{t(COPY.ctaWhatsApp)}</span>
+                  <MessageCircle size={18} />
+                  {t(COPY.ctaWhatsApp)}
                 </button>
                 <button
                   type="button"
                   onClick={() => handlePayNowSubmit('buybox_paynow')}
-                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-charcoal py-4 text-sm font-bold text-ivory transition hover:bg-primary hover:text-charcoal-dark active:scale-[0.99]"
+                  className={`${secondaryBtn} w-full`}
                 >
                   <QrCode size={17} />
-                  <span>{t(COPY.ctaPayNow)}</span>
+                  {t(COPY.ctaPayNow)}
                 </button>
               </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ------------------------------------------- 5. THREE CONCERNS */}
-      <section className="mt-16 border-y border-charcoal/5 bg-white py-14 md:py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t(COPY.concernsTitle)}</h2>
-          <p className="mt-2 text-sm font-semibold text-charcoal/60">{t(COPY.concernsSubtitle)}</p>
-          <div className="mt-7 grid gap-4 md:grid-cols-3">
-            {CONCERNS.map((concern) => (
-              <article
-                key={concern.id}
-                className="flex flex-col rounded-2xl border border-charcoal/10 bg-[#faf8f5] p-6"
-              >
-                <h3 className="text-lg font-black text-charcoal">{t(concern.question)}</h3>
-                <p className="mt-3 flex-1 text-sm leading-7 text-charcoal/70">{t(concern.answer)}</p>
-                {concern.note && (
-                  <p className="mt-4 border-t border-charcoal/10 pt-3 text-xs font-semibold leading-6 text-[#9b6b1f]">
-                    {t(concern.note)}
-                  </p>
-                )}
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ───────────────────── 5. THE THREE OBJECTIONS ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <Reveal>
+          <h2 className="display max-w-[24ch] text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+            {t(COPY.concernsTitle)}
+          </h2>
+          <p className="mt-3 max-w-[52ch] text-[1rem] leading-[1.7] text-ink-soft">
+            {t(COPY.concernsSubtitle)}
+          </p>
+        </Reveal>
 
-      {/* ------------------------------------------- 6. SOURCE & PROCESS */}
-      <section className="py-14 md:py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-8 lg:grid-cols-12 lg:items-start">
-            <div className="lg:col-span-7">
-              <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t(COPY.sourceTitle)}</h2>
-              <p className="mt-2 text-sm font-semibold text-charcoal/60">{t(COPY.sourceSubtitle)}</p>
-
-              <ol className="mt-6 space-y-4">
-                {SOURCE_CHAIN.map((step, i) => (
-                  <li key={step.id} className="flex gap-4">
-                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-charcoal-dark">
-                      {i + 1}
-                    </span>
-                    <div>
-                      <p className="text-sm font-black text-charcoal">{t(step.title)}</p>
-                      <p className="mt-1 text-sm leading-7 text-charcoal/70">{t(step.body)}</p>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-
-              <p className="mt-6 rounded-2xl border border-[#9b6b1f]/25 bg-[#fffaf1] p-4 text-sm font-bold leading-7 text-[#9b6b1f]">
-                {t(COPY.notPineappleFlavour)}
-              </p>
-
-              <div className="mt-6">
-                <p className="text-xs font-black uppercase tracking-wider text-charcoal/45">
-                  {t(COPY.nutritionTitle)}
+        <RevealGroup className={`mt-10 border-t ${RULE}`} as="ol">
+          {CONCERNS.map((concern, i) => (
+            <RevealItem key={concern.id} as="li" index={i} className={`border-b ${RULE} py-9`}>
+              <div className="grid gap-4 md:grid-cols-12 md:gap-8">
+                <p className="figure text-[0.8rem] text-ink-faint md:col-span-1">
+                  {String(i + 1).padStart(2, '0')}
                 </p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {NUTRITION_FACTS.map((fact) => (
-                    <span
-                      key={t(fact)}
-                      className="rounded-full border border-charcoal/10 bg-white px-3 py-1.5 text-xs font-bold text-charcoal/70"
-                    >
-                      {t(fact)}
-                    </span>
-                  ))}
+                <h3 className="display text-[1.35rem] leading-tight text-ink md:col-span-4 md:text-[1.6rem]">
+                  {t(concern.question)}
+                </h3>
+                <div className="md:col-span-7">
+                  <p className="max-w-[58ch] text-[1rem] leading-[1.8] text-ink-soft">
+                    {t(concern.answer)}
+                  </p>
+                  {concern.note && (
+                    <p className="mt-4 max-w-[58ch] border-l-2 border-gold/50 pl-4 text-[0.88rem] leading-[1.7] text-gold-deep">
+                      {t(concern.note)}
+                    </p>
+                  )}
                 </div>
               </div>
-            </div>
+            </RevealItem>
+          ))}
+        </RevealGroup>
+      </section>
 
-            <div className="grid gap-4 lg:col-span-5">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-charcoal/5 shadow-lg">
+      {/* ───────────────────── 6. SOURCE & PROCESS ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-14">
+          <div className="lg:col-span-7">
+            <Reveal>
+              <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+                {t(COPY.sourceTitle)}
+              </h2>
+              <p className="mt-3 max-w-[52ch] text-[1rem] leading-[1.7] text-ink-soft">
+                {t(COPY.sourceSubtitle)}
+              </p>
+            </Reveal>
+
+            <RevealGroup className={`mt-9 border-t ${RULE}`} as="ol">
+              {SOURCE_CHAIN.map((step, i) => (
+                <RevealItem key={step.id} as="li" index={i} className={`grid grid-cols-[2.5rem_1fr] gap-4 border-b ${RULE} py-6`}>
+                  <span className="figure pt-0.5 text-[0.8rem] text-ink-faint">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <h3 className="text-[1.05rem] font-semibold leading-snug text-ink">
+                      {t(step.title)}
+                    </h3>
+                    <p className="mt-1.5 max-w-[56ch] text-[0.95rem] leading-[1.75] text-ink-soft">
+                      {t(step.body)}
+                    </p>
+                  </div>
+                </RevealItem>
+              ))}
+            </RevealGroup>
+
+            <Reveal>
+              <p className="display mt-8 max-w-[40ch] text-[1.25rem] leading-snug text-gold-deep md:text-[1.5rem]">
+                {t(COPY.notPineappleFlavour)}
+              </p>
+              <div className={`mt-8 flex flex-wrap items-center gap-x-7 gap-y-2 border-t ${RULE} pt-5`}>
+                <span className="text-[0.72rem] tracking-wide text-ink-faint">
+                  {t(COPY.nutritionTitle)}
+                </span>
+                {NUTRITION_FACTS.map((fact) => (
+                  <span key={t(fact)} className="text-[0.85rem] font-medium text-ink-soft">
+                    {t(fact)}
+                  </span>
+                ))}
+              </div>
+            </Reveal>
+          </div>
+
+          <Reveal className="lg:col-span-5" index={1}>
+            <div className="sticky top-8 grid gap-4">
+              <figure className="lift relative aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-paper-deep">
                 <Image
                   src="/proof/pineapple-chicken-story.webp"
-                  alt={lang === 'zh' ? 'MD2 黄梨酵素鸡与产品场景' : 'MD2 pineapple enzyme chicken and the product'}
+                  alt={zh ? 'MD2 黄梨酵素鸡与产品场景' : 'MD2 pineapple enzyme chicken and the product'}
                   fill
-                  sizes="(max-width: 1024px) 92vw, 38vw"
+                  sizes="(max-width: 1024px) 92vw, 36vw"
                   className="object-cover"
                 />
-              </div>
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-charcoal/5 shadow-lg">
+              </figure>
+              <figure className="lift relative aspect-[16/10] overflow-hidden rounded-[1.25rem] bg-paper-deep">
                 <Image
                   src="/proof/pack-detail-single-origin.webp"
-                  alt={lang === 'zh' ? '包装上的 Single Origin 字样' : 'The "Single Origin" wording on the pack'}
+                  alt={zh ? '包装上的 Single Origin 字样' : 'The "Single Origin" wording on the pack'}
                   fill
-                  sizes="(max-width: 1024px) 92vw, 38vw"
+                  sizes="(max-width: 1024px) 92vw, 36vw"
                   className="object-cover"
                 />
-              </div>
+              </figure>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
 
-      {/* ------------------------------------------- 7. RHYTHM & BUDGET */}
-      <section className="border-y border-charcoal/5 bg-white py-14 md:py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-primary">
-                <CalendarDays size={12} />
-                <span>{lang === 'zh' ? '用量节奏' : 'How much you need'}</span>
-              </div>
-              <h2 className="mt-4 text-2xl font-black tracking-tight md:text-3xl">
+      {/* ───────────────────── 7. RHYTHM & BUDGET ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-14 lg:items-center">
+          <div className="lg:col-span-7">
+            <Reveal>
+              <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
                 {t(COPY.rhythmTitle)}
               </h2>
-              <p className="mt-2 text-sm font-semibold leading-7 text-charcoal/60">
+              <p className="mt-3 max-w-[54ch] text-[1rem] leading-[1.7] text-ink-soft">
                 {t(COPY.rhythmSubtitle)}
               </p>
+            </Reveal>
 
-              <div className="mt-6 overflow-hidden rounded-2xl border border-charcoal/10">
-                {RHYTHM_ROWS.map((row, i) => (
-                  <div
-                    key={t(row.stage)}
-                    className={`grid grid-cols-3 items-center gap-2 px-5 py-4 text-sm ${
-                      i % 2 ? 'bg-[#faf8f5]' : 'bg-white'
-                    }`}
-                  >
-                    <span className="font-bold text-charcoal">{t(row.stage)}</span>
-                    <span className="text-center font-semibold text-charcoal/60">{t(row.days)}</span>
-                    <span className="text-right">
-                      <span className="block text-base font-black text-primary">
+            <RevealGroup className={`mt-9 border-t ${RULE}`} as="dl">
+              {RHYTHM_ROWS.map((row, i) => (
+                <RevealItem
+                  key={t(row.stage)}
+                  index={i}
+                  className={`flex items-baseline justify-between gap-6 border-b ${RULE} py-5`}
+                >
+                  <dt className="text-[1rem] font-medium text-ink">{t(row.stage)}</dt>
+                  <dd className="figure flex items-baseline gap-6 text-ink-faint">
+                    <span className="text-[0.9rem]">{t(row.days)}</span>
+                    <span className="min-w-[6.5rem] text-right">
+                      <span className="block text-[1.35rem] font-semibold leading-tight text-gold-deep">
                         {t(row.boxes)}
                       </span>
                       {row.note && (
-                        <span className="block text-[11px] font-semibold text-charcoal/45">
+                        <span className="mt-1 block text-[0.72rem] leading-tight text-ink-faint">
                           {t(row.note)}
                         </span>
                       )}
                     </span>
-                  </div>
-                ))}
-              </div>
+                  </dd>
+                </RevealItem>
+              ))}
+            </RevealGroup>
 
-              <p className="mt-5 text-sm leading-7 text-charcoal/60">{t(COPY.rhythmBudget)}</p>
-
+            <Reveal>
+              <p className="mt-6 max-w-[58ch] text-[0.95rem] leading-[1.8] text-ink-soft">
+                {t(COPY.rhythmBudget)}
+              </p>
               <button
                 type="button"
                 onClick={() => openWhatsApp('rhythm_cta', 'confinement')}
-                className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-4 text-sm font-bold text-white shadow-lg shadow-[#25d366]/20 transition hover:brightness-105 active:scale-[0.99] sm:w-auto"
+                className={`${primaryBtn} mt-7`}
               >
-                <MessageCircle fill="currentColor" size={18} />
-                <span>{t(COPY.rhythmCta)}</span>
+                <MessageCircle size={18} />
+                {t(COPY.rhythmCta)}
               </button>
-            </div>
-
-            <div className="lg:col-span-5">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-3xl border border-charcoal/5 shadow-lg">
-                <Image
-                  src="/proof/scene-family-handover.webp"
-                  alt={lang === 'zh' ? '家人递上一袋纯鸡精' : 'Handing a sachet to family'}
-                  fill
-                  sizes="(max-width: 1024px) 92vw, 38vw"
-                  className="object-cover"
-                />
-              </div>
-            </div>
+            </Reveal>
           </div>
+
+          <Reveal className="lg:col-span-5" index={1}>
+            <figure className="lift relative aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-paper-deep">
+              <Image
+                src="/proof/scene-family-handover.webp"
+                alt={zh ? '家人递上一袋纯鸡精' : 'Handing a sachet to family'}
+                fill
+                sizes="(max-width: 1024px) 92vw, 36vw"
+                className="object-cover"
+              />
+            </figure>
+          </Reveal>
         </div>
       </section>
 
-      {/* ------------------------------------------- 8. GOLDEN STOCK / COOKING */}
-      <section className="py-14 md:py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-8 lg:grid-cols-12 lg:items-center">
-            <div className="lg:col-span-5">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-charcoal/5 shadow-lg">
-                <Image
-                  src="/proof/golden-broth-macro.webp"
-                  alt={lang === 'zh' ? '金黄色鸡精汤微距' : 'Macro of the golden broth'}
-                  fill
-                  sizes="(max-width: 1024px) 92vw, 38vw"
-                  className="object-cover"
-                />
-              </div>
-            </div>
-            <div className="lg:col-span-7">
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-primary">
-                <Utensils size={12} />
-                <span>{lang === 'zh' ? '黄金原汤' : 'Golden stock'}</span>
-              </div>
-              <h2 className="mt-4 text-2xl font-black tracking-tight md:text-3xl">
-                {t(COPY.cookingTitle)}
-              </h2>
-              <p className="mt-3 text-sm leading-7 text-charcoal/70">{t(COPY.cookingBody)}</p>
-              <div className="mt-5 flex flex-wrap gap-2">
-                {COOKING_USES.map((use) => (
-                  <span
-                    key={t(use)}
-                    className="rounded-full border border-charcoal/10 bg-white px-4 py-2 text-sm font-bold text-charcoal/75"
-                  >
-                    {t(use)}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ------------------------------------------- 9. SELLER IDENTITY */}
-      <section className="border-y border-charcoal/5 bg-white py-14 md:py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs font-extrabold uppercase tracking-wider text-primary">
-            <Building2 size={12} />
-            <span>{lang === 'zh' ? '卖家资料' : 'Seller details'}</span>
-          </div>
-          <h2 className="mt-4 text-2xl font-black tracking-tight md:text-3xl">
-            {t(COPY.identityTitle)}
-          </h2>
-          <p className="mt-2 max-w-3xl text-sm font-semibold leading-7 text-charcoal/60">
-            {t(COPY.identitySubtitle)}
-          </p>
-
-          <div className="mt-7 grid gap-6 lg:grid-cols-12">
-            <div className="overflow-hidden rounded-2xl border border-charcoal/10 lg:col-span-7">
-              {SELLER_IDENTITY.map((row, i) => (
-                <div
-                  key={t(row.label)}
-                  className={`grid gap-1 px-5 py-4 sm:grid-cols-[10rem_1fr] sm:gap-4 ${
-                    i % 2 ? 'bg-[#faf8f5]' : 'bg-white'
-                  }`}
-                >
-                  <span className="text-xs font-black uppercase tracking-wider text-charcoal/45">
-                    {t(row.label)}
-                  </span>
-                  <span className="text-sm font-bold leading-6 text-charcoal">{t(row.value)}</span>
-                </div>
+      {/* ───────────────────── 8. GOLDEN STOCK ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <div className="grid gap-12 lg:grid-cols-12 lg:items-center lg:gap-14">
+          <Reveal className="lg:col-span-6 lg:order-2">
+            <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+              {t(COPY.cookingTitle)}
+            </h2>
+            <p className="mt-4 max-w-[52ch] text-[1rem] leading-[1.8] text-ink-soft">
+              {t(COPY.cookingBody)}
+            </p>
+            <ul className={`mt-7 flex flex-wrap gap-x-6 gap-y-2 border-t ${RULE} pt-5`}>
+              {COOKING_USES.map((use) => (
+                <li key={t(use)} className="text-[0.95rem] font-medium text-ink-soft">
+                  {t(use)}
+                </li>
               ))}
-            </div>
+            </ul>
+          </Reveal>
 
-            <div className="lg:col-span-5">
-              <div className="rounded-2xl border border-charcoal/10 bg-[#faf8f5] p-5">
-                <div className="relative mx-auto aspect-square w-full max-w-[15rem] overflow-hidden rounded-xl bg-white">
-                  <Image
-                    src="/paynow/aqina-paynow-qr-designed.png"
-                    alt="Boong Poultry Pte Ltd PayNow QR"
-                    fill
-                    sizes="15rem"
-                    className="object-contain p-2"
-                  />
-                </div>
-                <p className="mt-4 flex gap-2 text-xs font-semibold leading-6 text-charcoal/60">
-                  <ShieldCheck size={14} className="mt-0.5 shrink-0 text-primary" />
-                  <span>{t(COPY.identityPaynowNote)}</span>
-                </p>
-              </div>
-            </div>
-          </div>
+          <Reveal className="lg:col-span-6 lg:order-1" index={1}>
+            <figure className="lift relative aspect-[5/4] overflow-hidden rounded-[1.25rem] bg-paper-deep">
+              <Image
+                src="/proof/golden-broth-macro.webp"
+                alt={zh ? '金黄色鸡精汤微距' : 'Macro of the golden broth'}
+                fill
+                sizes="(max-width: 1024px) 92vw, 44vw"
+                className="object-cover"
+              />
+            </figure>
+          </Reveal>
         </div>
       </section>
 
-      {/* ------------------------------------------- 10. PROOF */}
-      <section className="py-14 md:py-16">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t(COPY.proofTitle)}</h2>
-          <p className="mt-2 text-sm font-semibold text-charcoal/60">{t(COPY.proofSubtitle)}</p>
+      {/* ───────────────────── 9. SELLER IDENTITY ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <div className="grid gap-12 lg:grid-cols-12 lg:gap-14">
+          <div className="lg:col-span-7">
+            <Reveal>
+              <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+                {t(COPY.identityTitle)}
+              </h2>
+              <p className="mt-3 max-w-[54ch] text-[1rem] leading-[1.7] text-ink-soft">
+                {t(COPY.identitySubtitle)}
+              </p>
+            </Reveal>
 
-          <p className="mt-5 text-xs font-black uppercase tracking-wider text-charcoal/45">
-            {t(COPY.proofProductHeading)}
-          </p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {PROOF_PRODUCT.map((item) => (
-              <figure
+            <RevealGroup className={`mt-9 border-t ${RULE}`} as="dl">
+              {SELLER_IDENTITY.map((row, i) => (
+                <RevealItem
+                  key={t(row.label)}
+                  index={i}
+                  className={`grid gap-1 border-b ${RULE} py-5 sm:grid-cols-[11rem_1fr] sm:gap-6`}
+                >
+                  <dt className="text-[0.78rem] tracking-wide text-ink-faint">{t(row.label)}</dt>
+                  <dd className="text-[0.98rem] leading-[1.6] text-ink">{t(row.value)}</dd>
+                </RevealItem>
+              ))}
+            </RevealGroup>
+          </div>
+
+          <Reveal className="lg:col-span-5" index={1}>
+            <div className={`rounded-[1.25rem] border ${RULE} bg-paper-deep/50 p-6`}>
+              <div className="relative mx-auto aspect-square w-full max-w-[14rem] overflow-hidden rounded-lg bg-white">
+                <Image
+                  src="/paynow/aqina-paynow-qr-designed.png"
+                  alt="Boong Poultry Pte Ltd PayNow QR"
+                  fill
+                  sizes="14rem"
+                  className="object-contain p-2"
+                />
+              </div>
+              <p className="mt-5 text-[0.85rem] leading-[1.7] text-ink-soft">
+                {t(COPY.identityPaynowNote)}
+              </p>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ───────────────────── 10. PROOF — asymmetric mosaic ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <Reveal>
+          <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">
+            {t(COPY.proofTitle)}
+          </h2>
+          <p className="mt-3 text-[1rem] text-ink-soft">{t(COPY.proofSubtitle)}</p>
+        </Reveal>
+
+        <RevealGroup className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-6 md:gap-5">
+          {PROOF_PRODUCT.map((item, i) => {
+            // Deliberately uneven: wide / tall / square, so it reads as a shoot, not a grid.
+            const span = [
+              'md:col-span-4 md:aspect-[16/10]',
+              'md:col-span-2 md:aspect-[4/5]',
+              'md:col-span-2 md:aspect-[4/5]',
+              'md:col-span-4 md:aspect-[16/10]',
+              'md:col-span-3 md:aspect-[3/2]',
+              'md:col-span-3 md:aspect-[3/2]',
+            ][i % 6];
+            return (
+              <RevealItem
                 key={item.src}
-                className="overflow-hidden rounded-2xl border border-charcoal/5 bg-white shadow-sm"
+                as="figure"
+                index={i}
+                className={`col-span-1 ${span} group overflow-hidden rounded-[1rem] bg-paper-deep`}
               >
-                <div className="relative aspect-[4/3]">
+                <span className="relative block aspect-square h-full w-full md:aspect-auto">
                   <Image
                     src={item.src}
                     alt={t(item.alt)}
                     fill
-                    sizes="(max-width: 640px) 92vw, (max-width: 1024px) 45vw, 30vw"
-                    className="object-cover"
+                    sizes="(max-width: 768px) 46vw, 32vw"
+                    className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.03]"
                   />
-                </div>
-                <figcaption className="p-4 text-xs font-semibold leading-6 text-charcoal/70">
+                </span>
+                <figcaption className="px-1 pt-2.5 text-[0.78rem] leading-[1.5] text-ink-faint">
                   {t(item.caption)}
                 </figcaption>
-              </figure>
-            ))}
-          </div>
+              </RevealItem>
+            );
+          })}
+        </RevealGroup>
 
-          <p className="mt-10 text-xs font-black uppercase tracking-wider text-charcoal/45">
+        <Reveal>
+          <p className="mt-14 text-[0.72rem] tracking-wide text-ink-faint">
             {t(COPY.proofSceneHeading)}
           </p>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {PROOF_SCENES.map((item) => (
-              <figure
-                key={item.src}
-                className="overflow-hidden rounded-2xl border border-charcoal/5 bg-white shadow-sm"
-              >
-                <div className="relative aspect-[4/5]">
-                  <Image
-                    src={item.src}
-                    alt={t(item.alt)}
-                    fill
-                    sizes="(max-width: 640px) 92vw, 23vw"
-                    className="object-cover"
-                  />
-                </div>
-                <figcaption className="p-4 text-xs font-semibold leading-6 text-charcoal/70">
-                  {t(item.caption)}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+        </Reveal>
+        <RevealGroup className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
+          {PROOF_SCENES.map((item, i) => (
+            <RevealItem key={item.src} as="figure" index={i} className="group">
+              <span className="relative block aspect-[4/5] overflow-hidden rounded-[1rem] bg-paper-deep">
+                <Image
+                  src={item.src}
+                  alt={t(item.alt)}
+                  fill
+                  sizes="(max-width: 768px) 46vw, 22vw"
+                  className="object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.03]"
+                />
+              </span>
+              <figcaption className="px-1 pt-2.5 text-[0.78rem] leading-[1.5] text-ink-faint">
+                {t(item.caption)}
+              </figcaption>
+            </RevealItem>
+          ))}
+        </RevealGroup>
 
-          <p className="mt-8 max-w-3xl rounded-2xl border border-charcoal/10 bg-white p-5 text-sm leading-7 text-charcoal/65">
+        <Reveal>
+          <p className={`mt-12 max-w-[62ch] border-t ${RULE} pt-6 text-[0.95rem] leading-[1.8] text-ink-soft`}>
             {t(COPY.proofHonesty)}
           </p>
-        </div>
+        </Reveal>
       </section>
 
-      {/* ------------------------------------------- 11. FAQ */}
-      <section className="border-t border-charcoal/5 bg-white py-14 md:py-16">
-        <div className="mx-auto max-w-3xl px-4 md:px-8">
-          <h2 className="text-center text-2xl font-black tracking-tight md:text-3xl">
-            {t(COPY.faqTitle)}
-          </h2>
-          <div className="mt-8 space-y-4">
-            {FAQ_ITEMS.map((item) => (
-              <div key={t(item.q)} className="rounded-2xl border border-charcoal/5 bg-[#faf8f5] p-5">
-                <div className="flex items-start gap-2.5">
-                  <HelpCircle className="mt-0.5 shrink-0 text-primary" size={18} />
-                  <h3 className="text-base font-extrabold text-charcoal">{t(item.q)}</h3>
-                </div>
-                <p className="mt-2 pl-7 text-sm leading-7 text-charcoal/70">{t(item.a)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* ───────────────────── 11. FAQ ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <Reveal>
+          <h2 className="display text-[1.9rem] leading-[1.15] md:text-[2.6rem]">{t(COPY.faqTitle)}</h2>
+        </Reveal>
+
+        <RevealGroup className={`mt-10 border-t ${RULE}`} as="dl">
+          {FAQ_ITEMS.map((item, i) => (
+            <RevealItem
+              key={t(item.q)}
+              index={i}
+              className={`grid gap-3 border-b ${RULE} py-7 md:grid-cols-12 md:gap-8`}
+            >
+              <dt className="text-[1.02rem] font-semibold leading-snug text-ink md:col-span-5">
+                {t(item.q)}
+              </dt>
+              <dd className="max-w-[62ch] text-[0.95rem] leading-[1.8] text-ink-soft md:col-span-7">
+                {t(item.a)}
+              </dd>
+            </RevealItem>
+          ))}
+        </RevealGroup>
       </section>
 
-      {/* ------------------------------------------- 12. FINAL CTA + MEDICAL BOUNDARY */}
-      <section className="py-14 md:py-16">
-        <div className="mx-auto max-w-4xl px-4 md:px-8">
-          <div className="rounded-3xl border border-primary/25 bg-white p-6 text-center shadow-lg md:p-8">
-            <h2 className="text-2xl font-black tracking-tight md:text-3xl">{t(COPY.intentTitle)}</h2>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => openWhatsApp('final_whatsapp')}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-5 py-4 text-sm font-bold text-white shadow-lg shadow-[#25d366]/20 transition hover:brightness-105 active:scale-[0.99]"
-              >
-                <MessageCircle fill="currentColor" size={18} />
-                <span>{t(COPY.ctaWhatsApp)}</span>
+      {/* ───────────────────── 12. CLOSE ───────────────────── */}
+      <section className={`${SHELL} pt-24 md:pt-36`}>
+        <Reveal>
+          <div className={`border-t ${RULE} pt-12`}>
+            <h2 className="display max-w-[18ch] text-[2.1rem] leading-[1.1] md:text-[3rem]">
+              {t(COPY.intentTitle)}
+            </h2>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <button type="button" onClick={() => openWhatsApp('final_whatsapp')} className={primaryBtn}>
+                <MessageCircle size={18} />
+                {t(COPY.ctaWhatsApp)}
               </button>
               <button
                 type="button"
                 onClick={() => handlePayNowSubmit('final_paynow')}
-                className="flex items-center justify-center gap-2 rounded-2xl bg-charcoal px-5 py-4 text-sm font-bold text-ivory transition hover:bg-primary hover:text-charcoal-dark active:scale-[0.99]"
+                className={secondaryBtn}
               >
                 <QrCode size={17} />
-                <span>{t(COPY.ctaPayNow)}</span>
+                {t(COPY.ctaPayNow)}
               </button>
             </div>
-          </div>
 
-          {/* Medical boundary — always visible, desktop and mobile */}
-          <p className="mt-6 flex gap-2 rounded-2xl border border-charcoal/10 bg-[#faf8f5] p-5 text-xs leading-6 text-charcoal/60">
-            <ShieldCheck size={15} className="mt-0.5 shrink-0 text-primary" />
-            <span>{t(MEDICAL_BOUNDARY)}</span>
-          </p>
-
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] font-bold text-charcoal/45">
-            <span className="flex items-center gap-1.5">
-              <Award size={12} className="text-primary" /> JAKIM Halal · SFA · HACCP · GMP
-            </span>
-            <span className="flex items-center gap-1.5">
-              <Truck size={12} className="text-primary" />
-              {lang === 'zh' ? '新加坡 2–3 天冷链' : 'Singapore 2–3 day cold chain'}
-            </span>
+            <p className="mt-12 max-w-[70ch] text-[0.82rem] leading-[1.75] text-ink-faint">
+              {t(MEDICAL_BOUNDARY)}
+            </p>
+            <p className="mt-4 text-[0.75rem] text-ink-faint">
+              JAKIM Halal · SFA · HACCP · GMP —{' '}
+              {zh ? '新加坡 2–3 天冷链' : 'Singapore 2–3 day cold chain'}
+            </p>
           </div>
-        </div>
+        </Reveal>
       </section>
 
-      {/* ------------------------------------------- STICKY BAR (mobile) */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-charcoal/10 bg-white/95 px-3 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur md:hidden">
-        <div className="flex items-center gap-3">
+      {/* ───────────────────── Sticky bar (mobile) ───────────────────── */}
+      <div className={`fixed inset-x-0 bottom-0 z-40 border-t ${RULE} bg-paper/95 px-4 py-3 backdrop-blur md:hidden`}>
+        <div className="flex items-center gap-4">
           <div className="shrink-0">
-            <p className="text-[10px] font-bold leading-none text-charcoal/50">
-              {activeTab === 'pack1' ? (lang === 'zh' ? '1 盒' : '1 box') : t(COPY.stickyPrefix)}
+            <p className="text-[0.68rem] leading-none text-ink-faint">
+              {activeTab === 'pack1' ? (zh ? '1 盒' : '1 box') : t(COPY.stickyPrefix)}
             </p>
-            <p className="text-lg font-black leading-tight text-primary">
-              SGD {activePrice.toFixed(2)}
+            <p className="figure mt-1 text-[1.25rem] font-semibold leading-none text-ink">
+              {activePrice.toFixed(2)}
             </p>
           </div>
           <button
             type="button"
             onClick={() => openWhatsApp('sticky_whatsapp')}
-            className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-[#25D366] text-sm font-bold text-white active:scale-[0.99]"
+            className={`${primaryBtn} min-h-[2.9rem] flex-1 px-4 text-[0.9rem]`}
           >
-            <MessageCircle fill="currentColor" size={17} />
-            <span>{t(COPY.ctaWhatsApp)}</span>
+            <MessageCircle size={17} />
+            {t(COPY.ctaWhatsApp)}
           </button>
         </div>
       </div>
