@@ -12,6 +12,7 @@ from app.services.chatbot_skill_router import (
     has_typed_organic_message,
     is_templated_opener_text,
 )
+from app.services.chatbot_settings import normalize_customer_facing_product_terms
 from app.services.gift_choices import allowed_gift_choice_prompt_payload
 
 
@@ -239,7 +240,9 @@ class GeminiConversationService:
     @staticmethod
     def _normalize_sales_turn_payload(payload: dict[str, Any]) -> SalesConversationTurn:
         normalized = dict(payload)
-        normalized["reply_text"] = str(normalized.get("reply_text") or "").strip()
+        normalized["reply_text"] = normalize_customer_facing_product_terms(
+            str(normalized.get("reply_text") or "").strip()
+        )
         if not normalized["reply_text"]:
             normalized["reply_text"] = "明白，我先帮您了解一下需求。请问这次是自己日常保养、孕期调理，还是想送给长辈呢？"
         if _contains_internal_reply_field(normalized["reply_text"]):
@@ -358,6 +361,7 @@ class GeminiConversationService:
             "Use only Active chatbot skills as the current scene playbook. Do not include rules from skills that were not injected.\n"
             "Default to Pace -> Answer -> Diagnose -> Bridge -> Choice: acknowledge the customer's wording first, answer the real question, ask one necessary question, and recommend only after the need is clear.\n"
             "Do not expose skill_id, lead tag, package code, checkout_ready, escalate, or any internal fields in reply_text.\n"
+            "Always use the customer-facing product name Aqina 纯鸡精. Do not use retired product wording or variants; when describing extraction, say 萃取出来的纯鸡精.\n"
             "Images are sent separately by the system as media files. Do not put image URLs or checkout URLs in reply_text.\n"
             "Do not exaggerate pain, create fear, imply treatment effects, fake scarcity, or use manipulative closing language.\n"
             f"If the customer asks for human/staff/agent/person in charge/call/WhatsApp/help/真人/人工/客服/负责人/电话/找人, "
@@ -437,6 +441,7 @@ class GeminiConversationService:
             f"Stage instruction: {instruction}\n"
             f"Conversation history:\n{history}\n\n"
             "Stage instruction is internal service strategy, not customer copy. Rewrite it into natural, short customer-facing reply_text that can be sent directly.\n"
+            "Always use the customer-facing product name Aqina 纯鸡精. Do not use retired product wording or variants; when describing extraction, say 萃取出来的纯鸡精.\n"
             "Do not copy Stage instruction verbatim. Do not output internal instruction wording such as remind, ask, do not send, Stage instruction, or instruction in reply_text.\n"
             "Output JSON with exactly these fields: reply_text, next_tag, checkout_link_required, escalate, escalation_reason, opt_in_request."
         )

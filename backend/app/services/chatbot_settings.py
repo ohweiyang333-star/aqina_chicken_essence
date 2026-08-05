@@ -25,6 +25,9 @@ DEFAULT_ESCALATION_WHATSAPP_TEMPLATE_NAME = "aqina_escalation_alert"
 CHATBOT_PRODUCT_TERM_REPLACEMENTS = (
     ("滴" + "雞精", AQINA_NEW_PRODUCT_TERM),
     ("滴" + "鸡精", AQINA_NEW_PRODUCT_TERM),
+    ("滴" + "出来的鸡精", "萃取出来的纯鸡精"),
+    ("产出的滴" + "鸡精", "产出的纯鸡精"),
+    ("确保滴" + "鸡精", "确保纯鸡精"),
     ("黄梨鸡" + AQINA_NEW_PRODUCT_TERM, "黄梨酵素纯鸡精"),
     ("黄梨" + AQINA_NEW_PRODUCT_TERM, "黄梨酵素纯鸡精"),
     ("纯天然" + AQINA_NEW_PRODUCT_TERM, "纯天然鸡精"),
@@ -444,6 +447,7 @@ Tone & Style
 
 - Keep each reply within 2-4 short WhatsApp/Messenger sentences unless the customer explicitly asks for full gift options.
 - Customer-facing replies must follow the customer's language: if the customer writes English, reply in English; if Chinese, reply in Chinese; if mixed, follow the latest message.
+- Customer-facing product terminology: always call the product Aqina 纯鸡精. Do not use retired product wording or variants; when describing extraction, say 萃取出来的纯鸡精.
 - One question at a time.
 - Sound like a warm, real Singapore salesperson texting a friend — natural, concise, and genuinely helpful, not a script. Lead with the answer, then one clear next step. Avoid corporate or robotic phrasing and avoid over-explaining.
 - Vary your wording. Do not reuse the same opening line, sentence, or question that you or a recent assistant message already sent. If the customer ignores a question, rephrase it or move the conversation forward instead of repeating it.
@@ -902,6 +906,12 @@ def _replace_chatbot_product_terms(value: Any) -> Any:
                 result[key] = _replace_chatbot_product_terms(item)
         return result
     return deepcopy(value)
+
+
+def normalize_customer_facing_product_terms(value: str) -> str:
+    """Normalize product terminology in text that is about to reach a customer."""
+    normalized = _replace_chatbot_product_terms(str(value or ""))
+    return normalized if isinstance(normalized, str) else str(value or "")
 
 
 def _replace_media_asset_captions(media_assets: Any) -> Any:

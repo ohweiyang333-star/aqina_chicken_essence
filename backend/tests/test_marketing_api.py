@@ -1230,6 +1230,34 @@ class MarketingApiTests(unittest.TestCase):
         self.assertNotIn("checkout_ready", turn.reply_text)
         self.assertFalse(turn.escalate)
 
+    def test_gemini_sales_turn_normalizes_retired_product_phrase(self) -> None:
+        from app.services.gemini_service import GeminiConversationService
+
+        retired_phrase = "滴" + "出来的鸡精"
+        turn = GeminiConversationService._normalize_sales_turn_payload(
+            {
+                "reply_text": f"这样{retired_phrase}味道更鲜甜。",
+                "next_tag": "qualified_warm",
+                "lead_goal": "unknown",
+                "checkout_ready": False,
+                "escalate": False,
+                "opt_in_granted": False,
+            }
+        )
+
+        self.assertEqual(turn.reply_text, "这样萃取出来的纯鸡精味道更鲜甜。")
+        self.assertNotIn(retired_phrase, turn.reply_text)
+
+    def test_follow_up_text_normalizes_retired_product_phrase(self) -> None:
+        from app.services.chatbot_settings import normalize_customer_facing_product_terms
+
+        retired_phrase = "滴" + "出来的鸡精"
+
+        self.assertEqual(
+            normalize_customer_facing_product_terms(f"这样{retired_phrase}味道更鲜甜。"),
+            "这样萃取出来的纯鸡精味道更鲜甜。",
+        )
+
     def test_chatbot_skill_router_selects_cart_hot_checkout_for_buying_intent(self) -> None:
         from app.services.chatbot_settings import get_default_chatbot_settings
         from app.services.chatbot_skill_router import ChatbotSkillRouter

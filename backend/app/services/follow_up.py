@@ -8,7 +8,11 @@ import re
 from datetime import timedelta
 from typing import Any
 
-from app.services.chatbot_settings import ChatbotSettingsService, FOLLOW_UP_STAGE_DELAYS
+from app.services.chatbot_settings import (
+    ChatbotSettingsService,
+    FOLLOW_UP_STAGE_DELAYS,
+    normalize_customer_facing_product_terms,
+)
 from app.services.gemini_service import (
     SAFE_CHECKOUT_FOLLOW_UP_FALLBACK_TEXT,
     SAFE_FOLLOW_UP_FALLBACK_TEXT,
@@ -454,7 +458,7 @@ def _extract_bool_field(text: str, field_name: str) -> bool | None:
 
 
 def _customer_safe_follow_up_text(text: str, *, checkout_url: str | None, cart_hot: bool = False) -> str:
-    normalized = str(text or "").strip()
+    normalized = normalize_customer_facing_product_terms(str(text or "").strip())
     if not normalized or normalized.casefold() in {"none", "null"}:
         return _safe_follow_up_fallback_text(checkout_url=checkout_url, cart_hot=cart_hot)
     if _looks_like_internal_follow_up_instruction(normalized):
