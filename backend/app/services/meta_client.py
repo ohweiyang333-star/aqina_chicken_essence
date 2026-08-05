@@ -288,13 +288,25 @@ class MetaMessagingClient:
 
     def _post(self, path: str, **kwargs: Any) -> dict[str, Any]:
         response = requests.post(f"{self._base_url}{path}", timeout=20, **kwargs)
-        response.raise_for_status()
+        _raise_for_status_without_secrets(response)
         return response.json()
 
     def _get(self, path: str, **kwargs: Any) -> dict[str, Any]:
         response = requests.get(f"{self._base_url}{path}", timeout=20, **kwargs)
-        response.raise_for_status()
+        _raise_for_status_without_secrets(response)
         return response.json()
+
+
+def _raise_for_status_without_secrets(response: requests.Response) -> None:
+    """Raise provider errors without echoing access tokens from request URLs."""
+    try:
+        response.raise_for_status()
+    except requests.HTTPError as exc:
+        body = str(getattr(response, "text", "") or "").strip()
+        detail = f"Meta Graph API returned HTTP {response.status_code}"
+        if body:
+            detail = f"{detail}: {body[:1000]}"
+        raise requests.HTTPError(detail, response=response) from exc
 
 
 _meta_client: MetaMessagingClient | None = None
