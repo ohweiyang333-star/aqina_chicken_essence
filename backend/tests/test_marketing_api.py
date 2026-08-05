@@ -857,7 +857,7 @@ class MarketingApiTests(unittest.TestCase):
                                     {
                                         "from": "6591113333",
                                         "id": "wamid.audio.1",
-                                        "timestamp": "1777957353",
+                                        "timestamp": "4102444800",
                                         "type": "audio",
                                         "audio": {
                                             "id": "audio-media-id",
@@ -927,7 +927,7 @@ class MarketingApiTests(unittest.TestCase):
                     "messaging": [
                         {
                             "sender": {"id": "psid-audio-1"},
-                            "timestamp": 1770000000000,
+                            "timestamp": 4102444800000,
                             "message": {
                                 "mid": "mid-audio-1",
                                 "attachments": [
@@ -5010,6 +5010,71 @@ class MarketingApiTests(unittest.TestCase):
                 },
             },
         )
+
+    def test_process_inbound_message_skips_stale_event_after_newer_customer_message(self) -> None:
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-stale-event",
+            conversation_id="conv-stale-event",
+            event_id="event-stale-event",
+            channel="messenger",
+            incoming_text="旧消息",
+            identifier_key="psid",
+            identifier_value="psid-stale-event",
+        )
+        self.db.collection("marketing_contacts").document("contact-stale-event").set(
+            {
+                "last_interaction_time": "2026-04-10T01:00:00Z",
+                "window_expires_at": "2099-01-01T00:00:00Z",
+            },
+            merge=True,
+        )
+
+        response = self._build_client().post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-stale-event"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "skipped_stale_event"})
+        self.assertEqual(
+            self.db.collection("marketing_events").document("event-stale-event").get().to_dict()["status"],
+            "skipped_stale_event",
+        )
+        self.assertFalse([call for call in self.gemini_service.calls if call[0] == "generate_chat_reply"])
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_messenger_text"])
+
+    def test_process_inbound_message_skips_event_after_messenger_window_closed(self) -> None:
+        self._seed_runtime_settings()
+        self._seed_contact_and_event(
+            contact_id="contact-closed-event",
+            conversation_id="conv-closed-event",
+            event_id="event-closed-event",
+            channel="messenger",
+            incoming_text="旧窗口消息",
+            identifier_key="psid",
+            identifier_value="psid-closed-event",
+        )
+        self.db.collection("marketing_contacts").document("contact-closed-event").set(
+            {"window_expires_at": "2026-04-10T01:00:00Z"},
+            merge=True,
+        )
+
+        response = self._build_client().post(
+            "/api/v1/marketing/tasks/process-inbound-message",
+            json={"event_id": "event-closed-event"},
+            headers={"X-Internal-Token": "internal-secret"},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "skipped_window_closed"})
+        self.assertEqual(
+            self.db.collection("marketing_events").document("event-closed-event").get().to_dict()["status"],
+            "skipped_window_closed",
+        )
+        self.assertFalse([call for call in self.gemini_service.calls if call[0] == "generate_chat_reply"])
+        self.assertFalse([call for call in self.meta_client.calls if call[0] == "send_messenger_text"])
 
     def _seed_contact_and_event(
         self,

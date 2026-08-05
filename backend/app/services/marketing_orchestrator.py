@@ -45,6 +45,15 @@ FINAL_COMMENT_EVENT_STATUSES = {
 }
 MIN_PAYMENT_REFERENCE_LENGTH = 6
 DUPLICATE_PAYMENT_REFERENCE_FLAG = "duplicate_payment_reference"
+FINAL_INBOUND_EVENT_STATUSES = {
+    "processed",
+    "processed_with_errors",
+    "escalated",
+    "skipped_opt_out",
+    "skipped_stale_event",
+    "skipped_window_closed",
+    "skipped_handoff_pending",
+}
 INITIAL_PROMOTION_SUPPRESSION_TERMS = (
     "退款",
     "投诉",
@@ -757,12 +766,32 @@ class MarketingAutomationOrchestrator:
             raise KeyError(f"Marketing event not found: {event_id}")
 
         event = snapshot.to_dict()
+        event_status = str(event.get("status") or "queued")
+        if event_status in FINAL_INBOUND_EVENT_STATUSES:
+            return {"status": event_status}
+
+        def skip_event(status: str) -> dict[str, str]:
+            ref.set({"status": status, "processed_at": utcnow(), "updated_at": utcnow()}, merge=True)
+            return {"status": status}
+
         payload = event.get("payload", {})
+        contact_id = event["contact_id"]
+        contact = self.contact_service.get_contact(contact_id)
+        event_received_at = ensure_datetime(event.get("received_at"))
+        last_interaction_at = ensure_datetime(contact.get("last_interaction_time"))
+        if event_received_at and last_interaction_at and event_received_at < last_interaction_at:
+            return skip_event("skipped_stale_event")
+        if contact.get("automation_paused") or contact.get("current_tag") == "handoff_pending":
+            return skip_event("skipped_handoff_pending")
+        if contact.get("marketing_status") == "opted_out" or contact.get("opt_out_at"):
+            return skip_event("skipped_opt_out")
+        window_expires_at = ensure_datetime(contact.get("window_expires_at"))
+        if window_expires_at and utcnow() > window_expires_at:
+            return skip_event("skipped_window_closed")
+
         if payload.get("message_type") == "image":
             return self._process_payment_receipt_event(ref=ref, event=event)
 
-        contact_id = event["contact_id"]
-        contact = self.contact_service.get_contact(contact_id)
         contact, prompt_phone_defaulted = self._contact_with_channel_order_defaults(
             channel=event["channel"],
             contact=contact,
