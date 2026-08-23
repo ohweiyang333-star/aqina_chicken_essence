@@ -280,7 +280,7 @@ async def send_marketing_conversation_image(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is empty")
     if len(image_bytes) > MAX_MANUAL_IMAGE_BYTES:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail="Image file is too large",
         )
 

@@ -269,7 +269,7 @@ async def create_landing_order_with_receipt(
     if not receipt_bytes:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Receipt file is empty")
     if len(receipt_bytes) > MAX_RECEIPT_BYTES:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Receipt file is too large")
+        raise HTTPException(status_code=status.HTTP_413_CONTENT_TOO_LARGE, detail="Receipt file is too large")
 
     order_id = f"order_{uuid.uuid4().hex[:12]}"
     extension = {

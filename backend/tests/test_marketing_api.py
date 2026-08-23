@@ -24,14 +24,24 @@ LEGACY_ENERGY_PACK_NAME_ZH = "活力" + "升级装"
 
 class MarketingApiTests(unittest.TestCase):
     def setUp(self) -> None:
-        os.environ["META_VERIFY_TOKEN"] = "test-verify-token"
-        os.environ["META_APP_SECRET"] = "top-secret"
-        os.environ["INTERNAL_TASK_SECRET"] = "internal-secret"
-        os.environ["GEMINI_API_KEY"] = "test-api-key"
-        os.environ["GEMINI_MODEL"] = "gemini-3-flash-preview"
-        os.environ["FRONTEND_BASE_URL"] = "https://aqina.example.com"
-        os.environ["META_PAGE_ID"] = "page-1"
-        os.environ["META_WHATSAPP_PHONE_NUMBER_ID"] = "phone-number-id"
+        test_settings = {
+            "meta_verify_token": "test-verify-token",
+            "meta_app_secret": "top-secret",
+            "internal_task_secret": "internal-secret",
+            "gemini_api_key": "test-api-key",
+            "gemini_model": "gemini-3-flash-preview",
+            "frontend_base_url": "https://aqina.example.com",
+            "meta_page_id": "page-1",
+            "meta_whatsapp_phone_number_id": "phone-number-id",
+        }
+        for name, value in test_settings.items():
+            os.environ[name.upper()] = value
+
+        # The settings singleton may already exist after pytest collects sibling tests.
+        from app.core.config import settings
+
+        for name, value in test_settings.items():
+            setattr(settings, name, value)
 
         self.db = FakeFirestore()
         self.task_queue = FakeTaskQueue()

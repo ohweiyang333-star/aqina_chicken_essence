@@ -4,7 +4,7 @@
 High-conversion marketing platform for Aqina Chicken Essence in Singapore, featuring a bilingual Landing Page and a comprehensive Admin Console.
 
 ## Tech Stack
-- **Frontend**: Next.js 15, Tailwind CSS v4, TypeScript, next-intl
+- **Frontend**: Next.js 16, Tailwind CSS v4, TypeScript, next-intl
 - **Backend**: FastAPI, Python 3.11, Firebase Admin SDK
 - **Database/Auth**: Firebase Firestore, Firebase Auth, Firebase Storage
 - **Deployment**: Google Cloud Run
